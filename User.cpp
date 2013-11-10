@@ -191,47 +191,20 @@ struct sockaddr_in* User::from() const
 	return (this->_from);
 }
 
-char* User::getRelativeFile(char* relativeFile)
+char* User::getRealFile(char* relativeFile)
 {
-	string prev = *this->_folderPath;
+	char backup[FILENAME_MAX];
+	char* res;
+	strcpy(backup, this->_folderPath->c_str());
+
 	if(!this->moveFolder(relativeFile))
 	{
-		*this->_folderPath = prev;
-		return (NULL);
+		res = NULL;
+		goto _exit;
 	}
-	if(relativeFile[strlen(relativeFile) - 1] == '/')
-		this->_folderPath[this->_folderPath->length() - 1] = "";
-	char* res = (char*)malloc(FILENAME_MAX);
-	strcpy(res, this->_folderPath->c_str());
-	*this->_folderPath = prev;
+	res = getRealDirectory((char*)this->_folderPath->c_str());
+_exit:
+	delete this->_folderPath;
+	this->_folderPath = new string(backup);
 	return (res);
-	/** version 1
-	char* res = (char*)malloc(FILENAME_MAX);
-	int last = -1, i;
-	if(*relativeFile == '/')
-	{
-
-		strcpy(res, relativeFile);
-		return (res);
-	}
-	string prev = *this->_folderPath;
-	for(i = 0; relativeFile[i]; i++)
-		if(relativeFile[i] == '/')
-			last = i;
-	if(last != -1)
-		relativeFile[last] = 0;
-	if(this->moveFolder(relativeFile))
-	{
-		strcpy(res, this->_folderPath->c_str());
-		strcat(res, relativeFile + last + 1);
-		if(last != -1)
-			relativeFile[last] = 0;
-		*this->_folderPath = prev;
-		return (res);
-	}
-	if(last != -1)
-		relativeFile[last] = 0;
-	free(res);
-	*this->_folderPath = prev;
-	return (NULL);*/
 }

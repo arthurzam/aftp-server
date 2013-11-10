@@ -40,7 +40,13 @@ public:
 	void logIn();
 	const char* folderPath() const;
 	struct sockaddr_in* from() const;
-	char* getRelativeFile(char* relativeFile);
+
+	/*
+	 * returns a new char array allocated in HEAP that contains the path of the given path by the current folder,
+	 * but still don't contain the real path on hard disk (without SERVER_BASE_FOLDER)
+	 */
+	char* getRealFile(char* relativeFile);
+
 	/*
 	 * changes the folder path using the given path.
 	 * moves through every path between slash.

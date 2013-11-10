@@ -42,6 +42,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
     		char* src;
     		char* dst;
     		byte_t src_len;
+    		byte_t dst_len;
     	} src_dst;
     	char* path;
     	int i;
@@ -125,6 +126,10 @@ THREAD_RETURN_VALUE startServer(void* arg)
 			printf("user %s:%d removed\n", inet_ntoa(from.sin_addr), from.sin_port);
 			continue;
 		}
+		else if(msgCode == 0) //TODO: remove at end <=> exit command when no multiple threading
+		{
+			needExit = TRUE;
+		}
 		else if(msgCode != 100 && !user->isLoged())
 		{
 			sendMessage(&from, 100, NULL, 0);
@@ -149,8 +154,9 @@ THREAD_RETURN_VALUE startServer(void* arg)
 			case 520: // move file
 				tempData.src_dst.src_len = *(Buffer + 2);
 				tempData.src_dst.src = Buffer + 3;
-				tempData.src_dst.dst = Buffer + 5 + tempData.src_dst.src_len;
-				if(moveFile(tempData.src_dst.src, tempData.src_dst.dst))
+				tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+				tempData.src_dst.dst = Buffer + 6 + tempData.src_dst.src_len;
+				if(moveFile(tempData.src_dst.src, tempData.src_dst.dst, user))
 					sendMessage(&from, 200, NULL, 0);
 				else
 					sendMessage(&from, 300, NULL, 0);
@@ -158,8 +164,15 @@ THREAD_RETURN_VALUE startServer(void* arg)
 			case 521: // copy file
 				tempData.src_dst.src_len = *(Buffer + 2);
 				tempData.src_dst.src = Buffer + 3;
-				tempData.src_dst.dst = Buffer + 5 + tempData.src_dst.src_len;
-				if(copyFile(tempData.src_dst.src, tempData.src_dst.dst))
+				tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+				tempData.src_dst.dst = Buffer + 6 + tempData.src_dst.src_len;
+				if(copyFile(tempData.src_dst.src, tempData.src_dst.dst, user))
+					sendMessage(&from, 200, NULL, 0);
+				else
+					sendMessage(&from, 300, NULL, 0);
+				break;
+			case 522: // remove file
+				if(removeFile(Buffer + 2, user))
 					sendMessage(&from, 200, NULL, 0);
 				else
 					sendMessage(&from, 300, NULL, 0);
@@ -176,8 +189,14 @@ THREAD_RETURN_VALUE startServer(void* arg)
 				else
 					sendMessage(&from, 300, NULL, 0);
 				break;
+			case 532: // remove file
+				if(removeFolder(Buffer + 2, user))
+					sendMessage(&from, 200, NULL, 0);
+				else
+					sendMessage(&from, 300, NULL, 0);
+				break;
 			case 999:
-				tempData.path = user->getRelativeFile(Buffer + 2);
+				tempData.path = user->getRealFile(Buffer + 2);
 				if(!tempData.path)
 					sendMessage(&from, 300, NULL, 0);
 				else

@@ -67,35 +67,63 @@ bool_t createDirectory(char* realativDirectory)
 #endif
 }
 
-bool_t moveFile(char* from, char* to)
+bool_t moveFile(char* from, char* to, User* user)
 {
-	return (rename(from, to) == 0);
+	char* src = user->getRealFile(from);
+	char* dst = user->getRealFile(to);
+	int r = rename(src, dst);
+	free(src);
+	free(dst);
+	return (r == 0);
 }
 
-bool_t copyFile(char* from, char* to)
+bool_t copyFile(char* from, char* to, User* user)
 {
+	char* srcS = user->getRealFile(from);
+	char* dstS = user->getRealFile(to);
 	char buffer[0x100];
-	FILE* src = fopen(from, "rb");
+	FILE* src = fopen(srcS, "rb");
 	FILE* dst;
 	int i;
 
 	if(!src)
-		return (FALSE);
-	dst = fopen(to, "wb");
+		goto _badExit;
+	dst = fopen(dstS, "wb");
 
-	while(!feof(src) && (i = fread(buffer, 0x100, 1, src)) == 0x100)
-		fwrite(buffer, 0x100, 1, dst);
-	fwrite(buffer, i, 1, dst);
+	if(!dst)
+	{
+		fclose(src);
+		goto _badExit;
+	}
+
+	while ((i = fread(buffer, 0x100, 1, src)))
+		fwrite(buffer, i, 1, dst);
 
 	fclose(dst);
 	fclose(src);
-
 	return (TRUE);
+
+_badExit:
+	free(srcS);
+	free(dstS);
+	return (FALSE);
 }
 
-void removeFile(char* path)
+bool_t removeFile(char* path, User* user)
 {
-	remove(path);
+	char* src = user->getRealFile(path);
+	int r = remove(src);
+	free(src);
+	return (r == 0);
+}
+
+bool_t removeFolder(char* path, User* user)
+{
+	//TODO: build this function
+	char* src = user->getRealFile(path);
+	int r = _rmdir(src);
+	free(src);
+	return (r != -1);
 }
 
 bool_t isFileExists(char* path)

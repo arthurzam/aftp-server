@@ -8,7 +8,6 @@
 #else
 #include <pthread.h>
 #endif
-
 bool_t needExit = FALSE;
 bool_t canExit = FALSE;
 
@@ -16,6 +15,7 @@ int main(int argc, char **argv)
 {
 	printf("server is started\n");
 	char buf[120];
+	//startServer(NULL);
 #ifdef WIN32
 	_beginthread(startServer, 0, NULL);
 #else
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 		printf("    Do you want to exit? \n");
 		scanf("%s", buf);
 		system(CLEAR_SCREEN);
-	}while(strcmp("yes", buf));
+	}while(strcmp(buf, "yes"));
 	printf("    Start Exit \n");
 	needExit = TRUE;
 	while(!canExit);
