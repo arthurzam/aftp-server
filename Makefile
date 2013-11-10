@@ -4,21 +4,19 @@ LDFLAGS=
 SOURCES=fileControl.cpp md5.cpp server.cpp User.cpp UserList.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
-REMOVEFILECOMMAND=
+LIBS=
+REMOVEFILECOMMAND=rm -f
 
 ifeq ($(OS),Windows_NT)
-	LDFLAGS += -lws2_32
-	EXECUTABLE += .exe
-	REMOVEFILECOMMAND = del
+	LIBS = -lws2_32
 else
-	LDFLAGS += -lpthread
-	REMOVEFILECOMMAND = rm -f
+	LIBS = -lpthread
 endif
 
 all: $(SOURCES) $(EXECUTABLE)
 	
 $(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
