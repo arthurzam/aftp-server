@@ -1,4 +1,3 @@
-#include "server.h"
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -8,6 +7,9 @@
 #else
 #include <pthread.h>
 #endif
+
+#include "server.h"
+
 bool_t needExit = FALSE;
 bool_t canExit = FALSE;
 
@@ -29,7 +31,7 @@ int main(int argc, char **argv)
 	}while(strcmp(buf, "yes"));
 	printf("    Start Exit \n");
 	needExit = TRUE;
-	while(!canExit);
+	while(!canExit); // wait for all to exit
 	printf("    Finish \n");
 	return (0);
 }

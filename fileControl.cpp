@@ -119,11 +119,27 @@ bool_t removeFile(char* path, User* user)
 
 bool_t removeFolder(char* path, User* user)
 {
+#ifdef WIN32
+	char command[FILENAME_MAX] = "rd /q /s ";
+#else
+	char command[FILENAME_MAX] = "rm -r -f ";
+#endif
+	bool_t flag = TRUE;
 	//TODO: build this function
 	char* src = user->getRealFile(path);
-	int r = _rmdir(src);
+	if (!isDirectory(src))
+	{
+		flag = FALSE;
+		goto _exit;
+	}
+	strcat (command, src);
+	printf("              %s\n", command);
+	system (command);
+	if (isDirectory(src))
+		flag = FALSE;
+_exit:
 	free(src);
-	return (r != -1);
+	return (flag);
 }
 
 bool_t isFileExists(char* path)
