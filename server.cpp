@@ -1,5 +1,6 @@
 #ifdef WIN32
 #include <winsock2.h>
+#include <dos.h>
 #else
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -25,6 +26,7 @@ extern bool_t needExit;
 extern bool_t canExit;
 
 short getMsgCode(char* data, unsigned int datalen);
+THREAD_RETURN_VALUE userControl(void* arg);
 
 THREAD_RETURN_VALUE startServer(void* arg)
 {
@@ -183,14 +185,24 @@ THREAD_RETURN_VALUE startServer(void* arg)
 				else
 					sendMessage(&from, 200, (char*)user->folderPath(), strlen(user->folderPath()));
 				break;
-			case 531: // create dir
+			case 531: // create directory
 				if(createDirectory(Buffer + 2))
 					sendMessage(&from, 200, NULL, 0);
 				else
 					sendMessage(&from, 300, NULL, 0);
 				break;
-			case 532: // remove file
+			case 532: // remove directory
 				if(removeFolder(Buffer + 2, user))
+					sendMessage(&from, 200, NULL, 0);
+				else
+					sendMessage(&from, 300, NULL, 0);
+				break;
+			case 534: // copy directory
+				tempData.src_dst.src_len = *(Buffer + 2);
+				tempData.src_dst.src = Buffer + 3;
+				tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+				tempData.src_dst.dst = Buffer + 6 + tempData.src_dst.src_len;
+				if(copyFolder(tempData.src_dst.src, tempData.src_dst.dst, user))
 					sendMessage(&from, 200, NULL, 0);
 				else
 					sendMessage(&from, 300, NULL, 0);
@@ -249,4 +261,30 @@ short getMsgCode(char* data, unsigned int datalen)
 		return (-1);
 	memcpy(&ret, data, sizeof(ret));
 	return (ret);
+}
+
+THREAD_RETURN_VALUE userControl(void* arg)
+{
+#ifdef WIN32
+	const int WAIT_TIME = 50000; //mili-seconds
+#else
+	const int WAIT_TIME = 50;    // seconds
+#endif
+	const int CLEAR_AFTER_COUNT = 128;
+	while (!needExit)
+	{
+#ifdef WIN32
+		Sleep(WAIT_TIME);
+#else
+		sleep(WAIT_TIME);
+#endif
+		if (listUsers->getUserCount() < CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
+			break;
+		// TODO: move through all users and control
+	}
+#ifdef WIN32
+	return;
+#else
+	return NULL;
+#endif
 }

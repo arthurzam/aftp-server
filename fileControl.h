@@ -30,6 +30,7 @@ bool_t removeFile(char* path, User* user);
 
 #define moveDirectory moveFile
 bool_t removeFolder(char* path, User* user);
+bool_t copyFolder(char* from, char* to, User* user);
 
 bool_t isFileExists(char* path);
 

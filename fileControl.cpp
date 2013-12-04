@@ -142,6 +142,35 @@ _exit:
 	return (flag);
 }
 
+bool_t copyFolder(char* from, char* to, User* user)
+{
+#ifdef WIN32
+	char command[FILENAME_MAX] = "xcopy /s /e /h ";
+#else
+	char command[FILENAME_MAX] = "cp -r -f ";
+#endif
+	bool_t flag = TRUE;
+	//TODO: build this function
+	char* src = user->getRealFile(from);
+	char* dst = user->getRealFile(to);
+	if (!isDirectory(src) || isDirectory(dst))
+	{
+		flag = FALSE;
+		goto _exit;
+	}
+	strcat (command, src);
+	strcat (command, " ");
+	strcat (command, dst);
+	printf("              %s\n", command);
+	system (command);
+	if (isDirectory(src))
+		flag = FALSE;
+_exit:
+	free(src);
+	free(dst);
+	return (flag);
+}
+
 bool_t isFileExists(char* path)
 {
 	FILE* file = fopen(path, "rb");
