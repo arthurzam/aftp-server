@@ -1,5 +1,6 @@
 #include <cstring>
 #include "User.h"
+#include "server.h"
 
 void User::copyFrom(const struct sockaddr_in* from)
 {
@@ -70,6 +71,7 @@ void User::reset(const struct sockaddr_in* from)
 void User::resetTime()
 {
 	this->_lastUse = time(NULL);
+	this->_timeout = FALSE;
 }
 
 bool_t User::equals(const User& other) const
@@ -100,7 +102,7 @@ bool_t User::moveFolder(char* path)
 	if(*path == 0)
 		return (TRUE);
 	int i;
-	int last;
+	int last = -1;
 	char* newStr = NULL;
 
 	// replace all \ into /
@@ -176,6 +178,27 @@ bool_t User::isLoged() const
 	return (this->_logedIn);
 }
 
+bool_t User::timeout()
+{
+	if(this->_timeout)
+	{
+		time_t now = time(NULL);
+		double seconds = difftime(now, this->_lastUse);
+		return (seconds > 100);
+	}
+	else
+	{
+		time_t now = time(NULL);
+		double seconds = difftime(now, this->_lastUse);
+		if (seconds > 50)
+		{
+			sendMessage(this->_from, 900, NULL, 0); // send timeout
+			this->_timeout = FALSE;
+		}
+		return (FALSE);
+	}
+}
+
 void User::logIn()
 {
 	this->_logedIn = TRUE;
@@ -207,4 +230,15 @@ _exit:
 	delete this->_folderPath;
 	this->_folderPath = new string(backup);
 	return (res);
+}
+
+
+inline void User::sendData(short msgCode, char* data, int datalen)
+{
+	sendMessage(this->_from, msgCode, data, datalen);
+}
+
+inline void User::sendData(short msgCode)
+{
+	sendMessage(this->_from, msgCode, NULL, 0);
 }

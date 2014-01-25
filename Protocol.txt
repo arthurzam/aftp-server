@@ -5,6 +5,7 @@ Server Messages:
 110 - login not correct
 
 200 - action completed
+201 - LS data
 210 - file block (download from server) { after the number, put the MD5 of the current block }
 211 - end of file transfer {add the md5 of all the file}
 212 - md5 of whole file
@@ -13,6 +14,7 @@ Server Messages:
 301 - destination file exists (therefore ask for "action must overwrite" from client)
 310 - MD5 of the given block doesn't match
 311 - MD5 of the given file doesn't match
+312 - block number is out of range
 390 - unknown error
 391 - unknown command
 
@@ -37,6 +39,7 @@ Client Messages:
 
 310 - MD5 of the given block doesn't match
 311 - MD5 of the given file doesn't match
+312 - block number is out of range
 320 - cancel file transfer
 
 400 - info of client
@@ -53,3 +56,5 @@ Client Messages:
    032 - remove directory
    033 - move directory
    034 - copy directory
+   035 - get contents of directory {[code][path]}
+   

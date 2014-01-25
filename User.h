@@ -5,6 +5,7 @@
 #include <ctime>
 #include "defenitions.h"
 #include "fileControl.h"
+#include "server.h"
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -34,8 +35,11 @@ public:
 	void resetTime();
 	void reset(const struct sockaddr_in* from);
 
-	bool_t isTimeout() const;
-	void timeout();
+	/*
+	 * returns TRUE if user is to long not activated (timeout send + time moved).
+	 * if the user is inactive first time, then sends timeout message (900) to this user.
+	 */
+	bool_t timeout();
 	bool_t isLoged() const;
 	void logIn();
 	const char* folderPath() const;
@@ -61,6 +65,9 @@ public:
 	bool_t equals(const User& other) const;
 	bool_t operator==(const User& other) const;
 	bool_t operator!=(const User& other) const;
+
+	inline void sendData(short msgCode, char* data, int datalen);
+	inline void sendData(short msgCode);
 };
 
 #endif

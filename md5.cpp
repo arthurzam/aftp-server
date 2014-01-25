@@ -75,7 +75,7 @@
 #define T64 /* 0xeb86d391 */ (T_MASK ^ 0x14792c6e)
 
 
-static void md5_process(md5_context *ctx, const md5_byte_t *data /*[64]*/)
+static void md5_process(md5_context *ctx, const byte_t *data /*[64]*/)
 {
     md5_word_t
 	a = ctx->abcd[0], b = ctx->abcd[1],
@@ -99,7 +99,7 @@ static void md5_process(md5_context *ctx, const md5_byte_t *data /*[64]*/)
 	 */
 	static const int w = 1;
 
-	if (*((const md5_byte_t *)&w)) /* dynamic little-endian */
+	if (*((const byte_t *)&w)) /* dynamic little-endian */
 #endif
 #if BYTE_ORDER <= 0		/* little-endian */
 	{
@@ -107,7 +107,7 @@ static void md5_process(md5_context *ctx, const md5_byte_t *data /*[64]*/)
 	     * On little-endian machines, we can process properly aligned
 	     * data without copying it.
 	     */
-	    if (!((data - (const md5_byte_t *)0) & 3)) {
+	    if (!((data - (const byte_t *)0) & 3)) {
 		/* data are properly aligned */
 		X = (const md5_word_t *)data;
 	    } else {
@@ -126,7 +126,7 @@ static void md5_process(md5_context *ctx, const md5_byte_t *data /*[64]*/)
 	     * On big-endian machines, we must arrange the bytes in the
 	     * right order.
 	     */
-	    const md5_byte_t *xp = data;
+	    const byte_t *xp = data;
 	    int i;
 
 #  if BYTE_ORDER == 0
@@ -266,9 +266,9 @@ void md5_init(md5_context *ctx)
 }
 
 /* Append a string to the message. */
-void md5_append(md5_context *ctx, const md5_byte_t *data, int nbytes)
+void md5_append(md5_context *ctx, const byte_t *data, int nbytes)
 {
-    const md5_byte_t *p = data;
+    const byte_t *p = data;
     int left = nbytes;
     int offset = (ctx->count[0] >> 3) & 63;
     md5_word_t nbits = (md5_word_t)(nbytes << 3);
@@ -304,24 +304,32 @@ void md5_append(md5_context *ctx, const md5_byte_t *data, int nbytes)
 }
 
 /* Finish the message and return the digest. */
-void md5_finish(md5_context *ctx, md5_byte_t digest[16])
+void md5_finish(md5_context *ctx, byte_t digest[16])
 {
-    static const md5_byte_t pad[64] = {
+    static const byte_t pad[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
-    md5_byte_t data[8];
+    byte_t data[8];
     int i;
 
     /* Save the length before padding. */
     for (i = 0; i < 8; ++i)
-	data[i] = (md5_byte_t)(ctx->count[i >> 2] >> ((i & 3) << 3));
+	data[i] = (byte_t)(ctx->count[i >> 2] >> ((i & 3) << 3));
     /* Pad to 56 bytes mod 64. */
     md5_append(ctx, pad, ((55 - (ctx->count[0] >> 3)) & 63) + 1);
     /* Append the length. */
     md5_append(ctx, data, 8);
     for (i = 0; i < 16; ++i)
-	digest[i] = (md5_byte_t)(ctx->abcd[i >> 2] >> ((i & 3) << 3));
+	digest[i] = (byte_t)(ctx->abcd[i >> 2] >> ((i & 3) << 3));
+}
+
+void md5(const void* data, int nbytes, byte_t digest[16])
+{
+	md5_context ctx;
+	md5_init(&ctx);
+	md5_append(&ctx, (byte_t*)data, nbytes);
+	md5_finish(&ctx, digest);
 }

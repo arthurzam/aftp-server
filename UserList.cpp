@@ -4,6 +4,8 @@
 
 UserList::UserList() {
 	this->head = NULL;
+	this->userCount = 0;
+	this->nodesCount = 0;
 }
 
 UserList::~UserList() {
@@ -26,6 +28,8 @@ UserList::~UserList() {
 User* UserList::operator[](int index)
 {
 	ListNode* curr = this->head;
+	if ((this->nodesCount << 10) < index)
+		return (NULL);
 	while(index >= USERS_IN_USERS_ARRAY && curr) // get the node when the current index is hosted in array
 	{
 		curr = curr->next;
@@ -44,6 +48,8 @@ int UserList::operator+(const User &user)
 int UserList::removeUser(int index)
 {
 	ListNode* curr = this->head;
+	if ((this->nodesCount << 10) < index)
+		return (EXIT_FAILURE);
 	while(index >= USERS_IN_USERS_ARRAY && curr) // get the node when the current index is hosted in array
 	{
 		curr = curr->next;
@@ -54,6 +60,7 @@ int UserList::removeUser(int index)
 	delete curr->arr[index];
 	curr->arr[index] = NULL;
 	curr->isFull = FALSE;
+	this->userCount--;
 	return (EXIT_SUCCESS);
 }
 
@@ -68,6 +75,7 @@ int UserList::removeUser(const User* user)
 			{
 				delete curr->arr[i];
 				curr->arr[i] = NULL;
+				this->userCount--;
 				return (EXIT_SUCCESS);
 			}
 		curr = curr->next;
@@ -84,6 +92,7 @@ int UserList::addUser(const User &user)
 	{
 		this->head = createNewNode();
 		this->head->arr[0] = new User(user);
+		this->nodesCount++;
 		return (0);
 	}
 	while(curr) // move through all nodes
@@ -108,6 +117,7 @@ int UserList::addUser(const User &user)
 					break;
 				}
 			}
+			this->userCount++;
 			return (index);
 		}
 
@@ -117,6 +127,8 @@ int UserList::addUser(const User &user)
 			curr->next = createNewNode();
 			curr = curr->next;
 			curr->arr[0] = new User(user);
+			this->userCount++;
+			this->nodesCount++;
 			return (index);
 		}
 		curr = curr->next;
@@ -153,6 +165,11 @@ User* UserList::findUser(const User &user) const
 	return (NULL);
 }
 
+unsigned int UserList::getUserCount() const
+{
+	return (this->userCount);
+}
+
 ListNode* UserList::createNewNode()
 {
 	ListNode* result = new ListNode;
@@ -165,3 +182,4 @@ ListNode* UserList::createNewNode()
 	}
 	return (result);
 }
+

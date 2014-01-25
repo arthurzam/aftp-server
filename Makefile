@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=fileControl.cpp md5.cpp server.cpp User.cpp UserList.cpp main.cpp
+SOURCES=md5.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
 LIBS=

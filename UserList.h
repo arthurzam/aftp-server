@@ -18,9 +18,10 @@ typedef struct _listNode ListNode;
 class UserList {
 
 private:
+	int userCount;
+	int nodesCount;
 	ListNode* head;
 	ListNode* createNewNode();
-
 public:
 	UserList();
 	~UserList();
@@ -30,6 +31,7 @@ public:
 	int addUser(const User &user);
 	int findIndexOfUser(const User &user) const;
 	User* findUser(const User &user) const;
+	unsigned int getUserCount() const;
 
 	User* operator[](int index);
 	int operator+(const User &user);

@@ -1,6 +1,5 @@
 #ifdef WIN32
 #include <winsock2.h>
-#include <dos.h>
 #else
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -16,8 +15,7 @@
 #include "UserList.h"
 #include "server.h"
 #include "fileControl.h"
-
-#define BUFFER_SERVER_SIZE 0x400 // = 1024
+#include "LoginDB.h"
 
 UserList* listUsers = NULL;
 SOCKET sock;
@@ -30,14 +28,15 @@ THREAD_RETURN_VALUE userControl(void* arg);
 
 THREAD_RETURN_VALUE startServer(void* arg)
 {
+	LoginDB* usersDB = (LoginDB*)arg;
     char Buffer[BUFFER_SERVER_SIZE];
-    unsigned short port=DEFAULT_PORT;
+    unsigned short port = DEFAULT_PORT;
     int retval;
-    from_len_t fromlen;
     User* user;
     struct sockaddr_in server;
     struct sockaddr_in from;
     short msgCode;
+    from_len_t fromlen = sizeof(from);
 
     union {
     	struct {
@@ -59,7 +58,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
     WSADATA wsaData;
     if ((retval = WSAStartup(0x202, &wsaData)) != 0)
     {
-    	fprintf(stderr,"Server: WSAStartup() failed with error %d\n", retval);
+    	fprintf(stderr,"[Server: WSAStartup() failed with error %d]\n", retval);
     	goto _errorExit;
     }
 #endif
@@ -72,13 +71,13 @@ THREAD_RETURN_VALUE startServer(void* arg)
 #ifdef WIN32
     if (sock == INVALID_SOCKET)
     {
-        fprintf(stderr,"Server: socket() failed with error %d\n", WSAGetLastError());
+        fprintf(stderr,"[Server: socket() failed with error %d]\n", WSAGetLastError());
         goto _errorExit;
     }
 #else
 	if (sock < 0)
 	{
-		fprintf(stderr,"Server: socket() failed\n");
+		fprintf(stderr,"[Server: socket() failed]\n");
 		goto _errorExit;
 	}
 #endif
@@ -86,13 +85,13 @@ THREAD_RETURN_VALUE startServer(void* arg)
 #ifdef WIN32
     if (bind(sock, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
     {
-        fprintf(stderr,"Server: bind() failed with error %d\n", WSAGetLastError());
+        fprintf(stderr,"[Server: bind() failed with error %d]\n", WSAGetLastError());
         goto _errorExit;
     }
 #else
     if (bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0)
     {
-    	fprintf(stderr,"Server: bind() failed\n");
+    	fprintf(stderr,"[Server: bind() failed]\n");
     	goto _errorExit;
     }
 #endif
@@ -100,21 +99,18 @@ THREAD_RETURN_VALUE startServer(void* arg)
     if(listUsers)
     	delete listUsers;
     listUsers = new UserList();
-    printf("I'm working on port %d\n" ,DEFAULT_PORT);
-
+    printf("\n[I'm working on port %d]\n" ,DEFAULT_PORT);
 
     while(!needExit)
 	{
-        fromlen =sizeof(from);
-
         retval = recvfrom(sock,Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
-        printf("Server: Received datagram from %s:%d\n", inet_ntoa(from.sin_addr), from.sin_port);
+        printf("[Server: Received datagram from %s:%d]\n", inet_ntoa(from.sin_addr), from.sin_port);
         if (retval == SOCKET_ERROR || retval == 0)
             continue;
         User tempUser(&from);
 		Buffer[retval] = 0;
 		msgCode = getMsgCode(Buffer, retval);
-		printf("msg code is %04x\n", msgCode);
+		printf("[msg code is %04x]\n", msgCode);
 
 		if(!(user = listUsers->findUser(tempUser)))
 			user = (*listUsers)[listUsers->addUser(tempUser)];
@@ -125,7 +121,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
 		{
 			listUsers->removeUser(user);
 			sendMessage(&from, 200, NULL, 0);
-			printf("user %s:%d removed\n", inet_ntoa(from.sin_addr), from.sin_port);
+			printf("[user %s:%d removed]\n", inet_ntoa(from.sin_addr), from.sin_port);
 			continue;
 		}
 		else if(msgCode == 0) //TODO: remove at end <=> exit command when no multiple threading
@@ -143,9 +139,15 @@ THREAD_RETURN_VALUE startServer(void* arg)
 			case 100: // login
 				tempData.login.username = Buffer + 18;
 				tempData.login.md5Password = (byte_t*)(Buffer + 2);
-				// TODO: check if login is correct
-				user->logIn();
-				sendMessage(&from, 101, Buffer, strlen(Buffer));
+				if(usersDB->check(tempData.login.username, tempData.login.md5Password))
+				{ // good username
+					user->logIn();
+					sendMessage(&from, 101, NULL, 0);
+				}
+				else
+				{ // bad username
+					sendMessage(&from, 110, NULL, 0);
+				}
 				break;
 			case 200:
 				sendMessage(&from, 200, NULL, 0);

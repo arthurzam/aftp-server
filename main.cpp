@@ -9,29 +9,96 @@
 #endif
 
 #include "server.h"
+#include "LoginDB.h"
 
-bool_t needExit = FALSE;
-bool_t canExit = FALSE;
+bool_t needExit;
+bool_t canExit;
+
+inline void clearScreen()
+{
+#ifdef WIN32
+	system("cls");
+#else
+	system("clear");
+#endif
+}
 
 int main(int argc, char **argv)
 {
-	printf("server is started\n");
-	char buf[120];
-	//startServer(NULL);
-#ifdef WIN32
-	_beginthread(startServer, 0, NULL);
-#else
-	pthread_t thread;
-	pthread_create(&thread, NULL, startServer, NULL);
-#endif
+	bool_t exit = FALSE;
+	bool_t serverRunning = FALSE;
+	LoginDB userDB;
+	union{
+		int choice;
+		struct{
+			char username[USERNAME_MAX_LENGTH];
+			char password[0xFF];
+		} user;
+		char filePath[FILENAME_MAX];
+	} data;
 	do{
-		printf("    Do you want to exit? \n");
-		scanf("%s", buf);
-		system(CLEAR_SCREEN);
-	}while(strcmp(buf, "yes"));
-	printf("    Start Exit \n");
-	needExit = TRUE;
-	while(!canExit); // wait for all to exit
-	printf("    Finish \n");
-	return (0);
+		if(canExit)
+			serverRunning = FALSE;
+		printf("0. exit\n");
+		if(serverRunning)
+			printf("1. stop server\n");
+		else
+			printf("1. start server\n");
+		printf("2. add new user\n3. load login database from file\n4. save login database to file\n5. print database\n6. clear screen\n  your choice: ");
+		scanf("%d", &data.choice);
+		switch(data.choice)
+		{
+			case 0:
+				exit = TRUE;
+				break;
+			case 1:
+				if(serverRunning)
+				{
+					printf("the server is stopping!\n");
+					needExit = TRUE;
+					while(!canExit); // wait for all to exit
+					printf("the server stopped\n");
+					serverRunning = FALSE;
+				}
+				else
+				{
+					needExit = FALSE;
+					canExit = FALSE;
+					//startServer(&userDB); //F_IX: remove
+#ifdef WIN32
+					_beginthread(startServer, 0, &userDB);
+#else
+					pthread_t thread;
+					pthread_create(&thread, NULL, startServer, &userDB);
+#endif
+					serverRunning = TRUE;
+				}
+				break;
+			case 2:
+				printf("username: ");
+				scanf("%s", data.user.username);
+				printf("password: ");
+				scanf("%s", data.user.password);
+				userDB.add(data.user.username, data.user.password);
+				clearScreen();
+				printf("added\n");
+				break;
+			case 3:
+				printf("enter path to file: ");
+				scanf("%s", data.filePath);
+				userDB.load(data.filePath);
+				break;
+			case 4:
+				printf("enter path to file: ");
+				scanf("%s", data.filePath);
+				userDB.save(data.filePath);
+				break;
+			case 5:
+				userDB.print();
+				break;
+			case 6:
+				clearScreen();
+				break;
+		}
+	}while(!exit);
 }

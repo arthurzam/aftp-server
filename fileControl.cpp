@@ -26,9 +26,9 @@ char* getRealDirectory(char* realativDirectory)
 }
 
 //TODO: complete 'ls' command
-string* getContentDirectory(char* directory)
+char* getContentDirectory(char* directory, int* length)
 {
-	string* result = new string();
+	char* result = (char*)malloc(BUFFER_SERVER_SIZE);
 	DIR *dir;
 	struct dirent *ent;
 	dir = opendir (directory);
@@ -125,7 +125,6 @@ bool_t removeFolder(char* path, User* user)
 	char command[FILENAME_MAX] = "rm -r -f ";
 #endif
 	bool_t flag = TRUE;
-	//TODO: build this function
 	char* src = user->getRealFile(path);
 	if (!isDirectory(src))
 	{
@@ -150,7 +149,6 @@ bool_t copyFolder(char* from, char* to, User* user)
 	char command[FILENAME_MAX] = "cp -r -f ";
 #endif
 	bool_t flag = TRUE;
-	//TODO: build this function
 	char* src = user->getRealFile(from);
 	char* dst = user->getRealFile(to);
 	if (!isDirectory(src) || isDirectory(dst))
