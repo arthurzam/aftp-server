@@ -3,6 +3,7 @@
 
 #include <string>
 #include <ctime>
+#include <cstdio>
 #include "defenitions.h"
 #include "fileControl.h"
 #include "server.h"
@@ -19,7 +20,7 @@ using namespace std;
 class User {
 private:
 	struct sockaddr_in* _from;
-	string* _folderPath;
+	char _folderPath[FILENAME_MAX];
 	time_t _lastUse;
 	bool_t _timeout;
 	bool_t _logedIn;
@@ -65,9 +66,6 @@ public:
 	bool_t equals(const User& other) const;
 	bool_t operator==(const User& other) const;
 	bool_t operator!=(const User& other) const;
-
-	inline void sendData(short msgCode, char* data, int datalen);
-	inline void sendData(short msgCode);
 };
 
 #endif

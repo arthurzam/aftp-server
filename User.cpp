@@ -19,7 +19,7 @@ void User::copyFrom(const struct sockaddr_in* from)
 
 User::User()
 {
-	this->_folderPath = NULL;
+	this->_folderPath[0] = 0;
 	this->_from = NULL;
 	this->_lastUse = 0;
 	this->_logedIn = FALSE;
@@ -29,7 +29,7 @@ User::User()
 
 User::User(const struct sockaddr_in* from)
 {
-	this->_folderPath = new string("");
+	this->_folderPath[0] = 0;
 	copyFrom(from);
 	this->_lastUse = time(NULL);
 	this->_logedIn = FALSE;
@@ -39,7 +39,7 @@ User::User(const struct sockaddr_in* from)
 
 User::User(const User& other)
 {
-	this->_folderPath = new string(*other._folderPath);
+	strcpy(this->_folderPath, other._folderPath);
 	copyFrom(other._from);
 	this->_lastUse = time(NULL);
 	this->_logedIn = FALSE;
@@ -47,20 +47,18 @@ User::User(const User& other)
 	this->_initialized = TRUE;
 }
 
-User::~User() {
-	if(_folderPath)
-		delete _folderPath;
+User::~User()
+{
 	if(_from)
 		delete _from;
 }
 
 void User::reset(const struct sockaddr_in* from)
 {
-	if(_folderPath)
-		delete _folderPath;
 	if(_from)
 		delete _from;
-	this->_folderPath = new string("/");
+	this->_folderPath[0] = '/';
+	this->_folderPath[1] = 0;
 	copyFrom(from);
 	this->_lastUse = time(NULL);
 	this->_logedIn = FALSE;
@@ -118,16 +116,14 @@ bool_t User::moveFolder(char* path)
 
 	if(*path == '/') // for example /path/folder => just replace the current
 	{
-		if(this->_folderPath)
-			delete (this->_folderPath);
-		this->_folderPath = new string(path);
+		strcpy(this->_folderPath, path);
 		goto _fin;
 	}
 
 	newStr = (char*)malloc(FILENAME_MAX);
 	if(this->_folderPath)
 	{
-		strcpy(newStr, this->_folderPath->c_str());
+		strcpy(newStr, this->_folderPath);
 	}
 	else
 	{
@@ -165,9 +161,7 @@ _check_path:
 _fin:
 	if(newStr)
 	{
-		if(this->_folderPath)
-			delete (this->_folderPath);
-		this->_folderPath = new string(newStr);
+		strcpy(this->_folderPath, newStr);
 		free(newStr);
 	}
 	return (TRUE);
@@ -206,7 +200,7 @@ void User::logIn()
 
 const char* User::folderPath() const
 {
-	return (this->_folderPath->c_str());
+	return (this->_folderPath);
 }
 
 struct sockaddr_in* User::from() const
@@ -218,27 +212,15 @@ char* User::getRealFile(char* relativeFile)
 {
 	char backup[FILENAME_MAX];
 	char* res;
-	strcpy(backup, this->_folderPath->c_str());
+	strcpy(backup, this->_folderPath);
 
 	if(!this->moveFolder(relativeFile))
 	{
 		res = NULL;
 		goto _exit;
 	}
-	res = getRealDirectory((char*)this->_folderPath->c_str());
+	res = getRealDirectory(this->_folderPath);
 _exit:
-	delete this->_folderPath;
-	this->_folderPath = new string(backup);
+	strcpy(this->_folderPath, backup);
 	return (res);
-}
-
-
-inline void User::sendData(short msgCode, char* data, int datalen)
-{
-	sendMessage(this->_from, msgCode, data, datalen);
-}
-
-inline void User::sendData(short msgCode)
-{
-	sendMessage(this->_from, msgCode, NULL, 0);
 }
