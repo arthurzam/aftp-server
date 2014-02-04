@@ -101,7 +101,7 @@ bool_t User::moveFolder(char* path)
 		return (TRUE);
 	int i;
 	int last = -1;
-	char* newStr = NULL;
+	char newStr[FILENAME_MAX] = "/";
 
 	// replace all \ into /
 	for(i = 0; path[i] != 0; i++)
@@ -117,22 +117,16 @@ bool_t User::moveFolder(char* path)
 	if(*path == '/') // for example /path/folder => just replace the current
 	{
 		strcpy(this->_folderPath, path);
-		goto _fin;
+		return (TRUE);
 	}
 
-	newStr = (char*)malloc(FILENAME_MAX);
-	if(this->_folderPath)
+	if(this->_folderPath) // we have previous path
 	{
 		strcpy(newStr, this->_folderPath);
 	}
-	else
-	{
-		newStr[0] = '/';
-		newStr[1] = 0;
-	}
 
 _check_path:
-	if(!*path)
+	if(!*path) // path has ended
 		goto _fin;
 	if(*path == '.' && path[1] == '.')
 	{
@@ -159,11 +153,7 @@ _check_path:
 		goto _check_path;
 
 _fin:
-	if(newStr)
-	{
-		strcpy(this->_folderPath, newStr);
-		free(newStr);
-	}
+	strcpy(this->_folderPath, newStr);
 	return (TRUE);
 }
 
