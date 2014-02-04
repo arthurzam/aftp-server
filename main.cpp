@@ -17,7 +17,7 @@ bool_t canExit;
 inline void clearScreen()
 {
 #ifdef WIN32
-	system("cls");
+	//system("cls");
 #else
 	system("clear");
 #endif
@@ -87,13 +87,18 @@ int main(int argc, char **argv)
 				printf("enter path to file: ");
 				scanf("%s", data.filePath);
 				userDB.load(data.filePath);
+				clearScreen();
+				printf("loaded\n");
 				break;
 			case 4:
 				printf("enter path to file: ");
 				scanf("%s", data.filePath);
 				userDB.save(data.filePath);
+				clearScreen();
+				printf("saved\n");
 				break;
 			case 5:
+				clearScreen();
 				userDB.print();
 				break;
 			case 6:
