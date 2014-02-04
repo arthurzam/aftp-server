@@ -16,10 +16,11 @@ LoginDB::LoginDB(const char* filePath)
 void LoginDB::load(const char* filePath)
 {
 	FILE* src = fopen(filePath, "rb");
-	login_t* temp = this->head;
+	login_t* temp;
 	login_t* last = this->head;
-	for(; temp && temp->next; temp = temp->next)
-		last = temp;
+	if(last) // we need to put the last member in last
+		while(last->next)
+			last = last->next;
 	if(!src)
 		return;
 	while(!feof(src))
