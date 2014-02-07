@@ -164,20 +164,18 @@ bool_t User::isLoged() const
 
 bool_t User::timeout()
 {
+	time_t now = time(NULL);
+	double seconds = difftime(now, this->_lastUse);
 	if(this->_timeout)
 	{
-		time_t now = time(NULL);
-		double seconds = difftime(now, this->_lastUse);
-		return (seconds > 100);
+		return (seconds > USER_TIME_REMOVE);
 	}
 	else
 	{
-		time_t now = time(NULL);
-		double seconds = difftime(now, this->_lastUse);
-		if (seconds > 50)
+		if (seconds > USER_TIME_MSG_SEND)
 		{
 			sendMessage(this->_from, 900, NULL, 0); // send timeout
-			this->_timeout = FALSE;
+			this->_timeout = TRUE;
 		}
 		return (FALSE);
 	}

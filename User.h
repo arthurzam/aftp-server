@@ -17,6 +17,9 @@
 #endif
 using namespace std;
 
+#define USER_TIME_MSG_SEND 50
+#define USER_TIME_REMOVE 100
+
 class User {
 private:
 	struct sockaddr_in* _from;
