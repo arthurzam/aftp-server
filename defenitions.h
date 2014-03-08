@@ -26,9 +26,10 @@ typedef socklen_t from_len_t;
 #define FILENAME_MAX 260
 #endif
 
-#ifndef USERNAME_LENGTH
 #define USERNAME_LENGTH 0x40
-#endif
+
+#define PATH_SEPERATOR_BAD  '/'
+#define PATH_SEPERATOR_GOOD '\\'
 
 #ifndef WIN32
 #define SOCKET int

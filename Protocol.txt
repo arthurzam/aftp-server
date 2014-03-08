@@ -44,17 +44,16 @@ Client Messages:
 
 400 - info of client
 
-500
-   000 - ask for info of server
-   010 - upload file {[code][path]}
-   011 - download file {[code][path]}
-   020 - move file {[code][src_len][src][dst_len][dst]}
-   021 - copy file {[code][src_len][src][dst_len][dst]}
-   022 - remove file {[code][path]}
-   030 - cd
-   031 - create directory {[code][path]}
-   032 - remove directory
-   033 - move directory
-   034 - copy directory
-   035 - get contents of directory {[code][path]}
+500 - ask for info of server
+510 - upload file {[code][path]}
+511 - download file {[code][path]}
+520 - move file {[code][src_len][src][dst_len][dst]}
+521 - copy file {[code][src_len][src][dst_len][dst]}
+522 - remove file {[code][path]}
+530 - cd
+531 - create directory {[code][path]}
+532 - remove directory
+533 - move directory
+534 - copy directory
+535 - get contents of directory {[code][path]}
    

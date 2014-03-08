@@ -57,7 +57,7 @@ void User::reset(const struct sockaddr_in* from)
 {
 	if(_from)
 		delete _from;
-	this->_folderPath[0] = '/';
+	this->_folderPath[0] = PATH_SEPERATOR_GOOD;
 	this->_folderPath[1] = 0;
 	copyFrom(from);
 	this->_lastUse = time(NULL);
@@ -99,22 +99,22 @@ bool_t User::moveFolder(char* path)
 {
 	if(*path == 0)
 		return (TRUE);
-	int i;
+	int i, j;
 	int last = -1;
-	char newStr[FILENAME_MAX] = "/";
+	char newStr[FILENAME_MAX] = {PATH_SEPERATOR_GOOD, 0};
 
 	// replace all \ into /
 	for(i = 0; path[i] != 0; i++)
 	{
-		if(path[i] == '\\')
-			path[i] = '/';
-		if(i > 0 && path[i] == '/' && path[i - 1] == '/') // we have two slashes one by one
+		if(path[i] == PATH_SEPERATOR_BAD)
+			path[i] = PATH_SEPERATOR_GOOD;
+		if(i > 0 && path[i] == PATH_SEPERATOR_GOOD && path[i - 1] == PATH_SEPERATOR_GOOD) // we have two slashes one by one
 			return (FALSE);
 	}
-	if(path[i - 1] == '/') // we can use i-1 because path[i] after the for is the '/0' ending
+	if(path[i - 1] == PATH_SEPERATOR_GOOD) // we can use i-1 because path[i] after the for is the '/0' ending
 		path[i - 1] = 0; // if the path finishes in divider, remove it
 
-	if(*path == '/') // for example /path/folder => just replace the current
+	if(*path == PATH_SEPERATOR_GOOD) // for example /path/folder => just replace the current
 	{
 		strcpy(this->_folderPath, path);
 		return (TRUE);
@@ -133,7 +133,7 @@ _check_path:
 		if(newStr[1] == 0)
 			return (FALSE); // trying to move back when we are already on root
 		for(i = 0; newStr[i] != 0; i++)
-			if(newStr[i] == '/')
+			if(newStr[i] == PATH_SEPERATOR_GOOD)
 				last = i; // find the last occurrence of '/'
 		newStr[last] = 0;
 		if(path[2] == 0)
@@ -145,9 +145,10 @@ _check_path:
 	for(i = 0; path[i] != 0 && path[i] != '/'; i++) ; // find the first occurrence of '/'
 	last = path[i];
 	path[i] = 0;
-	strcat(newStr, "/");
-	strcat(newStr, path);
-	path[i] = '/';
+	j = strlen(newStr);
+	newStr[j++] = PATH_SEPERATOR_GOOD;
+	strcpy(newStr + j, path);
+	path[i] = last;
 	path += i + 1;
 	if(last != 0)
 		goto _check_path;
@@ -207,7 +208,7 @@ char* User::getRealFile(char* relativeFile)
 		res = NULL;
 		goto _exit;
 	}
-	res = getRealDirectory(this->_folderPath);
+	res = getRealDirectory(this->_folderPath, NULL);
 _exit:
 	strcpy(this->_folderPath, backup);
 	return (res);

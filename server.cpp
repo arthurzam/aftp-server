@@ -209,17 +209,12 @@ THREAD_RETURN_VALUE startServer(void* arg)
 				else
 					sendMessage(&from, 300, NULL, 0);
 				break;
-			case 999:
-				tempData.path = user->getRealFile(Buffer + 2);
-				if(!tempData.path)
-					sendMessage(&from, 300, NULL, 0);
+			case 535: // get contents of directory
+				if(getContentDirectory(Buffer + 2, user))
+					sendMessage(&from, 200, NULL, 0);
 				else
-					sendMessage(&from, 200, tempData.path, strlen(tempData.path));
+					sendMessage(&from, 300, NULL, 0);
 				break;
-				/*
-			case 500: // action
-				actionControl(Buffer + sizeof(msgCode), retval - sizeof(msgCode), user);
-				break;*/
 			default:
 				sendMessage(&from, 391, (char*)"unknown command", 15);
 				break;

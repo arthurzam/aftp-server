@@ -19,9 +19,10 @@ bool_t isDirectory(char* directory);
 /*
  * returns the real folder of the given path, in an allocated char array
  * for example, from realativDirectory=/aaa\a will return {BASE_FOLDER}/aaa/a
+ * if result is given, the result would be copied into the array and return NULL in success
  */
-char* getRealDirectory(char* realativDirectory);
-string* getContentDirectory(char* directory);
+char* getRealDirectory(char* realativDirectory, char* result);
+bool_t getContentDirectory(char* directory, User* user);
 bool_t createDirectory(char* realativDirectory);
 
 bool_t moveFile  (char* from, char* to, User* user);

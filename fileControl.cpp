@@ -13,37 +13,83 @@ bool_t isDirectory(char* directory)
 	return (TRUE);
 }
 
-char* getRealDirectory(char* realativDirectory)
+char* getRealDirectory(char* realativDirectory, char* result)
 {
-	char* realDirectory = (char*)malloc(FILENAME_MAX);
+	char* realDirectory;
+	if(result)
+		realDirectory = result;
+	else
+		realDirectory = (char*)malloc(FILENAME_MAX);
 	int i;
 	strcpy(realDirectory, SERVER_BASE_FOLDER);
 	for(i = 0; realativDirectory[i]; i++)
-		if(realativDirectory[i] == '/')
-			realativDirectory[i] = '\\';
-	strcat(realDirectory, (*realativDirectory == '\\' ? realativDirectory + 1 : realativDirectory));
-	return (realDirectory);
+		if(realativDirectory[i] == PATH_SEPERATOR_BAD)
+			realativDirectory[i] = PATH_SEPERATOR_GOOD;
+	strcat(realDirectory, (*realativDirectory == PATH_SEPERATOR_GOOD ? realativDirectory + 1 : realativDirectory));
+	return (result ? NULL : realDirectory);
 }
 
-//TODO: complete 'ls' command
-char* getContentDirectory(char* directory, int* length)
+#define FILE_LIST_SEPARATOR '|'
+bool_t getContentDirectory(char* directory, User* user)
 {
-	char* result = (char*)malloc(BUFFER_SERVER_SIZE);
+	char* base = user->getRealFile(directory);
+	int dirLen = strlen(base);
+    if(base[dirLen - 1] != PATH_SEPERATOR_GOOD)
+    {
+        base[dirLen++] = PATH_SEPERATOR_GOOD;
+        base[dirLen] = 0;
+    }
+
+	int resLen = 0;
+	char result[BUFFER_SERVER_SIZE + 5] = {0};
+	result[BUFFER_SERVER_SIZE + 4] = 0; // just to be safe from BUFFER_OVERFLOW
+
 	DIR *dir;
 	struct dirent *ent;
-	dir = opendir (directory);
+	dir = opendir (base);
 	if(!dir)
-		return (result);
+		goto _bad_exit;
+	bool_t flag;
 	while ((ent = readdir (dir)) != NULL)
 	{
-
+		if(ent->d_name[0] == '.' && (ent->d_name[1] == 0 || (ent->d_name[1] == '.' && ent->d_name[2] == 0))) // the path is not "." or ".."
+			continue;
+		if(resLen + ent->d_namlen >= BUFFER_SERVER_SIZE - 10)
+		{
+			sendMessage(user->from(), 201, result, resLen);
+			result[0] = 0;
+			resLen = 0;
+		}
+		strcpy(base + dirLen, ent->d_name);
+		flag = isDirectory(base);
+		if(flag)
+		{
+			result[resLen++] = '[';
+			result[resLen] =  0;
+		}
+		strcat(result + resLen, ent->d_name);
+		resLen += ent->d_namlen;
+		if(flag)
+		{
+			result[resLen++] = ']';
+			result[resLen] =  0;
+		}
+		result[resLen++] = FILE_LIST_SEPARATOR;
+		result[resLen] =  0;
 	}
-	return (result);
+	closedir (dir);
+	if(resLen)
+		sendMessage(user->from(), 201, result, resLen);
+	free(base);
+	return (TRUE);
+_bad_exit:
+	free(base);
+	return (FALSE);
 }
 
 bool_t createDirectory(char* realativDirectory)
 {
-	char* directory = getRealDirectory(realativDirectory);
+	char* directory = getRealDirectory(realativDirectory, NULL);
 #ifdef WIN32
 	if(CreateDirectory(directory, NULL))
 	{

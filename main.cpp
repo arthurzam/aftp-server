@@ -17,7 +17,7 @@ bool_t canExit;
 inline void clearScreen()
 {
 #ifdef WIN32
-	//system("cls");
+	system("cls");
 #else
 	system("clear");
 #endif
