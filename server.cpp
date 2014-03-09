@@ -238,15 +238,19 @@ _errorExit:
 
 int sendMessage(struct sockaddr_in* to, short msgCode, char* data, int datalen)
 {
-	static bool_t lockSend = FALSE;
-	char* buffer = (char*)malloc(datalen + sizeof(msgCode));
-	memcpy(buffer, &msgCode, sizeof(msgCode));
+	static bool_t lockSend = FALSE; // mini mutex
+
+	char buffer[BUFFER_SERVER_SIZE + 5];
+	memcpy(buffer, &msgCode, 2);
+	if(datalen > BUFFER_SERVER_SIZE)
+		datelen = BUFFER_SERVER_SIZE;
 	if(data && datalen > 0)
-		memcpy(buffer + sizeof(msgCode), data, datalen);
+		memcpy(buffer + 2, data, datalen);
+
 	while (lockSend) ;
 	lockSend = TRUE;
 	printf("send message %hd, %s\n", msgCode, data);
-	int retVal = sendto(sock, buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
+	int retVal = sendto(sock, buffer, datalen + 2, 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
 	lockSend = FALSE;
 	return (retVal);
 }
