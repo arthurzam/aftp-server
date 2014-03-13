@@ -50,11 +50,13 @@ bool_t getContentDirectory(char* directory, User* user)
 	if(!dir)
 		goto _bad_exit;
 	bool_t flag;
+	int fileNameLen;
 	while ((ent = readdir (dir)) != NULL)
 	{
 		if(ent->d_name[0] == '.' && (ent->d_name[1] == 0 || (ent->d_name[1] == '.' && ent->d_name[2] == 0))) // the path is not "." or ".."
 			continue;
-		if(resLen + ent->d_namlen >= BUFFER_SERVER_SIZE - 10)
+		fileNameLen = strlen(ent->d_name);
+		if(resLen + fileNameLen >= BUFFER_SERVER_SIZE - 10)
 		{
 			sendMessage(user->from(), 201, result, resLen);
 			result[0] = 0;
@@ -68,7 +70,7 @@ bool_t getContentDirectory(char* directory, User* user)
 			result[resLen] =  0;
 		}
 		strcat(result + resLen, ent->d_name);
-		resLen += ent->d_namlen;
+		resLen += fileNameLen;
 		if(flag)
 		{
 			result[resLen++] = ']';
