@@ -243,7 +243,7 @@ int sendMessage(struct sockaddr_in* to, short msgCode, char* data, int datalen)
 	char buffer[BUFFER_SERVER_SIZE + 5];
 	memcpy(buffer, &msgCode, 2);
 	if(datalen > BUFFER_SERVER_SIZE)
-		datelen = BUFFER_SERVER_SIZE;
+		datalen = BUFFER_SERVER_SIZE;
 	if(data && datalen > 0)
 		memcpy(buffer + 2, data, datalen);
 
