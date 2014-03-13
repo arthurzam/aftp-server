@@ -1,5 +1,7 @@
 #ifdef WIN32
 #include <winsock2.h>
+#include <windows.h>
+#include <process.h>
 #else
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -7,6 +9,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <pthread.h>
 #endif
 #include <cstdlib>
 #include <cstdio>
@@ -100,7 +103,12 @@ THREAD_RETURN_VALUE startServer(void* arg)
     	delete listUsers;
     listUsers = new UserList();
     printf("\n[I'm working on port %d]\n" ,DEFAULT_PORT);
-
+#ifdef WIN32
+    _beginthread(userControl, 0, NULL);
+#else
+    pthread_t thread;
+    pthread_create(&thread, NULL, userControl, NULL);
+#endif
     while(!needExit)
 	{
         retval = recvfrom(sock,Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
@@ -280,8 +288,7 @@ THREAD_RETURN_VALUE userControl(void* arg)
 		sleep(WAIT_TIME);
 #endif
 		if (listUsers->getUserCount() < CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
-			break;
-		// TODO: move through all users and control
+			listUsers->userControl();
 	}
 #ifdef WIN32
 	return;

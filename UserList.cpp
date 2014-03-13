@@ -2,6 +2,9 @@
 
 #include "stdio.h"
 
+extern bool_t needExit;
+extern bool_t canExit;
+
 UserList::UserList() {
 	this->head = NULL;
 	this->userCount = 0;
@@ -165,7 +168,7 @@ User* UserList::findUser(const User &user) const
 	return (NULL);
 }
 
-unsigned int UserList::getUserCount() const
+int UserList::getUserCount() const
 {
 	return (this->userCount);
 }
@@ -183,3 +186,19 @@ ListNode* UserList::createNewNode()
 	return (result);
 }
 
+void UserList::userControl()
+{
+	int i;
+	ListNode* curr;
+	for(curr = this->head; curr; curr = curr->next)
+	{
+		for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
+			if(curr->arr[i] && curr->arr[i]->timeout())
+			{
+                printf("someone removed\n");
+				this->userCount--;
+				delete curr->arr[i];
+				curr->arr[i] = NULL;
+			}
+	}
+}

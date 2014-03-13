@@ -3,6 +3,11 @@
 
 #include "User.h"
 #include "defenitions.h"
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #define USERS_IN_USERS_ARRAY 0x400 // =1024
 
@@ -31,9 +36,11 @@ public:
 	int addUser(const User &user);
 	int findIndexOfUser(const User &user) const;
 	User* findUser(const User &user) const;
-	unsigned int getUserCount() const;
+	int getUserCount() const;
 
 	User* operator[](int index);
 	int operator+(const User &user);
+	
+	void userControl();
 };
 #endif
