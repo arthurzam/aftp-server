@@ -236,6 +236,7 @@ _errorExit:
 #endif
 	if(listUsers)
 		delete listUsers;
+    listUsers = NULL;
 	canExit = TRUE;
 #ifdef WIN32
 	return;

@@ -10,9 +10,11 @@
 
 #include "server.h"
 #include "LoginDB.h"
+#include "UserList.h"
 
 bool_t needExit;
 bool_t canExit;
+extern UserList* listUsers;
 
 inline void clearScreen()
 {
@@ -27,6 +29,7 @@ int main(int argc, char **argv)
 {
 	bool_t exit = FALSE;
 	bool_t serverRunning = FALSE;
+    listUsers = NULL;
 	LoginDB userDB;
 	union{
 		int choice;
@@ -44,7 +47,7 @@ int main(int argc, char **argv)
 			printf("1. stop server\n");
 		else
 			printf("1. start server\n");
-		printf("2. add new user\n3. load login database from file\n4. save login database to file\n5. print database\n6. clear screen\n  your choice: ");
+		printf("2. add new user\n3. load login database from file\n4. save login database to file\n5. print database\n6. print current connections\n7. clear screen\n  your choice: ");
 		scanf("%d", &data.choice);
 		switch(data.choice)
 		{
@@ -109,7 +112,14 @@ int main(int argc, char **argv)
 				clearScreen();
 				userDB.print();
 				break;
-			case 6:
+            case 6:
+                clearScreen();
+                if(listUsers && listUsers->getUserCount() > 0)
+                    listUsers->print();
+                else
+                    printf("empty\n");
+                break;
+			case 7:
 				clearScreen();
 				break;
 		}

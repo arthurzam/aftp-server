@@ -69,6 +69,8 @@ public:
 	bool_t equals(const User& other) const;
 	bool_t operator==(const User& other) const;
 	bool_t operator!=(const User& other) const;
+    
+    void print() const;
 };
 
 #endif

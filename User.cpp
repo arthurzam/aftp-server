@@ -213,3 +213,11 @@ _exit:
 	strcpy(this->_folderPath, backup);
 	return (res);
 }
+
+void User::print() const
+{
+    if(this->_initialized)
+    {
+        printf("{<%s:%d>, %s}\n", inet_ntoa(this->_from->sin_addr), this->_from->sin_port, this->_folderPath);
+    }
+}

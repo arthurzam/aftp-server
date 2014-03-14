@@ -202,3 +202,17 @@ void UserList::userControl()
 			}
 	}
 }
+
+void UserList::print() const
+{
+    int i;
+	ListNode* curr;
+	for(curr = this->head; curr; curr = curr->next)
+	{
+		for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
+			if(curr->arr[i])
+			{
+                curr->arr[i]->print();
+			}
+	}
+}

@@ -42,5 +42,6 @@ public:
 	int operator+(const User &user);
 	
 	void userControl();
+    void print() const;
 };
 #endif
