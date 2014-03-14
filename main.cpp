@@ -50,6 +50,14 @@ int main(int argc, char **argv)
 		{
 			case 0:
 				exit = TRUE;
+				if(serverRunning)
+				{
+					printf("the server is stopping!\n");
+					needExit = TRUE;
+					while(!canExit); // wait for all to exit
+					printf("the server stopped\n");
+					serverRunning = FALSE;
+				}
 				break;
 			case 1:
 				if(serverRunning)
