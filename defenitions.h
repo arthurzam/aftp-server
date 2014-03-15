@@ -28,9 +28,6 @@ typedef socklen_t from_len_t;
 
 #define USERNAME_LENGTH 0x40
 
-#define PATH_SEPERATOR_BAD  '/'
-#define PATH_SEPERATOR_GOOD '\\'
-
 #ifndef WIN32
 #define SOCKET int
 #define SOCKET_ERROR	(-1)
@@ -38,10 +35,14 @@ typedef socklen_t from_len_t;
 
 #ifdef WIN32
 #define SERVER_BASE_FOLDER "C:\\server\\"
+#define PATH_SEPERATOR_BAD  '/'
+#define PATH_SEPERATOR_GOOD '\\'
 #define CLEAR_SCREEN "cls"
 #define THREAD_RETURN_VALUE void
 #else
-#define SERVER_BASE_FOLDER "\\opt\\server\\"
+#define SERVER_BASE_FOLDER "/opt/server/"
+#define PATH_SEPERATOR_BAD  '\\'
+#define PATH_SEPERATOR_GOOD '/'
 #define CLEAR_SCREEN "clear"
 #define THREAD_RETURN_VALUE void*
 #endif
