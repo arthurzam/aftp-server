@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include "defenitions.h"
 #include "User.h"
+#include "md5.h"
 class User;
 #include <string>
 using namespace std;
@@ -29,6 +30,7 @@ bool_t moveFile  (char* from, char* to, User* user);
 bool_t copyFile  (char* from, char* to, User* user);
 bool_t removeFile(char* path, User* user);
 long getFilesize(char* path, User* user);
+bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH]);
 
 #define moveDirectory moveFile
 bool_t removeFolder(char* path, User* user);

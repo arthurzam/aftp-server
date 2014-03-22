@@ -25,10 +25,10 @@ void md5_init(md5_context *ctx);
 void md5_append(md5_context *ctx, const byte_t *data, int nbytes);
 
 /* Finish the message and return the digest. */
-void md5_finish(md5_context *ctx, byte_t digest[16]);
+void md5_finish(md5_context *ctx, byte_t digest[MD5_RESULT_LENGTH]);
 
 /* Calculate he whole md5 of the given data into digest */
-void md5(const void* data, int nbytes, byte_t digest[16]);
+void md5(const void* data, int nbytes, byte_t digest[MD5_RESULT_LENGTH]);
 
 #ifdef __cplusplus
 }  /* end extern "C" */

@@ -186,6 +186,29 @@ long getFilesize(char* path, User* user)
 	return (r == 0);
 }
 
+bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
+{
+	char* filePath = user->getRealFile(path);
+	md5_context ctx;
+	int i;
+	byte_t buffer[512];
+
+	FILE* f = fopen(filePath, "rb");
+	if(!f)
+	{
+		free(filePath);
+		return (FALSE);
+	}
+	md5_init(&ctx);
+	while((i = fread(buffer, 1, 512, f)))
+	{
+		md5_append(&ctx, buffer, i);
+	}
+	md5_finish(&ctx, result);
+	free(filePath);
+	return (TRUE);
+}
+
 bool_t removeFolder(char* path, User* user)
 {
 #ifdef WIN32
