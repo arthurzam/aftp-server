@@ -15,7 +15,7 @@ class User;
 
 struct _listNode {
 	User* arr[USERS_IN_USERS_ARRAY];
-	int isFull;
+	bool_t isFull;
 	struct _listNode* next;
 };
 typedef struct _listNode ListNode;
@@ -27,6 +27,7 @@ private:
 	int nodesCount;
 	ListNode* head;
 	ListNode* createNewNode();
+	bool_t isSearching;
 public:
 	UserList();
 	~UserList();
@@ -34,8 +35,8 @@ public:
 	int removeUser(int index);
 	int removeUser(const User* user);
 	int addUser(const User &user);
-	int findIndexOfUser(const User &user) const;
-	User* findUser(const User &user) const;
+	int findIndexOfUser(const User &user);
+	User* findUser(const User &user);
 	int getUserCount() const;
 
 	User* operator[](int index);

@@ -9,9 +9,11 @@ UserList::UserList() {
 	this->head = NULL;
 	this->userCount = 0;
 	this->nodesCount = 0;
+	this->isSearching = FALSE;
 }
 
 UserList::~UserList() {
+	this->isSearching = TRUE;
 	ListNode* temp = NULL;
 	int i;
 	while(this->head)
@@ -24,8 +26,6 @@ UserList::~UserList() {
 		this->head = temp;
 	}
 	this->head = NULL;
-
-	printf("        cleared\n");
 }
 
 User* UserList::operator[](int index)
@@ -60,10 +60,14 @@ int UserList::removeUser(int index)
 	}
 	if(!curr) // if we exited the bound of list
 		return (EXIT_FAILURE);
+
+	this->isSearching = TRUE;
 	delete curr->arr[index];
 	curr->arr[index] = NULL;
 	curr->isFull = FALSE;
 	this->userCount--;
+	this->isSearching = FALSE;
+
 	return (EXIT_SUCCESS);
 }
 
@@ -71,6 +75,7 @@ int UserList::removeUser(const User* user)
 {
 	int i;
 	ListNode* curr = this->head;
+	this->isSearching = TRUE;
 	while(curr)
 	{
 		for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
@@ -79,10 +84,12 @@ int UserList::removeUser(const User* user)
 				delete curr->arr[i];
 				curr->arr[i] = NULL;
 				this->userCount--;
+				this->isSearching = FALSE;
 				return (EXIT_SUCCESS);
 			}
 		curr = curr->next;
 	}
+	this->isSearching = FALSE;
 	return (EXIT_FAILURE);
 }
 
@@ -124,6 +131,7 @@ int UserList::addUser(const User &user)
 			return (index);
 		}
 
+		this->isSearching = TRUE;
 		index += USERS_IN_USERS_ARRAY;
 		if(!curr->next) // we didn't found a not full node => we need to create
 		{
@@ -132,6 +140,7 @@ int UserList::addUser(const User &user)
 			curr->arr[0] = new User(user);
 			this->userCount++;
 			this->nodesCount++;
+			this->isSearching = FALSE;
 			return (index);
 		}
 		curr = curr->next;
@@ -139,32 +148,42 @@ int UserList::addUser(const User &user)
 	return (-1);
 }
 
-int UserList::findIndexOfUser(const User &user) const
+int UserList::findIndexOfUser(const User &user)
 {
 	int index = 0, i;
 	ListNode* curr = this->head;
+	this->isSearching = TRUE;
 	while(curr)
 	{
 		for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
 			if(curr->arr[i] && curr->arr[i]->equals(user))
+			{
+				this->isSearching = FALSE;
 				return (index + i);
+			}
 		curr = curr->next;
 		index += USERS_IN_USERS_ARRAY;
 	}
+	this->isSearching = FALSE;
 	return (-1);
 }
 
-User* UserList::findUser(const User &user) const
+User* UserList::findUser(const User &user)
 {
 	int i;
 	ListNode* curr = this->head;
+	this->isSearching = TRUE;
 	while(curr)
 	{
 		for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
 			if(curr->arr[i] && curr->arr[i]->equals(user))
+			{
+				this->isSearching = FALSE;
 				return (curr->arr[i]);
+			}
 		curr = curr->next;
 	}
+	this->isSearching = FALSE;
 	return (NULL);
 }
 
@@ -193,12 +212,13 @@ void UserList::userControl()
 	for(curr = this->head; curr; curr = curr->next)
 	{
 		for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
+			while(this->isSearching);
 			if(curr->arr[i] && curr->arr[i]->timeout())
 			{
-                printf("someone removed\n");
 				this->userCount--;
 				delete curr->arr[i];
 				curr->arr[i] = NULL;
+				curr->isFull = FALSE;
 			}
 	}
 }
