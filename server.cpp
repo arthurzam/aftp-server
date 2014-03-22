@@ -50,6 +50,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
     	} src_dst;
     	char* path;
     	int i;
+    	long l;
     	struct {
     		char* username;
     		byte_t* md5Password;
@@ -188,6 +189,13 @@ THREAD_RETURN_VALUE startServer(void* arg)
 					sendMessage(&from, 200, NULL, 0);
 				else
 					sendMessage(&from, 300, NULL, 0);
+				break;
+			case 523: // get file size
+				tempData.l = getFilesize(Buffer + 2, user);
+				if(tempData.l == -1)
+					sendMessage(&from, 300, NULL, 0);
+				else
+					sendMessage(&from, 200, (char*)&tempData.l, sizeof(long));
 				break;
 			case 530: // cd
 				if(!user->moveFolder(Buffer + 2))

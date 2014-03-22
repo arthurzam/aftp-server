@@ -165,6 +165,27 @@ bool_t removeFile(char* path, User* user)
 	return (r == 0);
 }
 
+long getFilesize(char* path, User* user)
+{
+	char* src = user->getRealFile(path);
+	long r = -1;
+#ifdef WIN32
+	FILE* srcF = fopen(src, "r");
+	if(srcF)
+	{
+		fseek(src, 0, SEEK_END);
+		r = ftell(f);
+	}
+	fclose(srcF);
+#else
+	struct stat st;
+	if(stat(src, &st) >= 0)
+		r = st.st_size;
+#endif
+	free(src);
+	return (r == 0);
+}
+
 bool_t removeFolder(char* path, User* user)
 {
 #ifdef WIN32

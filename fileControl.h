@@ -28,6 +28,7 @@ bool_t createDirectory(char* realativDirectory);
 bool_t moveFile  (char* from, char* to, User* user);
 bool_t copyFile  (char* from, char* to, User* user);
 bool_t removeFile(char* path, User* user);
+long getFilesize(char* path, User* user);
 
 #define moveDirectory moveFile
 bool_t removeFolder(char* path, User* user);
