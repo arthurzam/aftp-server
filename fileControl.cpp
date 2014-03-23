@@ -173,8 +173,8 @@ long getFilesize(char* path, User* user)
 	FILE* srcF = fopen(src, "r");
 	if(srcF)
 	{
-		fseek(src, 0, SEEK_END);
-		r = ftell(f);
+		fseek(srcF, 0, SEEK_END);
+		r = ftell(srcF);
 	}
 	fclose(srcF);
 #else
