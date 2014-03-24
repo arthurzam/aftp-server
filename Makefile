@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=md5.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp User.cpp UserList.cpp server.cpp main.cpp
+SOURCES=md5.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
 LIBS=
@@ -24,4 +24,4 @@ $(EXECUTABLE): $(OBJECTS)
 clear: clean
 
 clean:
-	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)
+	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)*
