@@ -170,13 +170,12 @@ long getFilesize(char* path, User* user)
 	char* src = user->getRealFile(path);
 	long r = -1;
 #ifdef WIN32
-	FILE* srcF = fopen(src, "r");
-	if(srcF)
+	HANDLE MF = CreateFile(src, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+	DWORD High;
+	if ( MF != INVALID_HANDLE_VALUE )
 	{
-		fseek(srcF, 0, SEEK_END);
-		r = ftell(srcF);
+		r = GetFileSize(MF, &High);
 	}
-	fclose(srcF);
 #else
 	struct stat st;
 	if(stat(src, &st) >= 0)
