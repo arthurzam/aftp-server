@@ -16,6 +16,8 @@ typedef enum{
 
 #define FILE_BLOCK_SIZE 0x200 //=500
 
+class User;
+
 class FileTransfer {
 private:
 	FILE_TRANSFER_STATE state;

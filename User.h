@@ -7,6 +7,7 @@
 #include "defenitions.h"
 #include "fileControl.h"
 #include "server.h"
+#include "FileTransfer.h"
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -17,6 +18,8 @@ using namespace std;
 
 #define USER_TIME_MSG_SEND 50
 #define USER_TIME_REMOVE 100
+
+class FileTransfer;
 
 class User {
 private:
@@ -29,6 +32,7 @@ private:
 
 	void copyFrom(const struct sockaddr_in* from);
 public:
+	FileTransfer* fileTransfer; // TODO: convert to private member
 	User();
 	User(const struct sockaddr_in* from);
 	User(const User& other);

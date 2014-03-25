@@ -2,17 +2,16 @@
 
 #include "stdio.h"
 
-extern bool_t needExit;
-extern bool_t canExit;
-
-UserList::UserList() {
+UserList::UserList()
+{
 	this->head = NULL;
 	this->userCount = 0;
 	this->nodesCount = 0;
 	this->isSearching = FALSE;
 }
 
-UserList::~UserList() {
+UserList::~UserList()
+{
 	this->isSearching = TRUE;
 	ListNode* temp = NULL;
 	int i;

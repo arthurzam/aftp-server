@@ -45,8 +45,9 @@ Client Messages:
 400 - info of client
 
 500 - ask for info of server
-510 - upload file {[code][path]}
-511 - download file {[code][path]}
+510 - upload file {[code][blocks num][path]}
+511 - finish upload
+512 - download file {[code][path]}
 520 - move file {[code][src_len][src][dst_len][dst]}
 521 - copy file {[code][src_len][src][dst_len][dst]}
 522 - remove file {[code][path]}

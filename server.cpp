@@ -165,6 +165,15 @@ THREAD_RETURN_VALUE startServer(void* arg)
 			case 500: // info
 				sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2013", 41);
 				break;
+			case 510: // upload
+				// TODO: test upload
+				tempData.i = *(int*)(Buffer + 2);
+				user->fileTransfer = new FileTransfer(Buffer + 6, user, tempData.i);
+				if(user->fileTransfer->isLoaded())
+					sendMessage(&from, 200, NULL, 0);
+				else
+					sendMessage(&from, 300, NULL, 0);
+				break;
 			case 520: // move file
 				tempData.src_dst.src_len = *(Buffer + 2);
 				tempData.src_dst.src = Buffer + 3;

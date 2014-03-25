@@ -59,6 +59,9 @@ FileTransfer::~FileTransfer()
 	if (this->blocks)
 		free(this->blocks);
 	this->blocks = NULL;
+	if(this->file)
+		fclose(this->file);
+	this->file = NULL;
 }
 
 bool_t FileTransfer::isLoaded() const
@@ -96,6 +99,7 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
 	if(!this->blocks[data->blockNum])
 		md5_append(&this->allFile, data->dataFile, data->size);
 	this->blocks[data->blockNum] = 1;
+	sendMessage(this->user->from(), 200, NULL, 0);
 }
 
 void FileTransfer::askForBlock(unsigned int blockNum)

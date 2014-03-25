@@ -25,6 +25,17 @@ inline void clearScreen()
 #endif
 }
 
+void stopServer()
+{
+	printf("the server is stopping!\n");
+	needExit = TRUE;
+	while(!canExit); // wait for all to exit
+	printf("the server stopped\n");
+
+	if(listUsers)
+		delete listUsers;
+}
+
 int main(int argc, char **argv)
 {
 	bool_t exit = FALSE;
@@ -55,20 +66,14 @@ int main(int argc, char **argv)
 				exit = TRUE;
 				if(serverRunning)
 				{
-					printf("the server is stopping!\n");
-					needExit = TRUE;
-					while(!canExit); // wait for all to exit
-					printf("the server stopped\n");
+					stopServer();
 					serverRunning = FALSE;
 				}
 				break;
 			case 1:
 				if(serverRunning)
 				{
-					printf("the server is stopping!\n");
-					needExit = TRUE;
-					while(!canExit); // wait for all to exit
-					printf("the server stopped\n");
+					stopServer();
 					serverRunning = FALSE;
 				}
 				else
@@ -124,4 +129,6 @@ int main(int argc, char **argv)
 				break;
 		}
 	}while(!exit);
+	if(listUsers)
+		delete listUsers;
 }

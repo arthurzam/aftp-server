@@ -25,6 +25,7 @@ User::User()
 	this->_logedIn = FALSE;
 	this->_timeout = FALSE;
 	this->_initialized = FALSE;
+	this->fileTransfer = NULL;
 }
 
 User::User(const struct sockaddr_in* from)
@@ -35,6 +36,7 @@ User::User(const struct sockaddr_in* from)
 	this->_logedIn = FALSE;
 	this->_timeout = FALSE;
 	this->_initialized = TRUE;
+	this->fileTransfer = NULL;
 }
 
 User::User(const User& other)
@@ -45,12 +47,17 @@ User::User(const User& other)
 	this->_logedIn = FALSE;
 	this->_timeout = FALSE;
 	this->_initialized = TRUE;
+	this->fileTransfer = NULL;
 }
 
 User::~User()
 {
 	if(_from)
 		delete _from;
+	_from = NULL;
+	if(fileTransfer)
+		delete fileTransfer;
+	fileTransfer = NULL;
 }
 
 void User::reset(const struct sockaddr_in* from)
