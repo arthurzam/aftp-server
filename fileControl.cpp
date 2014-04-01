@@ -127,6 +127,7 @@ bool_t moveFile(char* from, char* to, User* user)
 
 bool_t copyFile(char* from, char* to, User* user)
 {
+	bool_t flag = TRUE;
 	char* srcS = user->getRealFile(from);
 	char* dstS = user->getRealFile(to);
 	char buffer[0x100];
@@ -135,26 +136,27 @@ bool_t copyFile(char* from, char* to, User* user)
 	int i;
 
 	if(!src)
-		goto _badExit;
+	{
+		flag = FALSE;
+		goto _exit;
+	}	goto _exit;
 	dst = fopen(dstS, "wb");
 
 	if(!dst)
 	{
-		fclose(src);
-		goto _badExit;
+		flag = FALSE;
+		goto _exit;
 	}
 
 	while ((i = fread(buffer, 0x100, 1, src)))
 		fwrite(buffer, i, 1, dst);
 
+_exit:
 	fclose(dst);
 	fclose(src);
-	return (TRUE);
-
-_badExit:
 	free(srcS);
 	free(dstS);
-	return (FALSE);
+	return (flag);
 }
 
 bool_t removeFile(char* path, User* user)
