@@ -129,32 +129,38 @@ bool_t copyFile(char* from, char* to, User* user)
 {
 	char* srcS = user->getRealFile(from);
 	char* dstS = user->getRealFile(to);
+	bool_t flag = TRUE;
+#ifdef WIN32
+	flag = CopyFileA(srcS, dstS, 0);
+#else
 	char buffer[0x100];
 	FILE* src = fopen(srcS, "rb");
-	FILE* dst;
+	FILE* dst = NULL;
 	int i;
 
 	if(!src)
-		goto _badExit;
+	{
+		flag = FALSE;
+		goto _exit;
+	}
 	dst = fopen(dstS, "wb");
 
 	if(!dst)
 	{
-		fclose(src);
-		goto _badExit;
+		flag = FALSE;
+		goto _exit;
 	}
 
 	while ((i = fread(buffer, 0x100, 1, src)))
 		fwrite(buffer, i, 1, dst);
 
+_exit:
 	fclose(dst);
 	fclose(src);
-	return (TRUE);
-
-_badExit:
+#endif
 	free(srcS);
 	free(dstS);
-	return (FALSE);
+	return (flag);
 }
 
 bool_t removeFile(char* path, User* user)
