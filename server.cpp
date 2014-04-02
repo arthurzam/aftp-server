@@ -312,7 +312,7 @@ THREAD_RETURN_VALUE userControl(void* arg)
 #else
 		sleep(WAIT_TIME);
 #endif
-		if (listUsers->getUserCount() < CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
+		if (listUsers->getUserCount() >= CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
 			listUsers->userControl();
 	}
 #ifdef WIN32

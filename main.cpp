@@ -6,6 +6,7 @@
 #include <process.h>
 #else
 #include <pthread.h>
+#include <signal.h>
 #endif
 
 #include "server.h"
@@ -16,15 +17,6 @@ bool_t needExit;
 bool_t canExit;
 extern UserList* listUsers;
 
-inline void clearScreen()
-{
-#ifdef WIN32
-	system("cls");
-#else
-	system("clear");
-#endif
-}
-
 void stopServer()
 {
 	printf("the server is stopping!\n");
@@ -34,6 +26,35 @@ void stopServer()
 
 	if(listUsers)
 		delete listUsers;
+}
+
+#ifdef WIN32
+BOOL WINAPI signalHandler(DWORD signum)
+#else
+void signalHandler(int signum)
+#endif
+{
+    switch(signum)
+    {
+#ifdef WIN32
+		case CTRL_C_EVENT:
+#else
+		case SIGINT:
+#endif
+			if(listUsers)
+				delete listUsers;
+			break;
+    }
+	exit(signum);
+}
+
+inline void clearScreen()
+{
+#ifdef WIN32
+	system("cls");
+#else
+	system("clear");
+#endif
 }
 
 int main(int argc, char **argv)
@@ -50,6 +71,14 @@ int main(int argc, char **argv)
 		} user;
 		char filePath[FILENAME_MAX];
 	} data;
+#ifdef WIN32
+	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)signalHandler,TRUE))
+	{
+		fprintf(stderr, "Unable to install handler!\n");
+	}
+#else
+	signal(SIGINT, signalHandler);
+#endif
 	do{
 		if(canExit)
 			serverRunning = FALSE;

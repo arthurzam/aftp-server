@@ -127,6 +127,7 @@ bool_t moveFile(char* from, char* to, User* user)
 
 bool_t copyFile(char* from, char* to, User* user)
 {
+	bool_t flag = TRUE;
 	char* srcS = user->getRealFile(from);
 	char* dstS = user->getRealFile(to);
 	bool_t flag = TRUE;
