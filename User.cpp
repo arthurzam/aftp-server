@@ -204,21 +204,20 @@ struct sockaddr_in* User::from() const
 	return (this->_from);
 }
 
-char* User::getRealFile(char* relativeFile)
+char* User::getRealFile(char* relativeFile, char* result)
 {
 	char backup[FILENAME_MAX];
 	char* res;
 	strcpy(backup, this->_folderPath);
-
 	if(!this->moveFolder(relativeFile))
 	{
 		res = NULL;
 		goto _exit;
 	}
-	res = getRealDirectory(this->_folderPath, NULL);
+	res = getRealDirectory(this->_folderPath, result);
 _exit:
 	strcpy(this->_folderPath, backup);
-	return (res);
+	return (result ? NULL : res);
 }
 
 void User::print() const

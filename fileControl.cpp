@@ -32,7 +32,8 @@ char* getRealDirectory(char* realativDirectory, char* result)
 #define FILE_LIST_SEPARATOR '|'
 bool_t getContentDirectory(char* directory, User* user)
 {
-	char* base = user->getRealFile(directory);
+	char base[FILENAME_MAX];
+	user->getRealFile(directory, base);
 	int dirLen = strlen(base);
     if(base[dirLen - 1] != PATH_SEPERATOR_GOOD)
     {
@@ -82,10 +83,8 @@ bool_t getContentDirectory(char* directory, User* user)
 	closedir (dir);
 	if(resLen)
 		sendMessage(user->from(), 201, result, resLen);
-	free(base);
 	return (TRUE);
 _bad_exit:
-	free(base);
 	return (FALSE);
 }
 
@@ -117,20 +116,18 @@ bool_t createDirectory(char* realativDirectory)
 
 bool_t moveFile(char* from, char* to, User* user)
 {
-	char* src = user->getRealFile(from);
-	char* dst = user->getRealFile(to);
-	int r = rename(src, dst);
-	free(src);
-	free(dst);
-	return (r == 0);
+	char src[FILENAME_MAX], dst[FILENAME_MAX];
+	user->getRealFile(from, src);
+	user->getRealFile(to, dst);
+	return (rename(src, dst) == 0);
 }
 
 bool_t copyFile(char* from, char* to, User* user)
 {
 	bool_t flag = TRUE;
-	char* srcS = user->getRealFile(from);
-	char* dstS = user->getRealFile(to);
-	bool_t flag = TRUE;
+	char srcS[FILENAME_MAX], dstS[FILENAME_MAX];
+	user->getRealFile(from, srcS);
+	user->getRealFile(to, dstS);
 #ifdef WIN32
 	flag = CopyFileA(srcS, dstS, 0);
 #else
@@ -159,22 +156,20 @@ _exit:
 	fclose(dst);
 	fclose(src);
 #endif
-	free(srcS);
-	free(dstS);
 	return (flag);
 }
 
 bool_t removeFile(char* path, User* user)
 {
-	char* src = user->getRealFile(path);
-	int r = remove(src);
-	free(src);
-	return (r == 0);
+	char src[FILENAME_MAX];
+	user->getRealFile(path, src);
+	return (remove(src) == 0);
 }
 
 long getFilesize(char* path, User* user)
 {
-	char* src = user->getRealFile(path);
+	char src[FILENAME_MAX];
+	user->getRealFile(path, src);
 	long r = -1;
 #ifdef WIN32
 	HANDLE MF = CreateFile(src, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
@@ -188,13 +183,13 @@ long getFilesize(char* path, User* user)
 	if(stat(src, &st) >= 0)
 		r = st.st_size;
 #endif
-	free(src);
-	return (r == 0);
+	return (r);
 }
 
 bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
 {
-	char* filePath = user->getRealFile(path);
+	char filePath[FILENAME_MAX];
+	user->getRealFile(path, filePath);
 	md5_context ctx;
 	int i;
 	byte_t buffer[512];
@@ -202,7 +197,6 @@ bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
 	FILE* f = fopen(filePath, "rb");
 	if(!f)
 	{
-		free(filePath);
 		return (FALSE);
 	}
 	md5_init(&ctx);
@@ -211,44 +205,44 @@ bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
 		md5_append(&ctx, buffer, i);
 	}
 	md5_finish(&ctx, result);
-	free(filePath);
 	return (TRUE);
 }
 
 bool_t removeFolder(char* path, User* user)
 {
 #ifdef WIN32
-	char command[FILENAME_MAX] = "rd /q /s ";
+	char command[2 * FILENAME_MAX] = "rd /q /s ";
 #else
-	char command[FILENAME_MAX] = "rm -r -f ";
+	char command[2 * FILENAME_MAX] = "rm -r -f ";
 #endif
 	bool_t flag = TRUE;
-	char* src = user->getRealFile(path);
+	char src[FILENAME_MAX];
+	user->getRealFile(path, src);
 	if (!isDirectory(src))
 	{
 		flag = FALSE;
 		goto _exit;
 	}
 	strcat (command, src);
-	printf("              %s\n", command);
 	system (command);
 	if (isDirectory(src))
 		flag = FALSE;
 _exit:
-	free(src);
 	return (flag);
 }
 
 bool_t copyFolder(char* from, char* to, User* user)
 {
 #ifdef WIN32
-	char command[FILENAME_MAX] = "xcopy /s /e /h ";
+	char command[2 * FILENAME_MAX] = "xcopy /s /e /h ";
 #else
-	char command[FILENAME_MAX] = "cp -r -f ";
+	char command[2 * FILENAME_MAX] = "cp -r -f ";
 #endif
 	bool_t flag = TRUE;
-	char* src = user->getRealFile(from);
-	char* dst = user->getRealFile(to);
+	char src[FILENAME_MAX];
+	char dst[FILENAME_MAX];
+	user->getRealFile(from, src);
+	user->getRealFile(to, dst);
 	if (!isDirectory(src) || isDirectory(dst))
 	{
 		flag = FALSE;
@@ -257,13 +251,10 @@ bool_t copyFolder(char* from, char* to, User* user)
 	strcat (command, src);
 	strcat (command, " ");
 	strcat (command, dst);
-	printf("              %s\n", command);
 	system (command);
 	if (isDirectory(src))
 		flag = FALSE;
 _exit:
-	free(src);
-	free(dst);
 	return (flag);
 }
 

@@ -10,12 +10,11 @@
 
 FileTransfer::FileTransfer(char* relativePath, User* user) // Download
 {
-	char* fPath;
+	char fPath[FILENAME_MAX];
 	char buffer[FILE_BLOCK_SIZE];
 
-	fPath = user->getRealFile(relativePath);
+	user->getRealFile(relativePath, fPath);
 	this->file = fopen(fPath, "r+b");
-	free(fPath);
 	if(!this->file)
 	{
 		this->state = FILE_TRANSFER_STATE_ERROR;
@@ -37,9 +36,9 @@ FileTransfer::FileTransfer(char* relativePath, User* user) // Download
 
 FileTransfer::FileTransfer(char* relativePath, User* user, unsigned int blocksCount) // Upload
 {
-	char* fPath = user->getRealFile(relativePath);
+	char fPath[FILENAME_MAX];
+	user->getRealFile(relativePath, fPath);
 	this->file = fopen(fPath, "w+b");
-	free(fPath);
 	if(!this->file)
 	{
 		this->state = FILE_TRANSFER_STATE_ERROR;
