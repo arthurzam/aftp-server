@@ -24,7 +24,7 @@ bool_t isDirectory(char* directory);
  */
 char* getRealDirectory(char* realativDirectory, char* result);
 bool_t getContentDirectory(char* directory, User* user);
-bool_t createDirectory(char* realativDirectory);
+bool_t createDirectory(char* directory, User* user);
 
 bool_t moveFile  (char* from, char* to, User* user);
 bool_t copyFile  (char* from, char* to, User* user);

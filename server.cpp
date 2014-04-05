@@ -220,7 +220,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
 					sendMessage(&from, 200, (char*)user->folderPath(), strlen(user->folderPath()));
 				break;
 			case 531: // create directory
-				if(createDirectory(Buffer + 2))
+				if(createDirectory(Buffer + 2, user))
 					sendMessage(&from, 200, NULL, 0);
 				else
 					sendMessage(&from, 300, NULL, 0);

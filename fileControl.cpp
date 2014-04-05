@@ -49,7 +49,7 @@ bool_t getContentDirectory(char* directory, User* user)
 	struct dirent *ent;
 	dir = opendir (base);
 	if(!dir)
-		goto _bad_exit;
+		return (FALSE);
 	bool_t flag;
 	int fileNameLen;
 	while ((ent = readdir (dir)) != NULL)
@@ -84,20 +84,17 @@ bool_t getContentDirectory(char* directory, User* user)
 	if(resLen)
 		sendMessage(user->from(), 201, result, resLen);
 	return (TRUE);
-_bad_exit:
-	return (FALSE);
 }
 
-bool_t createDirectory(char* realativDirectory)
+bool_t createDirectory(char* realativDirectory, User* user)
 {
-	char* directory = getRealDirectory(realativDirectory, NULL);
+	char directory[FILENAME_MAX];
+	user->getRealFile(realativDirectory, directory);
 #ifdef WIN32
 	if(CreateDirectory(directory, NULL))
 	{
-		free(directory);
 		return (TRUE);
 	}
-	free(directory);
 	return (FALSE);
 #else
 	struct stat st = {0};
@@ -105,11 +102,9 @@ bool_t createDirectory(char* realativDirectory)
 	{
 	    if(mkdir(directory, 0700) == 0)
 	    {
-	    	free(directory);
 	    	return (TRUE);
 	    }
 	}
-	free(directory);
 	return (FALSE);
 #endif
 }
@@ -170,20 +165,19 @@ long getFilesize(char* path, User* user)
 {
 	char src[FILENAME_MAX];
 	user->getRealFile(path, src);
-	long r = -1;
 #ifdef WIN32
 	HANDLE MF = CreateFile(src, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
 	DWORD High;
 	if ( MF != INVALID_HANDLE_VALUE )
 	{
-		r = GetFileSize(MF, &High);
+		return (GetFileSize(MF, &High));
 	}
 #else
 	struct stat st;
 	if(stat(src, &st) >= 0)
-		r = st.st_size;
+		return (st.st_size);
 #endif
-	return (r);
+	return (-1);
 }
 
 bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
@@ -211,51 +205,44 @@ bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
 bool_t removeFolder(char* path, User* user)
 {
 #ifdef WIN32
-	char command[2 * FILENAME_MAX] = "rd /q /s ";
+	char command[FILENAME_MAX + 9] = "rd /q /s ";
+	const int baseCommandLen = 9;
 #else
-	char command[2 * FILENAME_MAX] = "rm -r -f ";
+	char command[FILENAME_MAX + 9] = "rm -r -f ";
+	const int baseCommandLen = 9;
 #endif
-	bool_t flag = TRUE;
-	char src[FILENAME_MAX];
-	user->getRealFile(path, src);
-	if (!isDirectory(src))
-	{
-		flag = FALSE;
-		goto _exit;
-	}
-	strcat (command, src);
+	user->getRealFile(path, command + baseCommandLen); // put the full path in the command buffer
+	if (!isDirectory(command + baseCommandLen))
+		return (FALSE);
 	system (command);
-	if (isDirectory(src))
-		flag = FALSE;
-_exit:
-	return (flag);
+	if (isDirectory(command + baseCommandLen))
+		return (FALSE);
+	return (TRUE);
 }
 
 bool_t copyFolder(char* from, char* to, User* user)
 {
 #ifdef WIN32
-	char command[2 * FILENAME_MAX] = "xcopy /s /e /h ";
+	char command[2 * FILENAME_MAX + 17] = "xcopy /s /e /h ";
+	const int baseCommandLen = 15;
 #else
-	char command[2 * FILENAME_MAX] = "cp -r -f ";
+	char command[2 * FILENAME_MAX + 17] = "cp -r -f ";
+	const int baseCommandLen = 9;
 #endif
-	bool_t flag = TRUE;
-	char src[FILENAME_MAX];
-	char dst[FILENAME_MAX];
-	user->getRealFile(from, src);
-	user->getRealFile(to, dst);
-	if (!isDirectory(src) || isDirectory(dst))
-	{
-		flag = FALSE;
-		goto _exit;
-	}
-	strcat (command, src);
-	strcat (command, " ");
-	strcat (command, dst);
+	int i;
+	user->getRealFile(from, command + baseCommandLen);
+	if(!isDirectory(command + baseCommandLen))
+		return (FALSE);
+	i = strlen(command);
+	command[i++] = ' ';
+	user->getRealFile(to, command + i);
+	if (isDirectory(command + i))
+		return (FALSE);
 	system (command);
-	if (isDirectory(src))
-		flag = FALSE;
-_exit:
-	return (flag);
+	command[i - 1] = 0;
+	if (isDirectory(command + baseCommandLen))
+		return (FALSE);
+	return (TRUE);
 }
 
 bool_t isFileExists(char* path)
