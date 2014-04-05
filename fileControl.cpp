@@ -223,8 +223,8 @@ bool_t removeFolder(char* path, User* user)
 bool_t copyFolder(char* from, char* to, User* user)
 {
 #ifdef WIN32
-	char command[2 * FILENAME_MAX + 17] = "xcopy /s /e /h ";
-	const int baseCommandLen = 15;
+	char command[2 * FILENAME_MAX + 20] = "xcopy /E /H /Y /i ";
+	const int baseCommandLen = 18;
 #else
 	char command[2 * FILENAME_MAX + 17] = "cp -r -f ";
 	const int baseCommandLen = 9;
@@ -240,9 +240,7 @@ bool_t copyFolder(char* from, char* to, User* user)
 		return (FALSE);
 	system (command);
 	command[i - 1] = 0;
-	if (isDirectory(command + baseCommandLen))
-		return (FALSE);
-	return (TRUE);
+	return (isDirectory(command + i)); // did create directory?
 }
 
 bool_t isFileExists(char* path)
