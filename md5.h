@@ -14,7 +14,7 @@ typedef struct md5_state_s {
 } md5_context;
 
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 {
 #endif
 

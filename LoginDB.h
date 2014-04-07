@@ -12,10 +12,10 @@ using namespace std;
 
 #define USERNAME_MAX_LENGTH 32
 
-typedef struct _login_t{
-	char username[USERNAME_MAX_LENGTH];
-	byte_t password[MD5_RESULT_LENGTH];
-	struct _login_t* next;
+typedef struct _login_t {
+    char username[USERNAME_MAX_LENGTH];
+    byte_t password[MD5_RESULT_LENGTH];
+    struct _login_t* next;
 } login_t;
 
 /*
@@ -24,25 +24,25 @@ typedef struct _login_t{
  */
 class LoginDB {
 private:
-	login_t* head;
-	unsigned short count;
+    login_t* head;
+    unsigned short count;
 public:
-	/*
-	 * create empty list
-	 */
-	LoginDB();
-	/*
-	 * Load the list from the given file.
+    /*
+     * create empty list
+     */
+    LoginDB();
+    /*
+     * Load the list from the given file.
      * If error occurs on loading, the count variable will be empty.
-	 */
-	LoginDB(const char* filePath);
-	void add(const char* username, const char* password);
-	bool_t check(const char* username, const byte_t passwordMD5[16]) const;
-	int save(const char* path) const;
-	bool_t isEmpty() const;
-	void print() const;
-	void load(const char* filePath);
-	~LoginDB();
+     */
+    LoginDB(const char* filePath);
+    void add(const char* username, const char* password);
+    bool_t check(const char* username, const byte_t passwordMD5[16]) const;
+    int save(const char* path) const;
+    bool_t isEmpty() const;
+    void print() const;
+    void load(const char* filePath);
+    ~LoginDB();
 };
 
 #endif /* LOGINDB_H_ */

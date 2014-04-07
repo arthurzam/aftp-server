@@ -78,8 +78,8 @@
 static void md5_process(md5_context *ctx, const byte_t *data /*[64]*/)
 {
     md5_word_t
-	a = ctx->abcd[0], b = ctx->abcd[1],
-	c = ctx->abcd[2], d = ctx->abcd[3];
+    a = ctx->abcd[0], b = ctx->abcd[1],
+    c = ctx->abcd[2], d = ctx->abcd[3];
     md5_word_t t;
 #if BYTE_ORDER > 0
     /* Define storage only for big-endian CPUs. */
@@ -92,51 +92,51 @@ static void md5_process(md5_context *ctx, const byte_t *data /*[64]*/)
 
     {
 #if BYTE_ORDER == 0
-	/*
-	 * Determine dynamically whether this is a big-endian or
-	 * little-endian machine, since we can use a more efficient
-	 * algorithm on the latter.
-	 */
-	static const int w = 1;
+        /*
+         * Determine dynamically whether this is a big-endian or
+         * little-endian machine, since we can use a more efficient
+         * algorithm on the latter.
+         */
+        static const int w = 1;
 
-	if (*((const byte_t *)&w)) /* dynamic little-endian */
+        if (*((const byte_t *)&w)) /* dynamic little-endian */
 #endif
 #if BYTE_ORDER <= 0		/* little-endian */
-	{
-	    /*
-	     * On little-endian machines, we can process properly aligned
-	     * data without copying it.
-	     */
-	    if (!((data - (const byte_t *)0) & 3)) {
-		/* data are properly aligned */
-		X = (const md5_word_t *)data;
-	    } else {
-		/* not aligned */
-		memcpy(xbuf, data, 64);
-		X = xbuf;
-	    }
-	}
+        {
+            /*
+             * On little-endian machines, we can process properly aligned
+             * data without copying it.
+             */
+            if (!((data - (const byte_t *)0) & 3)) {
+                /* data are properly aligned */
+                X = (const md5_word_t *)data;
+            } else {
+                /* not aligned */
+                memcpy(xbuf, data, 64);
+                X = xbuf;
+            }
+        }
 #endif
 #if BYTE_ORDER == 0
-	else			/* dynamic big-endian */
+        else			/* dynamic big-endian */
 #endif
 #if BYTE_ORDER >= 0		/* big-endian */
-	{
-	    /*
-	     * On big-endian machines, we must arrange the bytes in the
-	     * right order.
-	     */
-	    const byte_t *xp = data;
-	    int i;
+        {
+            /*
+             * On big-endian machines, we must arrange the bytes in the
+             * right order.
+             */
+            const byte_t *xp = data;
+            int i;
 
 #  if BYTE_ORDER == 0
-	    X = xbuf;		/* (dynamic only) */
+            X = xbuf;		/* (dynamic only) */
 #  else
 #    define xbuf X		/* (static only) */
 #  endif
-	    for (i = 0; i < 16; ++i, xp += 4)
-		xbuf[i] = xp[0] + (xp[1] << 8) + (xp[2] << 16) + (xp[3] << 24);
-	}
+            for (i = 0; i < 16; ++i, xp += 4)
+                xbuf[i] = xp[0] + (xp[1] << 8) + (xp[2] << 16) + (xp[3] << 24);
+        }
 #endif
     }
 
@@ -168,14 +168,14 @@ static void md5_process(md5_context *ctx, const byte_t *data /*[64]*/)
     SET(b, c, d, a, 15, 22, T16);
 #undef SET
 
-     /* Round 2. */
-     /* Let [abcd k s i] denote the operation
-          a = b + ((a + G(b,c,d) + X[k] + T[i]) <<< s). */
+    /* Round 2. */
+    /* Let [abcd k s i] denote the operation
+         a = b + ((a + G(b,c,d) + X[k] + T[i]) <<< s). */
 #define G(x, y, z) (((x) & (z)) | ((y) & ~(z)))
 #define SET(a, b, c, d, k, s, Ti)\
   t = a + G(b,c,d) + X[k] + Ti;\
   a = ROTATE_LEFT(t, s) + b
-     /* Do the following 16 operations. */
+    /* Do the following 16 operations. */
     SET(a, b, c, d,  1,  5, T17);
     SET(d, a, b, c,  6,  9, T18);
     SET(c, d, a, b, 11, 14, T19);
@@ -194,14 +194,14 @@ static void md5_process(md5_context *ctx, const byte_t *data /*[64]*/)
     SET(b, c, d, a, 12, 20, T32);
 #undef SET
 
-     /* Round 3. */
-     /* Let [abcd k s t] denote the operation
-          a = b + ((a + H(b,c,d) + X[k] + T[i]) <<< s). */
+    /* Round 3. */
+    /* Let [abcd k s t] denote the operation
+         a = b + ((a + H(b,c,d) + X[k] + T[i]) <<< s). */
 #define H(x, y, z) ((x) ^ (y) ^ (z))
 #define SET(a, b, c, d, k, s, Ti)\
   t = a + H(b,c,d) + X[k] + Ti;\
   a = ROTATE_LEFT(t, s) + b
-     /* Do the following 16 operations. */
+    /* Do the following 16 operations. */
     SET(a, b, c, d,  5,  4, T33);
     SET(d, a, b, c,  8, 11, T34);
     SET(c, d, a, b, 11, 16, T35);
@@ -220,14 +220,14 @@ static void md5_process(md5_context *ctx, const byte_t *data /*[64]*/)
     SET(b, c, d, a,  2, 23, T48);
 #undef SET
 
-     /* Round 4. */
-     /* Let [abcd k s t] denote the operation
-          a = b + ((a + I(b,c,d) + X[k] + T[i]) <<< s). */
+    /* Round 4. */
+    /* Let [abcd k s t] denote the operation
+         a = b + ((a + I(b,c,d) + X[k] + T[i]) <<< s). */
 #define I(x, y, z) ((y) ^ ((x) | ~(z)))
 #define SET(a, b, c, d, k, s, Ti)\
   t = a + I(b,c,d) + X[k] + Ti;\
   a = ROTATE_LEFT(t, s) + b
-     /* Do the following 16 operations. */
+    /* Do the following 16 operations. */
     SET(a, b, c, d,  0,  6, T49);
     SET(d, a, b, c,  7, 10, T50);
     SET(c, d, a, b, 14, 15, T51);
@@ -246,9 +246,9 @@ static void md5_process(md5_context *ctx, const byte_t *data /*[64]*/)
     SET(b, c, d, a,  9, 21, T64);
 #undef SET
 
-     /* Then perform the following additions. (That is increment each
-        of the four registers by the value it had before this block
-        was started.) */
+    /* Then perform the following additions. (That is increment each
+       of the four registers by the value it had before this block
+       was started.) */
     ctx->abcd[0] += a;
     ctx->abcd[1] += b;
     ctx->abcd[2] += c;
@@ -274,62 +274,62 @@ void md5_append(md5_context *ctx, const byte_t *data, int nbytes)
     md5_word_t nbits = (md5_word_t)(nbytes << 3);
 
     if (nbytes <= 0)
-	return;
+        return;
 
     /* Update the message length. */
     ctx->count[1] += nbytes >> 29;
     ctx->count[0] += nbits;
     if (ctx->count[0] < nbits)
-	ctx->count[1]++;
+        ctx->count[1]++;
 
     /* Process an initial partial block. */
     if (offset) {
-	int copy = (offset + nbytes > 64 ? 64 - offset : nbytes);
+        int copy = (offset + nbytes > 64 ? 64 - offset : nbytes);
 
-	memcpy(ctx->buf + offset, p, copy);
-	if (offset + copy < 64)
-	    return;
-	p += copy;
-	left -= copy;
-	md5_process(ctx, ctx->buf);
+        memcpy(ctx->buf + offset, p, copy);
+        if (offset + copy < 64)
+            return;
+        p += copy;
+        left -= copy;
+        md5_process(ctx, ctx->buf);
     }
 
     /* Process full blocks. */
     for (; left >= 64; p += 64, left -= 64)
-	md5_process(ctx, p);
+        md5_process(ctx, p);
 
     /* Process a final partial block. */
     if (left)
-	memcpy(ctx->buf, p, left);
+        memcpy(ctx->buf, p, left);
 }
 
 /* Finish the message and return the digest. */
 void md5_finish(md5_context *ctx, byte_t digest[16])
 {
     static const byte_t pad[64] = {
-	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     byte_t data[8];
     int i;
 
     /* Save the length before padding. */
     for (i = 0; i < 8; ++i)
-	data[i] = (byte_t)(ctx->count[i >> 2] >> ((i & 3) << 3));
+        data[i] = (byte_t)(ctx->count[i >> 2] >> ((i & 3) << 3));
     /* Pad to 56 bytes mod 64. */
     md5_append(ctx, pad, ((55 - (ctx->count[0] >> 3)) & 63) + 1);
     /* Append the length. */
     md5_append(ctx, data, 8);
     for (i = 0; i < 16; ++i)
-	digest[i] = (byte_t)(ctx->abcd[i >> 2] >> ((i & 3) << 3));
+        digest[i] = (byte_t)(ctx->abcd[i >> 2] >> ((i & 3) << 3));
 }
 
 void md5(const void* data, int nbytes, byte_t digest[16])
 {
-	md5_context ctx;
-	md5_init(&ctx);
-	md5_append(&ctx, (byte_t*)data, nbytes);
-	md5_finish(&ctx, digest);
+    md5_context ctx;
+    md5_init(&ctx);
+    md5_append(&ctx, (byte_t*)data, nbytes);
+    md5_finish(&ctx, digest);
 }

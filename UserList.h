@@ -14,36 +14,36 @@
 class User;
 
 struct _listNode {
-	User* arr[USERS_IN_USERS_ARRAY];
-	bool_t isFull;
-	struct _listNode* next;
+    User* arr[USERS_IN_USERS_ARRAY];
+    bool_t isFull;
+    struct _listNode* next;
 };
 typedef struct _listNode ListNode;
 
 class UserList {
 
 private:
-	int userCount;
-	int nodesCount;
-	ListNode* head;
-	ListNode* createNewNode();
-	mutable bool_t isSearching;
+    int userCount;
+    int nodesCount;
+    ListNode* head;
+    ListNode* createNewNode();
+    mutable bool_t isSearching;
 public:
-	UserList();
-	~UserList();
+    UserList();
+    ~UserList();
 
-	int removeUser(int index);
-	int removeUser(const User* user);
-	int addUser(const User &user);
-	int findIndexOfUser(const User &user) const;
-	User* findUser(const User &user) const;
+    int removeUser(int index);
+    int removeUser(const User* user);
+    int addUser(const User &user);
+    int findIndexOfUser(const User &user) const;
+    User* findUser(const User &user) const;
 
-	User* operator[](int index) const;
-	int operator+=(const User &user);
-	
-	int getUserCount() const;
+    User* operator[](int index) const;
+    int operator+=(const User &user);
 
-	void userControl();
+    int getUserCount() const;
+
+    void userControl();
     void print() const;
 };
 #endif
