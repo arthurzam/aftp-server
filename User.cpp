@@ -182,7 +182,7 @@ bool_t User::timeout()
 	{
 		if (seconds > USER_TIME_MSG_SEND)
 		{
-			sendMessage(this->_from, 900, NULL, 0); // send timeout
+			sendData(900); // send timeout
 			this->_timeout = TRUE;
 		}
 		return (FALSE);

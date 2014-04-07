@@ -98,15 +98,15 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
 	if(!this->blocks[data->blockNum])
 		md5_append(&this->allFile, data->dataFile, data->size);
 	this->blocks[data->blockNum] = 1;
-	sendMessage(this->user->from(), 200, NULL, 0);
+	this->user->sendData(200);
 }
 
 void FileTransfer::askForBlock(unsigned int blockNum)
 {
 	if(blockNum > this->blocksCount)
 	{
-		sendMessage(user->from(), 312, NULL, 0);
-		return;
+	    this->user->sendData(312);
+	    return;
 	}
 
 	md5_context ctx;
@@ -121,8 +121,7 @@ void FileTransfer::askForBlock(unsigned int blockNum)
 
 	memcpy(buffer, &blockNum, 4);
 	memcpy(buffer + 4, &size, 2);
-
-	sendMessage(user->from(), 210, buffer, 23 + size);
+	this->user->sendData(210, buffer, 23 + size);
 	if(!this->blocks[blockNum])
 		md5_append(&this->allFile, (byte_t*)buffer + 22, size);
 	this->blocks[blockNum] = 1;

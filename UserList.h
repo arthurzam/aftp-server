@@ -27,7 +27,7 @@ private:
 	int nodesCount;
 	ListNode* head;
 	ListNode* createNewNode();
-	bool_t isSearching;
+	mutable bool_t isSearching;
 public:
 	UserList();
 	~UserList();
@@ -35,13 +35,14 @@ public:
 	int removeUser(int index);
 	int removeUser(const User* user);
 	int addUser(const User &user);
-	int findIndexOfUser(const User &user);
-	User* findUser(const User &user);
+	int findIndexOfUser(const User &user) const;
+	User* findUser(const User &user) const;
+
+	User* operator[](int index) const;
+	int operator+=(const User &user);
+	
 	int getUserCount() const;
 
-	User* operator[](int index);
-	int operator+(const User &user);
-	
 	void userControl();
     void print() const;
 };

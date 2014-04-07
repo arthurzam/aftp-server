@@ -59,7 +59,7 @@ bool_t getContentDirectory(char* directory, User* user)
 		fileNameLen = strlen(ent->d_name);
 		if(resLen + fileNameLen >= BUFFER_SERVER_SIZE - 10)
 		{
-			sendMessage(user->from(), 201, result, resLen);
+		    user->sendData(201, result, resLen);
 			result[0] = 0;
 			resLen = 0;
 		}
@@ -82,7 +82,7 @@ bool_t getContentDirectory(char* directory, User* user)
 	}
 	closedir (dir);
 	if(resLen)
-		sendMessage(user->from(), 201, result, resLen);
+	    user->sendData(201, result, resLen);
 	return (TRUE);
 }
 

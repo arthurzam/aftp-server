@@ -27,7 +27,7 @@ UserList::~UserList()
 	this->head = NULL;
 }
 
-User* UserList::operator[](int index)
+User* UserList::operator[](int index) const
 {
 	ListNode* curr = this->head;
 	if ((this->nodesCount << 10) < index)
@@ -42,7 +42,7 @@ User* UserList::operator[](int index)
 	return (curr->arr[index]);
 }
 
-int UserList::operator+(const User &user)
+int UserList::operator+=(const User &user)
 {
 	return (this->addUser(user));
 }
@@ -147,7 +147,7 @@ int UserList::addUser(const User &user)
 	return (-1);
 }
 
-int UserList::findIndexOfUser(const User &user)
+int UserList::findIndexOfUser(const User &user) const
 {
 	int index = 0, i;
 	ListNode* curr = this->head;
@@ -167,7 +167,7 @@ int UserList::findIndexOfUser(const User &user)
 	return (-1);
 }
 
-User* UserList::findUser(const User &user)
+User* UserList::findUser(const User &user) const
 {
 	int i;
 	ListNode* curr = this->head;
@@ -184,11 +184,6 @@ User* UserList::findUser(const User &user)
 	}
 	this->isSearching = FALSE;
 	return (NULL);
-}
-
-int UserList::getUserCount() const
-{
-	return (this->userCount);
 }
 
 ListNode* UserList::createNewNode()
@@ -222,6 +217,11 @@ void UserList::userControl()
 					curr->isFull = FALSE;
 				}
 		}
+}
+
+int UserList::getUserCount() const
+{
+	return (this->userCount);
 }
 
 void UserList::print() const

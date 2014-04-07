@@ -73,6 +73,16 @@ public:
 	bool_t operator!=(const User& other) const;
     
     void print() const;
+
+    inline int sendData(short msgCode, char* data, int datalen)
+    {
+        return (sendMessage(this->_from, msgCode, data, datalen));
+    }
+
+    inline int sendData(short msgCode)
+    {
+        return (sendMessage(this->_from, msgCode, NULL, 0));
+    }
 };
 
 #endif
