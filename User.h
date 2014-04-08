@@ -29,8 +29,6 @@ private:
     bool_t _timeout;
     bool_t _logedIn;
     bool_t _initialized;
-
-    void copyFrom(const struct sockaddr_in* from);
 public:
     FileTransfer* fileTransfer; // TODO: convert to private member
     User();

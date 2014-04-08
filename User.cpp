@@ -2,20 +2,6 @@
 #include "User.h"
 #include "server.h"
 
-void User::copyFrom(const struct sockaddr_in* from)
-{
-    int i;
-    this->_from.sin_family = from->sin_family;
-    this->_from.sin_port   = from->sin_port;
-#ifdef WIN32
-    this->_from.sin_addr.S_un.S_addr = from->sin_addr.S_un.S_addr;
-#else
-    this->_from.sin_addr.s_addr = from->sin_addr.s_addr;
-#endif
-    for(i = 0; i < 8; i++)
-        this->_from.sin_zero[i] = from->sin_zero[i];
-}
-
 User::User()
 {
     this->_folderPath[0] = 0;
@@ -29,7 +15,7 @@ User::User()
 User::User(const struct sockaddr_in* from)
 {
     this->_folderPath[0] = 0;
-    copyFrom(from);
+    memcpy(&(this->_from), from, sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
     this->_logedIn = FALSE;
     this->_timeout = FALSE;
@@ -40,7 +26,7 @@ User::User(const struct sockaddr_in* from)
 User::User(const User& other)
 {
     strcpy(this->_folderPath, other._folderPath);
-    copyFrom(&(other._from));
+    memcpy(&(this->_from), &(other._from), sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
     this->_logedIn = FALSE;
     this->_timeout = FALSE;
@@ -59,7 +45,7 @@ void User::reset(const struct sockaddr_in* from)
 {
     this->_folderPath[0] = PATH_SEPERATOR_GOOD;
     this->_folderPath[1] = 0;
-    copyFrom(from);
+    memcpy(&(this->_from), from, sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
     this->_logedIn = FALSE;
     this->_timeout = FALSE;
