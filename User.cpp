@@ -5,22 +5,20 @@
 void User::copyFrom(const struct sockaddr_in* from)
 {
     int i;
-    this->_from = new struct sockaddr_in;
-    this->_from->sin_family = from->sin_family;
-    this->_from->sin_port   = from->sin_port;
+    this->_from.sin_family = from->sin_family;
+    this->_from.sin_port   = from->sin_port;
 #ifdef WIN32
-    this->_from->sin_addr.S_un.S_addr = from->sin_addr.S_un.S_addr;
+    this->_from.sin_addr.S_un.S_addr = from->sin_addr.S_un.S_addr;
 #else
-    this->_from->sin_addr.s_addr = from->sin_addr.s_addr;
+    this->_from.sin_addr.s_addr = from->sin_addr.s_addr;
 #endif
     for(i = 0; i < 8; i++)
-        this->_from->sin_zero[i] = from->sin_zero[i];
+        this->_from.sin_zero[i] = from->sin_zero[i];
 }
 
 User::User()
 {
     this->_folderPath[0] = 0;
-    this->_from = NULL;
     this->_lastUse = 0;
     this->_logedIn = FALSE;
     this->_timeout = FALSE;
@@ -42,7 +40,7 @@ User::User(const struct sockaddr_in* from)
 User::User(const User& other)
 {
     strcpy(this->_folderPath, other._folderPath);
-    copyFrom(other._from);
+    copyFrom(&(other._from));
     this->_lastUse = time(NULL);
     this->_logedIn = FALSE;
     this->_timeout = FALSE;
@@ -52,9 +50,6 @@ User::User(const User& other)
 
 User::~User()
 {
-    if(_from)
-        delete _from;
-    _from = NULL;
     if(fileTransfer)
         delete fileTransfer;
     fileTransfer = NULL;
@@ -62,8 +57,6 @@ User::~User()
 
 void User::reset(const struct sockaddr_in* from)
 {
-    if(_from)
-        delete _from;
     this->_folderPath[0] = PATH_SEPERATOR_GOOD;
     this->_folderPath[1] = 0;
     copyFrom(from);
@@ -81,25 +74,15 @@ void User::resetTime()
 
 bool_t User::equals(const User& other) const
 {
-    if(other._from->sin_port != this->_from->sin_port)
+    if(other._from.sin_port != this->_from.sin_port)
         return (FALSE);
 #ifdef WIN32
-    if(other._from->sin_addr.S_un.S_addr != this->_from->sin_addr.S_un.S_addr)
+    if(other._from.sin_addr.S_un.S_addr != this->_from.sin_addr.S_un.S_addr)
 #else
-    if(other._from->sin_addr.s_addr != this->_from->sin_addr.s_addr)
+    if(other._from.sin_addr.s_addr != this->_from.sin_addr.s_addr)
 #endif
         return (FALSE);
     return (TRUE);
-}
-
-bool_t User::operator==(const User& other) const
-{
-    return (this->equals(other));
-}
-
-bool_t User::operator!=(const User& other) const
-{
-    return (!this->equals(other));
 }
 
 bool_t User::moveFolder(char* path)
@@ -199,11 +182,6 @@ const char* User::folderPath() const
     return (this->_folderPath);
 }
 
-struct sockaddr_in* User::from() const
-{
-    return (this->_from);
-}
-
 char* User::getRealFile(char* relativeFile, char* result)
 {
     char backup[FILENAME_MAX];
@@ -224,6 +202,6 @@ void User::print() const
 {
     if(this->_initialized)
     {
-        printf("{<%s:%d>, %s}\n", inet_ntoa(this->_from->sin_addr), this->_from->sin_port, this->_folderPath);
+        printf("{<%s:%d>, %s}\n", inet_ntoa(this->_from.sin_addr), this->_from.sin_port, this->_folderPath);
     }
 }

@@ -90,7 +90,7 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     md5_finish(&ctx, md5R);
     if(memcpy(md5R, data->md5Res, 16)) // not equal
     {
-        sendMessage(this->user->from(), 310, NULL, 0);
+        this->user->sendData(310);
         return;
     }
     fseek(this->file, data->blockNum * FILE_BLOCK_SIZE, SEEK_SET);

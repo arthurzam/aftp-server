@@ -42,11 +42,6 @@ User* UserList::operator[](int index) const
     return (curr->arr[index]);
 }
 
-int UserList::operator+=(const User &user)
-{
-    return (this->addUser(user));
-}
-
 int UserList::removeUser(int index)
 {
     ListNode* curr = this->head;

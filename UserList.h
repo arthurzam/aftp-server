@@ -39,7 +39,10 @@ public:
     User* findUser(const User &user) const;
 
     User* operator[](int index) const;
-    int operator+=(const User &user);
+    inline int operator+=(const User &user)
+    {
+        return (this->addUser(user));
+    }
 
     int getUserCount() const;
 

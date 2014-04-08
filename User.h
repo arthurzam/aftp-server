@@ -23,7 +23,7 @@ class FileTransfer;
 
 class User {
 private:
-    struct sockaddr_in* _from;
+    struct sockaddr_in _from;
     char _folderPath[FILENAME_MAX];
     time_t _lastUse;
     bool_t _timeout;
@@ -49,7 +49,6 @@ public:
     bool_t isLoged() const;
     void logIn();
     const char* folderPath() const;
-    struct sockaddr_in* from() const;
 
     /*
      * returns a new char array allocated in HEAP that contains the path of the given path by the current folder,
@@ -69,19 +68,25 @@ public:
     bool_t moveFolder(char* path);
 
     bool_t equals(const User& other) const;
-    bool_t operator==(const User& other) const;
-    bool_t operator!=(const User& other) const;
+    inline bool_t operator==(const User& other) const
+    {
+        return (this->equals(other));
+    }
+    inline bool_t operator!=(const User& other) const
+    {
+        return (this->equals(other));
+    }
 
     void print() const;
 
     inline int sendData(short msgCode, char* data, int datalen)
     {
-        return (sendMessage(this->_from, msgCode, data, datalen));
+        return (sendMessage(&this->_from, msgCode, data, datalen));
     }
 
     inline int sendData(short msgCode)
     {
-        return (sendMessage(this->_from, msgCode, NULL, 0));
+        return (sendMessage(&this->_from, msgCode, NULL, 0));
     }
 };
 
