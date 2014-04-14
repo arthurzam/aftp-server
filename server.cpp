@@ -162,12 +162,28 @@ THREAD_RETURN_VALUE startServer(void* arg)
             case 200:
                 sendMessage(&from, 200, NULL, 0);
                 break;
+            case 210: // block in File Upload
+                if(!user->fileTransfer)
+                    sendMessage(&from, 300, NULL, 0);
+                else
+                    user->fileTransfer->recieveBlock(Buffer + 2, retval - 2);
+                break;
+            case 211: // finish of File Upload
+                if(!user->fileTransfer)
+                    sendMessage(&from, 300, NULL, 0);
+                else if(user->fileTransfer->finishUpload(Buffer + 2))
+                {
+                    delete user->fileTransfer;
+                    user->fileTransfer = NULL;
+                }
+                break;
             case 500: // info
                 sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2013", 41);
                 break;
             case 510: // upload
-                // TODO: test upload
                 tempData.i = *(int*)(Buffer + 2);
+                if(user->fileTransfer)
+                    delete user->fileTransfer;
                 user->fileTransfer = new FileTransfer(Buffer + 6, user, tempData.i);
                 if(user->fileTransfer->isLoaded())
                     sendMessage(&from, 200, NULL, 0);

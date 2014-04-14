@@ -14,7 +14,7 @@ typedef enum {
     FILE_TRANSFER_STATE_DOWNLOAD
 } FILE_TRANSFER_STATE;
 
-#define FILE_BLOCK_SIZE 0x200 //=500
+#define FILE_BLOCK_SIZE 0x200 //=512
 
 class User;
 
@@ -33,7 +33,13 @@ public:
     bool_t isLoaded() const;
     void askForBlock(unsigned int blockNum);
     void askForBlocksRange(unsigned int start, unsigned int end);
+
     void recieveBlock(char* buffer, int dataLen);
+    /*
+     * finished the upload with last check. return true if success.
+     * the function automatically sends the message code
+     */
+    bool_t finishUpload(char* Buffer);
 
     ~FileTransfer();
 };

@@ -68,12 +68,6 @@ bool_t FileTransfer::isLoaded() const
     return (this->state);
 }
 
-void FileTransfer::askForBlocksRange(unsigned int start, unsigned int end)
-{
-    for(; start <= end; start++)
-        askForBlock(start);
-}
-
 void FileTransfer::recieveBlock(char* buffer, int dataLen)
 {
     struct dat_t {
@@ -88,17 +82,39 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     md5_init(&ctx);
     md5_append(&ctx, data->dataFile, data->size);
     md5_finish(&ctx, md5R);
-    if(memcpy(md5R, data->md5Res, 16)) // not equal
+    if(memcmp(md5R, data->md5Res, 16)) // not equal
     {
         this->user->sendData(310);
         return;
     }
     fseek(this->file, data->blockNum * FILE_BLOCK_SIZE, SEEK_SET);
-    fwrite(data->dataFile, data->size, 1, this->file);
+    fwrite(data->dataFile, 1, data->size, this->file);
     if(!this->blocks[data->blockNum])
         md5_append(&this->allFile, data->dataFile, data->size);
     this->blocks[data->blockNum] = 1;
-    this->user->sendData(200);
+    this->user->sendData(200, (char*)&(data->blockNum), sizeof(data->blockNum));
+}
+
+bool_t FileTransfer::finishUpload(char* Buffer)
+{
+    byte_t md5file[16];
+    md5_finish(&this->allFile, md5file);
+    if(memcmp(md5file, Buffer, 16)) // not equal
+    {
+        this->user->sendData(311);
+        return (FALSE);
+    }
+    else
+    {
+        this->user->sendData(200);
+        return (TRUE);
+    }
+}
+
+void FileTransfer::askForBlocksRange(unsigned int start, unsigned int end)
+{
+    for(; start <= end; start++)
+        askForBlock(start);
 }
 
 void FileTransfer::askForBlock(unsigned int blockNum)
