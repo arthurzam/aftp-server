@@ -178,7 +178,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
                 }
                 break;
             case 500: // info
-                sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2013", 41);
+                sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2014", 41);
                 break;
             case 510: // upload
                 tempData.i = *(int*)(Buffer + 2);

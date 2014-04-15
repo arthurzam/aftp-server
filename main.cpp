@@ -71,6 +71,24 @@ int main(int argc, char **argv)
         } user;
         char filePath[FILENAME_MAX];
     } data;
+    if(argc > 1) // there are parameters
+    {
+        for(int i = 1; i < argc; i++)
+        {
+            if(!strcmp(argv[i], "-db") && i + 1 < argc)
+            {
+                userDB.load(argv[++i]);
+            }
+            if(!strcmp(argv[i], "-h"))
+            {
+                printf("This is the AFTP server\n");
+                printf("  usage:\n");
+                printf("    -db [path]   load the Login database from this file\n");
+                printf("    -h           show this text\n");
+                return (0);
+            }
+        }
+    }
 #ifdef WIN32
     if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)signalHandler,TRUE))
     {
