@@ -77,9 +77,9 @@ public:
 
     void print() const;
 
-    inline int sendData(short msgCode, char* data, int datalen)
+    inline int sendData(short msgCode, void* data, int datalen)
     {
-        return (sendMessage(&this->_from, msgCode, data, datalen));
+        return (sendMessage(&this->_from, msgCode, (char*)data, datalen));
     }
 
     inline int sendData(short msgCode)

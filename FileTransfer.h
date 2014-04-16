@@ -31,8 +31,14 @@ public:
     FileTransfer(char* relativePath, User* user, unsigned int blocksCount); // Upload
 
     bool_t isLoaded() const;
+    inline unsigned int getBlocksCount() const
+    {
+        return (this->blocksCount);
+    }
+
     void askForBlock(unsigned int blockNum);
     void askForBlocksRange(unsigned int start, unsigned int end);
+    void finishDownload();
 
     void recieveBlock(char* buffer, int dataLen);
     /*

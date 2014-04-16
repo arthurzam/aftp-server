@@ -33,7 +33,7 @@ Client Messages:
 200 - empty message
 210 - file block (upload to server) { after the number, put the MD5 of the current block }
 211 - end of file transfer {add the md5 of all the file}
-212 - ask for range blocks {[startN] [endN]}
+212 - ask for range blocks {[startN][endN]}
 213 - ask for block {[block num]}
 214 - ask for md5 of whole file
 
@@ -46,8 +46,7 @@ Client Messages:
 
 500 - ask for info of server
 510 - upload file {[code][blocks num][path]}
-511 - finish upload
-512 - download file {[code][path]}
+511 - download file {[code][path]}
 520 - move file {[code][src_len][src][dst_len][dst]}
 521 - copy file {[code][src_len][src][dst_len][dst]}
 522 - remove file {[code][path]}

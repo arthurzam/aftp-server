@@ -1,20 +1,12 @@
-/*
- * FileTransfer.cpp
- *
- *  Created on: 5 ???? 2013
- *      Author: Arthur Zamarin
- */
-
 #include <cstring>
 #include "FileTransfer.h"
 
 FileTransfer::FileTransfer(char* relativePath, User* user) // Download
 {
     char fPath[FILENAME_MAX];
-    char buffer[FILE_BLOCK_SIZE];
 
     user->getRealFile(relativePath, fPath);
-    this->file = fopen(fPath, "r+b");
+    this->file = fopen(fPath, "rb");
     if(!this->file)
     {
         this->state = FILE_TRANSFER_STATE_ERROR;
@@ -25,8 +17,10 @@ FileTransfer::FileTransfer(char* relativePath, User* user) // Download
     md5_init(&this->allFile);
     this->user = user;
 
-    this->blocksCount = 0;
-    while(fread(buffer, FILE_BLOCK_SIZE, 1, this->file))
+    fseek(this->file, 0, SEEK_END);
+    long temp = ftell(this->file);
+    this->blocksCount = temp / FILE_BLOCK_SIZE;
+    if((temp & (FILE_BLOCK_SIZE - 1)) != 0) // works only if FILE_BLOCK_SIZE is 2^x; check that there is a partial block
         this->blocksCount++;
     fseek(this->file, 0, SEEK_SET);
 
@@ -78,10 +72,7 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     };
     struct dat_t* data = (struct dat_t*)buffer;
     byte_t md5R[16];
-    md5_context ctx;
-    md5_init(&ctx);
-    md5_append(&ctx, data->dataFile, data->size);
-    md5_finish(&ctx, md5R);
+    md5(data->dataFile, data->size, md5R);
     if(memcmp(md5R, data->md5Res, 16)) // not equal
     {
         this->user->sendData(310);
@@ -92,7 +83,7 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     if(!this->blocks[data->blockNum])
         md5_append(&this->allFile, data->dataFile, data->size);
     this->blocks[data->blockNum] = 1;
-    this->user->sendData(200, (char*)&(data->blockNum), sizeof(data->blockNum));
+    this->user->sendData(200, &data->blockNum, sizeof(data->blockNum));
 }
 
 bool_t FileTransfer::finishUpload(char* Buffer)
@@ -113,7 +104,7 @@ bool_t FileTransfer::finishUpload(char* Buffer)
 
 void FileTransfer::askForBlocksRange(unsigned int start, unsigned int end)
 {
-    for(; start <= end; start++)
+    for(; start < end; start++)
         askForBlock(start);
 }
 
@@ -121,24 +112,28 @@ void FileTransfer::askForBlock(unsigned int blockNum)
 {
     if(blockNum > this->blocksCount)
     {
-        this->user->sendData(312);
+        this->user->sendData(312, (char*)&(blockNum), sizeof(blockNum));
         return;
     }
-
-    md5_context ctx;
-    char buffer[FILE_BLOCK_SIZE + 23];
-    unsigned short size;
-
-    md5_init(&ctx);
+    struct {
+        int blockNum;
+        unsigned short size;
+        byte_t md5[16];
+        byte_t data[FILE_BLOCK_SIZE];
+    } buffer;
     fseek(this->file, blockNum * FILE_BLOCK_SIZE, SEEK_SET);
-    size = fread(buffer + 22, FILE_BLOCK_SIZE, 1, this->file);
-    md5_append(&ctx, (byte_t*)buffer + 22, size);
-    md5_finish(&ctx, (byte_t*)buffer + 6);
-
-    memcpy(buffer, &blockNum, 4);
-    memcpy(buffer + 4, &size, 2);
-    this->user->sendData(210, buffer, 23 + size);
+    buffer.size = fread(buffer.data, 1, FILE_BLOCK_SIZE, this->file);
+    md5(buffer.data, buffer.size, buffer.md5);
+    buffer.blockNum = blockNum;
+    this->user->sendData(210, &buffer, 22 + buffer.size);
     if(!this->blocks[blockNum])
-        md5_append(&this->allFile, (byte_t*)buffer + 22, size);
+        md5_append(&this->allFile, buffer.data, buffer.size);
     this->blocks[blockNum] = 1;
+}
+
+void FileTransfer::finishDownload()
+{
+    byte_t md5file[16];
+    md5_finish(&this->allFile, md5file);
+    this->user->sendData(212, md5file, 16);
 }

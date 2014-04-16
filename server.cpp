@@ -177,6 +177,29 @@ THREAD_RETURN_VALUE startServer(void* arg)
                     user->fileTransfer = NULL;
                 }
                 break;
+            case 212: // ask for block range
+                if(!user->fileTransfer)
+                    sendMessage(&from, 300, NULL, 0);
+                else
+                    user->fileTransfer->askForBlocksRange(*((int*)(Buffer + 2)), *((int*)(Buffer + 6)));
+                break;
+            case 213: // ask for block
+                if(!user->fileTransfer)
+                    sendMessage(&from, 300, NULL, 0);
+                else
+                    user->fileTransfer->askForBlock(*((int*)(Buffer + 2)));
+                break;
+            case 214: // ask for md5 of read file
+                if(!user->fileTransfer)
+                    sendMessage(&from, 300, NULL, 0);
+                else
+                {
+                    user->fileTransfer->finishDownload();
+                    // no matter if the user managed to download, we destroy the Transfer. The client should try again
+                    delete user->fileTransfer;
+                    user->fileTransfer = NULL;
+                }
+                break;
             case 500: // info
                 sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2014", 41);
                 break;
@@ -188,7 +211,27 @@ THREAD_RETURN_VALUE startServer(void* arg)
                 if(user->fileTransfer->isLoaded())
                     sendMessage(&from, 200, NULL, 0);
                 else
+                {
                     sendMessage(&from, 300, NULL, 0);
+                    delete user->fileTransfer;
+                    user->fileTransfer = NULL;
+                }
+                break;
+            case 511: // download
+                if(user->fileTransfer)
+                    delete user->fileTransfer;
+                user->fileTransfer = new FileTransfer(Buffer + 2, user);
+                if(user->fileTransfer->isLoaded())
+                {
+                    tempData.i = user->fileTransfer->getBlocksCount();
+                    sendMessage(&from, 200, (char*)&tempData.i, 4);
+                }
+                else
+                {
+                    sendMessage(&from, 300, NULL, 0);
+                    delete user->fileTransfer;
+                    user->fileTransfer = NULL;
+                }
                 break;
             case 520: // move file
                 tempData.src_dst.src_len = *(Buffer + 2);
@@ -285,7 +328,7 @@ _errorExit:
 #endif
 }
 
-int sendMessage(struct sockaddr_in* to, short msgCode, char* data, int datalen)
+int sendMessage(struct sockaddr_in* to, short msgCode, void* data, int datalen)
 {
     static bool_t lockSend = FALSE; // mini mutex
 
