@@ -79,13 +79,26 @@ int main(int argc, char **argv)
             {
                 userDB.load(argv[++i]);
             }
-            if(!strcmp(argv[i], "-h"))
+            else if(!strcmp(argv[i], "-h"))
             {
                 printf("This is the AFTP server\n");
                 printf("  usage:\n");
                 printf("    -db [path]   load the Login database from this file\n");
                 printf("    -h           show this text\n");
+                printf("    -a           auto start server\n");
                 return (0);
+            }
+            else if(!strcmp(argv[i], "-a"))
+            {
+                needExit = FALSE;
+                canExit = FALSE;
+#ifdef WIN32
+                _beginthread(startServer, 0, &userDB);
+#else
+                pthread_t thread;
+                pthread_create(&thread, NULL, startServer, &userDB);
+#endif
+                serverRunning = TRUE;
             }
         }
     }
