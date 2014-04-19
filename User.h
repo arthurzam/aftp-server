@@ -32,7 +32,7 @@ private:
 public:
     FileTransfer* fileTransfer;
     User();
-    User(const struct sockaddr_in* from);
+    User(const struct sockaddr_in& from);
     User(const User& other);
     ~User();
 

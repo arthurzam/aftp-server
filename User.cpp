@@ -12,10 +12,10 @@ User::User()
     this->fileTransfer = NULL;
 }
 
-User::User(const struct sockaddr_in* from)
+User::User(const struct sockaddr_in& from)
 {
     this->_folderPath[0] = 0;
-    memcpy(&(this->_from), from, sizeof(struct sockaddr_in));
+    memcpy(&(this->_from), &from, sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
     this->_logedIn = FALSE;
     this->_timeout = FALSE;

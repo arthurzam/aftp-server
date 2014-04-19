@@ -13,16 +13,17 @@
 
 class User;
 
-struct _listNode {
-    User* arr[USERS_IN_USERS_ARRAY];
-    bool_t isFull;
-    struct _listNode* next;
-};
-typedef struct _listNode ListNode;
 
 class UserList {
 
 private:
+    struct _listNode {
+        User* arr[USERS_IN_USERS_ARRAY];
+        bool_t isFull;
+        struct _listNode* next;
+    };
+    typedef struct _listNode ListNode;
+
     int userCount;
     int nodesCount;
     ListNode* head;

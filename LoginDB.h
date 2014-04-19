@@ -38,7 +38,7 @@ public:
     LoginDB(const char* filePath);
     void add(const char* username, const char* password);
     bool_t check(const char* username, const byte_t passwordMD5[16]) const;
-    int save(const char* path) const;
+    bool_t save(const char* path) const;
     bool_t isEmpty() const;
     void print() const;
     void load(const char* filePath);

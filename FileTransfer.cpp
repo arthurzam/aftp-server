@@ -9,11 +9,11 @@ FileTransfer::FileTransfer(char* relativePath, User* user) // Download
     this->file = fopen(fPath, "rb");
     if(!this->file)
     {
-        this->state = FILE_TRANSFER_STATE_ERROR;
+        this->state = STATE_ERROR;
         return;
     }
 
-    this->state = FILE_TRANSFER_STATE_DOWNLOAD;
+    this->state = STATE_DOWNLOAD;
     md5_init(&this->allFile);
     this->user = user;
 
@@ -35,11 +35,11 @@ FileTransfer::FileTransfer(char* relativePath, User* user, unsigned int blocksCo
     this->file = fopen(fPath, "w+b");
     if(!this->file)
     {
-        this->state = FILE_TRANSFER_STATE_ERROR;
+        this->state = STATE_ERROR;
         return;
     }
 
-    this->state = FILE_TRANSFER_STATE_UPLOAD;
+    this->state = STATE_UPLOAD;
     md5_init(&this->allFile);
     this->user = user;
     this->blocksCount = blocksCount;

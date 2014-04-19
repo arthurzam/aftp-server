@@ -78,13 +78,13 @@ bool_t LoginDB::check(const char* username, const byte_t* passwordMD5) const
     return (FALSE);
 }
 
-int LoginDB::save(const char* path) const
+bool_t LoginDB::save(const char* path) const
 {
     if(!this->head)
-        return (EXIT_FAILURE);
+        return (FALSE);
     FILE* dst = fopen(path, "wb");
     if(!dst)
-        return (EXIT_FAILURE);
+        return (FALSE);
     login_t* curr = this->head;
     while(curr)
     {
@@ -93,7 +93,7 @@ int LoginDB::save(const char* path) const
         curr = curr->next;
     }
     fclose(dst);
-    return (EXIT_SUCCESS);
+    return (TRUE);
 }
 
 LoginDB::~LoginDB()

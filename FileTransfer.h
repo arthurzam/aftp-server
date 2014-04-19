@@ -8,11 +8,7 @@
 #include "User.h"
 #include "server.h"
 
-typedef enum {
-    FILE_TRANSFER_STATE_ERROR = 0,
-    FILE_TRANSFER_STATE_UPLOAD,
-    FILE_TRANSFER_STATE_DOWNLOAD
-} FILE_TRANSFER_STATE;
+
 
 #define FILE_BLOCK_SIZE 0x200 //=512
 
@@ -20,7 +16,13 @@ class User;
 
 class FileTransfer {
 private:
-    FILE_TRANSFER_STATE state;
+    typedef enum {
+        STATE_ERROR = 0,
+        STATE_UPLOAD,
+        STATE_DOWNLOAD
+    } STATE;
+
+    STATE state;
     md5_context allFile;
     byte_t* blocks; // pointer to HEAP located array
     unsigned int blocksCount;
