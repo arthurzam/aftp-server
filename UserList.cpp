@@ -90,7 +90,7 @@ int UserList::removeUser(const User* user)
     return (EXIT_FAILURE);
 }
 
-int UserList::addUser(const User &user)
+int UserList::addUser(const struct sockaddr_in& user)
 {
     ListNode* curr = this->head;
     int index = 0;
@@ -98,7 +98,7 @@ int UserList::addUser(const User &user)
     if(!curr)
     {
         this->head = createNewNode();
-        this->head->arr[0] = new User(user);
+        this->head->arr[0] = new User(&user);
         this->nodesCount++;
         return (0);
     }
@@ -111,7 +111,7 @@ int UserList::addUser(const User &user)
             {
                 if(!curr->arr[i]) // is empty (==NULL)
                 {
-                    curr->arr[i] = new User(user); // set
+                    curr->arr[i] = new User(&user); // set
                     index += i;
                     break;
                 }
@@ -134,7 +134,7 @@ int UserList::addUser(const User &user)
         {
             curr->next = createNewNode();
             curr = curr->next;
-            curr->arr[0] = new User(user);
+            curr->arr[0] = new User(&user);
             this->userCount++;
             this->nodesCount++;
             this->isSearching = FALSE;
@@ -165,7 +165,7 @@ int UserList::findIndexOfUser(const User &user) const
     return (-1);
 }
 
-User* UserList::findUser(const User &user) const
+User* UserList::findUser(const struct sockaddr_in& user) const
 {
     int i;
     ListNode* curr = this->head;

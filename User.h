@@ -30,7 +30,7 @@ private:
     bool_t _logedIn;
     bool_t _initialized;
 public:
-    FileTransfer* fileTransfer; // TODO: convert to private member
+    FileTransfer* fileTransfer;
     User();
     User(const struct sockaddr_in* from);
     User(const User& other);
@@ -65,7 +65,11 @@ public:
      */
     bool_t moveFolder(char* path);
 
-    bool_t equals(const User& other) const;
+    bool_t equals(const struct sockaddr_in& other) const;
+    inline bool_t equals(const User& other) const
+    {
+        return (this->equals(other._from));
+    }
     inline bool_t operator==(const User& other) const
     {
         return (this->equals(other));

@@ -58,14 +58,14 @@ void User::resetTime()
     this->_timeout = FALSE;
 }
 
-bool_t User::equals(const User& other) const
+bool_t User::equals(const struct sockaddr_in& other) const
 {
-    if(other._from.sin_port != this->_from.sin_port)
+    if(other.sin_port != this->_from.sin_port)
         return (FALSE);
 #ifdef WIN32
-    if(other._from.sin_addr.S_un.S_addr != this->_from.sin_addr.S_un.S_addr)
+    if(other.sin_addr.S_un.S_addr != this->_from.sin_addr.S_un.S_addr)
 #else
-    if(other._from.sin_addr.s_addr != this->_from.sin_addr.s_addr)
+    if(other.sin_addr.s_addr != this->_from.sin_addr.s_addr)
 #endif
         return (FALSE);
     return (TRUE);

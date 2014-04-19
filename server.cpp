@@ -115,12 +115,11 @@ THREAD_RETURN_VALUE startServer(void* arg)
         retval = recvfrom(sock,Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
         if (retval == SOCKET_ERROR || retval == 0)
             continue;
-        User tempUser(&from);
         Buffer[retval] = 0;
         msgCode = getMsgCode(Buffer, retval);
 
-        if(!(user = listUsers->findUser(tempUser)))
-            user = (*listUsers)[listUsers->addUser(tempUser)];
+        if(!(user = listUsers->findUser(from)))
+            user = (*listUsers)[listUsers->addUser(from)];
         else
             user->resetTime();
 
@@ -128,7 +127,6 @@ THREAD_RETURN_VALUE startServer(void* arg)
         {
             listUsers->removeUser(user);
             sendMessage(&from, 200, NULL, 0);
-            printf("[user %s:%d removed]\n", inet_ntoa(from.sin_addr), from.sin_port);
             continue;
         }
         else if(msgCode != 100 && !user->isLoged())

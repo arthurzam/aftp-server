@@ -34,12 +34,12 @@ public:
 
     int removeUser(int index);
     int removeUser(const User* user);
-    int addUser(const User &user);
-    int findIndexOfUser(const User &user) const;
-    User* findUser(const User &user) const;
+    int addUser(const struct sockaddr_in&user);
+    int findIndexOfUser(const User& user) const;
+    User* findUser(const struct sockaddr_in& user) const;
 
     User* operator[](int index) const;
-    inline int operator+=(const User &user)
+    inline int operator+=(const struct sockaddr_in&user)
     {
         return (this->addUser(user));
     }
