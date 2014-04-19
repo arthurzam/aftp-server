@@ -1,7 +1,7 @@
 ******************************
 Server Messages:
 100 - login required
-101 - login seccess
+101 - login success
 110 - login not correct
 
 200 - action completed
@@ -32,10 +32,9 @@ Client Messages:
 
 200 - empty message
 210 - file block (upload to server) { after the number, put the MD5 of the current block }
-211 - end of file transfer {add the md5 of all the file}
-212 - ask for range blocks {[startN][endN]}
-213 - ask for block {[block num]}
-214 - ask for md5 of whole file
+211 - ask for range blocks {[startN][endN]}
+212 - ask for block {[block num]}
+213 - finish of File Transfer
 
 310 - MD5 of the given block doesn't match
 311 - MD5 of the given file doesn't match

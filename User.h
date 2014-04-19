@@ -16,8 +16,6 @@
 #endif
 using namespace std;
 
-#define USER_TIME_MSG_SEND 50
-#define USER_TIME_REMOVE 100
 
 class FileTransfer;
 
@@ -33,11 +31,9 @@ public:
     FileTransfer* fileTransfer;
     User();
     User(const struct sockaddr_in& from);
-    User(const User& other);
     ~User();
 
     void resetTime();
-    void reset(const struct sockaddr_in* from);
 
     /*
      * returns TRUE if user is to long not activated (timeout send + time moved).
@@ -46,7 +42,10 @@ public:
     bool_t timeout();
     bool_t isLoged() const;
     void logIn();
-    const char* folderPath() const;
+    inline const char* folderPath() const
+    {
+        return (this->_folderPath);
+    }
 
     /*
      * returns a new char array allocated in HEAP that contains the path of the given path by the current folder,
@@ -70,20 +69,12 @@ public:
     {
         return (this->equals(other._from));
     }
-    inline bool_t operator==(const User& other) const
-    {
-        return (this->equals(other));
-    }
-    inline bool_t operator!=(const User& other) const
-    {
-        return (this->equals(other));
-    }
 
     void print() const;
 
     inline int sendData(short msgCode, void* data, int datalen)
     {
-        return (sendMessage(&this->_from, msgCode, (char*)data, datalen));
+        return (sendMessage(&this->_from, msgCode, data, datalen));
     }
 
     inline int sendData(short msgCode)

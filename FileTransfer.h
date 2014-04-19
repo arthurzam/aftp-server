@@ -8,8 +8,6 @@
 #include "User.h"
 #include "server.h"
 
-
-
 #define FILE_BLOCK_SIZE 0x200 //=512
 
 class User;
@@ -23,7 +21,6 @@ private:
     } STATE;
 
     STATE state;
-    md5_context allFile;
     byte_t* blocks; // pointer to HEAP located array
     unsigned int blocksCount;
     FILE* file;
@@ -40,14 +37,8 @@ public:
 
     void askForBlock(unsigned int blockNum);
     void askForBlocksRange(unsigned int start, unsigned int end);
-    void finishDownload();
 
     void recieveBlock(char* buffer, int dataLen);
-    /*
-     * finished the upload with last check. return true if success.
-     * the function automatically sends the message code
-     */
-    bool_t finishUpload(char* Buffer);
 
     ~FileTransfer();
 };

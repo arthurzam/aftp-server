@@ -14,7 +14,6 @@ FileTransfer::FileTransfer(char* relativePath, User* user) // Download
     }
 
     this->state = STATE_DOWNLOAD;
-    md5_init(&this->allFile);
     this->user = user;
 
     fseek(this->file, 0, SEEK_END);
@@ -40,7 +39,6 @@ FileTransfer::FileTransfer(char* relativePath, User* user, unsigned int blocksCo
     }
 
     this->state = STATE_UPLOAD;
-    md5_init(&this->allFile);
     this->user = user;
     this->blocksCount = blocksCount;
     this->blocks = (byte_t*)malloc(blocksCount);
@@ -80,26 +78,8 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     }
     fseek(this->file, data->blockNum * FILE_BLOCK_SIZE, SEEK_SET);
     fwrite(data->dataFile, 1, data->size, this->file);
-    if(!this->blocks[data->blockNum])
-        md5_append(&this->allFile, data->dataFile, data->size);
     this->blocks[data->blockNum] = 1;
     this->user->sendData(200, &data->blockNum, sizeof(data->blockNum));
-}
-
-bool_t FileTransfer::finishUpload(char* Buffer)
-{
-    byte_t md5file[16];
-    md5_finish(&this->allFile, md5file);
-    if(memcmp(md5file, Buffer, 16)) // not equal
-    {
-        this->user->sendData(311);
-        return (FALSE);
-    }
-    else
-    {
-        this->user->sendData(200);
-        return (TRUE);
-    }
 }
 
 void FileTransfer::askForBlocksRange(unsigned int start, unsigned int end)
@@ -126,14 +106,5 @@ void FileTransfer::askForBlock(unsigned int blockNum)
     md5(buffer.data, buffer.size, buffer.md5);
     buffer.blockNum = blockNum;
     this->user->sendData(210, &buffer, 22 + buffer.size);
-    if(!this->blocks[blockNum])
-        md5_append(&this->allFile, buffer.data, buffer.size);
     this->blocks[blockNum] = 1;
-}
-
-void FileTransfer::finishDownload()
-{
-    byte_t md5file[16];
-    md5_finish(&this->allFile, md5file);
-    this->user->sendData(212, md5file, 16);
 }

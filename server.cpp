@@ -158,36 +158,26 @@ THREAD_RETURN_VALUE startServer(void* arg)
                 else
                     user->fileTransfer->recieveBlock(Buffer + 2, retval - 2);
                 break;
-            case 211: // finish of File Upload
-                if(!user->fileTransfer)
-                    sendMessage(&from, 300, NULL, 0);
-                else if(user->fileTransfer->finishUpload(Buffer + 2))
-                {
-                    delete user->fileTransfer;
-                    user->fileTransfer = NULL;
-                }
-                break;
-            case 212: // ask for block range
+            case 211: // ask for block range
                 if(!user->fileTransfer)
                     sendMessage(&from, 300, NULL, 0);
                 else
                     user->fileTransfer->askForBlocksRange(*((int*)(Buffer + 2)), *((int*)(Buffer + 6)));
                 break;
-            case 213: // ask for block
+            case 212: // ask for block
                 if(!user->fileTransfer)
                     sendMessage(&from, 300, NULL, 0);
                 else
                     user->fileTransfer->askForBlock(*((int*)(Buffer + 2)));
                 break;
-            case 214: // ask for md5 of read file
+            case 213: // finish file transfer
                 if(!user->fileTransfer)
                     sendMessage(&from, 300, NULL, 0);
                 else
                 {
-                    user->fileTransfer->finishDownload();
-                    // no matter if the user managed to download, we destroy the Transfer. The client should try again
                     delete user->fileTransfer;
                     user->fileTransfer = NULL;
+                    sendMessage(&from, 200, NULL, 0);
                 }
                 break;
             case 500: // info
@@ -214,7 +204,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
                 if(user->fileTransfer->isLoaded())
                 {
                     tempData.i = user->fileTransfer->getBlocksCount();
-                    sendMessage(&from, 200, (char*)&tempData.i, 4);
+                    sendMessage(&from, 200, &tempData.i, 4);
                 }
                 else
                 {
@@ -254,11 +244,11 @@ THREAD_RETURN_VALUE startServer(void* arg)
                 if(tempData.l == -1)
                     sendMessage(&from, 300, NULL, 0);
                 else
-                    sendMessage(&from, 200, (char*)&tempData.l, sizeof(long));
+                    sendMessage(&from, 200, &tempData.l, sizeof(long));
                 break;
             case 524: // get md5 of file
                 if(getMD5OfFile(Buffer + 2, user, tempData.md5))
-                    sendMessage(&from, 200, (char*)tempData.md5, MD5_RESULT_LENGTH);
+                    sendMessage(&from, 200, tempData.md5, MD5_RESULT_LENGTH);
                 else
                     sendMessage(&from, 300, NULL, 0);
                 break;

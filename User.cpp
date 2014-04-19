@@ -23,33 +23,11 @@ User::User(const struct sockaddr_in& from)
     this->fileTransfer = NULL;
 }
 
-User::User(const User& other)
-{
-    strcpy(this->_folderPath, other._folderPath);
-    memcpy(&(this->_from), &(other._from), sizeof(struct sockaddr_in));
-    this->_lastUse = time(NULL);
-    this->_logedIn = FALSE;
-    this->_timeout = FALSE;
-    this->_initialized = TRUE;
-    this->fileTransfer = NULL;
-}
-
 User::~User()
 {
     if(fileTransfer)
         delete fileTransfer;
     fileTransfer = NULL;
-}
-
-void User::reset(const struct sockaddr_in* from)
-{
-    this->_folderPath[0] = PATH_SEPERATOR_GOOD;
-    this->_folderPath[1] = 0;
-    memcpy(&(this->_from), from, sizeof(struct sockaddr_in));
-    this->_lastUse = time(NULL);
-    this->_logedIn = FALSE;
-    this->_timeout = FALSE;
-    this->_initialized = TRUE;
 }
 
 void User::resetTime()
@@ -141,31 +119,23 @@ bool_t User::isLoged() const
 
 bool_t User::timeout()
 {
+    const int USER_TIME_MSG_SEND = 50;
+    const int USER_TIME_REMOVE = 100;
     time_t now = time(NULL);
     double seconds = difftime(now, this->_lastUse);
     if(this->_timeout)
-    {
         return (seconds > USER_TIME_REMOVE);
-    }
-    else
+    else if (seconds > USER_TIME_MSG_SEND)
     {
-        if (seconds > USER_TIME_MSG_SEND)
-        {
-            sendData(900); // send timeout
-            this->_timeout = TRUE;
-        }
-        return (FALSE);
+        this->sendData(900); // send timeout
+        this->_timeout = TRUE;
     }
+    return (FALSE);
 }
 
 void User::logIn()
 {
     this->_logedIn = TRUE;
-}
-
-const char* User::folderPath() const
-{
-    return (this->_folderPath);
 }
 
 char* User::getRealFile(char* relativeFile, char* result)
