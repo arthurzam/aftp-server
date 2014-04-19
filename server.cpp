@@ -26,7 +26,6 @@ SOCKET sock;
 extern bool_t needExit;
 extern bool_t canExit;
 
-short getMsgCode(char* data, unsigned int datalen);
 THREAD_RETURN_VALUE userControl(void* arg);
 
 THREAD_RETURN_VALUE startServer(void* arg)
@@ -113,10 +112,10 @@ THREAD_RETURN_VALUE startServer(void* arg)
     while(!needExit)
     {
         retval = recvfrom(sock,Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
-        if (retval == SOCKET_ERROR || retval == 0)
+        if (retval == SOCKET_ERROR || retval < 2)
             continue;
         Buffer[retval] = 0;
-        msgCode = getMsgCode(Buffer, retval);
+        msgCode = *((short*)Buffer);
 
         if(!(user = listUsers->findUser(from)))
             user = (*listUsers)[listUsers->addUser(from)];
@@ -335,15 +334,6 @@ int sendMessage(struct sockaddr_in* to, short msgCode, void* data, int datalen)
     int retVal = sendto(sock, buffer, datalen + 2, 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
     lockSend = FALSE;
     return (retVal);
-}
-
-short getMsgCode(char* data, unsigned int datalen)
-{
-    short ret;
-    if(datalen < sizeof(ret))
-        return (-1);
-    memcpy(&ret, data, sizeof(ret));
-    return (ret);
 }
 
 THREAD_RETURN_VALUE userControl(void* arg)
