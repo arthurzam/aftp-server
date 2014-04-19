@@ -23,7 +23,7 @@ Login::Login(FILE* srcFile)
 
         this->restrictedFolders = NULL;
         this->restrictedFoldersCount = 0;
-        for(; i; i--)
+        for(; i; --i)
         {
             fgets(folder, FILENAME_MAX + 1, srcFile);
             this->addRestrictedFolder(folder);

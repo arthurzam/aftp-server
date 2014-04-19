@@ -119,7 +119,7 @@ void LoginDB::print() const
     int i = 1; // for human it is better to start with #1
     int j;
 
-    for(; temp; temp = temp->next, i++)
+    for(; temp; temp = temp->next, ++i)
     {
         printf("user #%d: {%s, ", i, temp->username);
 

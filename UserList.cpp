@@ -18,7 +18,7 @@ UserList::~UserList()
     while(this->head)
     {
         temp = this->head->next;
-        for(i = 0; i < USERS_IN_USERS_ARRAY && this->userCount > 0; i++)
+        for(i = 0; i < USERS_IN_USERS_ARRAY && this->userCount > 0; ++i)
             if(this->head->arr[i])
             {
                 delete this->head->arr[i];
@@ -75,7 +75,7 @@ int UserList::removeUser(const User* user)
     this->isSearching = TRUE;
     while(curr)
     {
-        for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
+        for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
             if(curr->arr[i] && curr->arr[i]->equals(*user))
             {
                 delete curr->arr[i];
@@ -107,7 +107,7 @@ int UserList::addUser(const struct sockaddr_in& user)
         if(!curr->isFull)
         {
             curr->isFull = TRUE;
-            for(i = 0; i < USERS_IN_USERS_ARRAY; i++) // find an empty spot on the current array
+            for(i = 0; i < USERS_IN_USERS_ARRAY; ++i) // find an empty spot on the current array
             {
                 if(!curr->arr[i]) // is empty (==NULL)
                 {
@@ -116,7 +116,7 @@ int UserList::addUser(const struct sockaddr_in& user)
                     break;
                 }
             }
-            for( ; i < USERS_IN_USERS_ARRAY; i++) // move through all other to check if there is another empty spot
+            for( ; i < USERS_IN_USERS_ARRAY; ++i) // move through all other to check if there is another empty spot
             {
                 if(!curr->arr[i]) // is empty?
                 {
@@ -152,7 +152,7 @@ int UserList::findIndexOfUser(const User &user) const
     this->isSearching = TRUE;
     while(curr)
     {
-        for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
+        for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
             if(curr->arr[i] && curr->arr[i]->equals(user))
             {
                 this->isSearching = FALSE;
@@ -172,7 +172,7 @@ User* UserList::findUser(const struct sockaddr_in& user) const
     this->isSearching = TRUE;
     while(curr)
     {
-        for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
+        for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
             if(curr->arr[i] && curr->arr[i]->equals(user))
             {
                 this->isSearching = FALSE;
@@ -190,7 +190,7 @@ ListNode* UserList::createNewNode()
     int i;
     result->isFull = FALSE;
     result->next = NULL;
-    for(i = 0; i < USERS_IN_USERS_ARRAY; i++)
+    for(i = 0; i < USERS_IN_USERS_ARRAY; ++i)
     {
         result->arr[i] = NULL;
     }
@@ -205,7 +205,7 @@ void UserList::userControl()
     if(this->userCount >= CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
         for(curr = this->head; curr; curr = curr->next)
         {
-            for (i = 0; i < USERS_IN_USERS_ARRAY; i++)
+            for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
                 while(this->isSearching);
             if(curr->arr[i] && curr->arr[i]->timeout())
             {

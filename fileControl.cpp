@@ -22,7 +22,7 @@ char* getRealDirectory(char* realativDirectory, char* result)
         realDirectory = (char*)malloc(FILENAME_MAX);
     int i;
     strcpy(realDirectory, SERVER_BASE_FOLDER);
-    for(i = 0; realativDirectory[i]; i++)
+    for(i = 0; realativDirectory[i]; ++i)
         if(realativDirectory[i] == PATH_SEPERATOR_BAD)
             realativDirectory[i] = PATH_SEPERATOR_GOOD;
     strcat(realDirectory, (*realativDirectory == PATH_SEPERATOR_GOOD ? realativDirectory + 1 : realativDirectory));

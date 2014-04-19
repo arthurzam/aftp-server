@@ -80,7 +80,7 @@ bool_t User::moveFolder(char* path)
     char newStr[FILENAME_MAX] = {PATH_SEPERATOR_GOOD, 0};
 
     // replace all \ into /
-    for(i = 0; path[i] != 0; i++)
+    for(i = 0; path[i] != 0; ++i)
     {
         if(path[i] == PATH_SEPERATOR_BAD)
             path[i] = PATH_SEPERATOR_GOOD;
@@ -108,7 +108,7 @@ _check_path:
     {
         if(newStr[1] == 0)
             return (FALSE); // trying to move back when we are already on root
-        for(i = 0; newStr[i] != 0; i++)
+        for(i = 0; newStr[i] != 0; ++i)
             if(newStr[i] == PATH_SEPERATOR_GOOD)
                 last = i; // find the last occurrence of '/'
         newStr[last] = 0;
@@ -118,7 +118,7 @@ _check_path:
         goto _check_path;
     }
 
-    for(i = 0; path[i] != 0 && path[i] != '/'; i++) ; // find the first occurrence of '/'
+    for(i = 0; path[i] != 0 && path[i] != '/'; ++i) ; // find the first occurrence of '/'
     last = path[i];
     path[i] = 0;
     j = strlen(newStr);

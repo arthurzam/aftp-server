@@ -104,7 +104,7 @@ bool_t FileTransfer::finishUpload(char* Buffer)
 
 void FileTransfer::askForBlocksRange(unsigned int start, unsigned int end)
 {
-    for(; start < end; start++)
+    for(; start < end; ++start)
         askForBlock(start);
 }
 
