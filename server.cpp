@@ -104,7 +104,6 @@ THREAD_RETURN_VALUE startServer(void* arg)
     if(listUsers)
         delete listUsers;
     listUsers = new UserList();
-    printf("\n[I'm working on port %d]\n" ,DEFAULT_PORT);
 #ifdef WIN32
     _beginthread(userControl, 0, NULL);
 #else
@@ -114,13 +113,11 @@ THREAD_RETURN_VALUE startServer(void* arg)
     while(!needExit)
     {
         retval = recvfrom(sock,Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
-        printf("[Server: Received datagram from %s:%d]\n", inet_ntoa(from.sin_addr), from.sin_port);
         if (retval == SOCKET_ERROR || retval == 0)
             continue;
         User tempUser(&from);
         Buffer[retval] = 0;
         msgCode = getMsgCode(Buffer, retval);
-        printf("[msg code is %04x]\n", msgCode);
 
         if(!(user = listUsers->findUser(tempUser)))
             user = (*listUsers)[listUsers->addUser(tempUser)];
@@ -133,10 +130,6 @@ THREAD_RETURN_VALUE startServer(void* arg)
             sendMessage(&from, 200, NULL, 0);
             printf("[user %s:%d removed]\n", inet_ntoa(from.sin_addr), from.sin_port);
             continue;
-        }
-        else if(msgCode == 0) //TODO: remove at end <=> exit command when no multiple threading
-        {
-            needExit = TRUE;
         }
         else if(msgCode != 100 && !user->isLoged())
         {
@@ -341,7 +334,6 @@ int sendMessage(struct sockaddr_in* to, short msgCode, void* data, int datalen)
 
     while (lockSend) ;
     lockSend = TRUE;
-    printf("send message %hd, %s\n", msgCode, data);
     int retVal = sendto(sock, buffer, datalen + 2, 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
     lockSend = FALSE;
     return (retVal);
