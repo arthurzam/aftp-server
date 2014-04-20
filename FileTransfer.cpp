@@ -15,6 +15,7 @@ FileTransfer::FileTransfer(char* relativePath, User* user) // Download
 
     this->state = STATE_DOWNLOAD;
     this->user = user;
+    this->currentCursorBlock = 0;
 
     fseek(this->file, 0, SEEK_END);
     long temp = ftell(this->file);
@@ -41,6 +42,7 @@ FileTransfer::FileTransfer(char* relativePath, User* user, unsigned int blocksCo
     this->state = STATE_UPLOAD;
     this->user = user;
     this->blocksCount = blocksCount;
+    this->currentCursorBlock = 0;
     this->blocks = (byte_t*)malloc(blocksCount);
     memset(this->blocks, 0, blocksCount);
 }
@@ -76,8 +78,10 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
         this->user->sendData(310);
         return;
     }
-    fseek(this->file, data->blockNum * FILE_BLOCK_SIZE, SEEK_SET);
+    if(this->currentCursorBlock != data->blockNum)
+        fseek(this->file, (data->blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
     fwrite(data->dataFile, 1, data->size, this->file);
+    this->currentCursorBlock = data->blockNum + 1;
     this->blocks[data->blockNum] = 1;
     this->user->sendData(200, &data->blockNum, sizeof(data->blockNum));
 }
@@ -101,8 +105,10 @@ void FileTransfer::askForBlock(unsigned int blockNum)
         byte_t md5[16];
         byte_t data[FILE_BLOCK_SIZE];
     } buffer;
-    fseek(this->file, blockNum * FILE_BLOCK_SIZE, SEEK_SET);
+    if(this->currentCursorBlock != blockNum)
+        fseek(this->file, (blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
     buffer.size = fread(buffer.data, 1, FILE_BLOCK_SIZE, this->file);
+    this->currentCursorBlock = blockNum + 1;
     md5(buffer.data, buffer.size, buffer.md5);
     buffer.blockNum = blockNum;
     this->user->sendData(210, &buffer, 22 + buffer.size);

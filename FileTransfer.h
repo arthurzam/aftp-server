@@ -23,6 +23,7 @@ private:
     STATE state;
     byte_t* blocks; // pointer to HEAP located array
     unsigned int blocksCount;
+    unsigned int currentCursorBlock; // the block where the file's cursor is located
     FILE* file;
     User* user; // just a pointer
 public:
