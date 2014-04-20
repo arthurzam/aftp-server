@@ -29,6 +29,18 @@ void stopServer()
         delete listUsers;
 }
 
+void startServerThread(LoginDB* userDB)
+{
+    needExit = FALSE;
+    canExit = FALSE;
+#ifdef WIN32
+    _beginthread(startServer, 0, &userDB);
+#else
+    pthread_t thread;
+    pthread_create(&thread, NULL, startServer, userDB);
+#endif
+}
+
 #ifdef WIN32
 BOOL WINAPI signalHandler(DWORD signum)
 #else
@@ -102,14 +114,7 @@ int main(int argc, char **argv)
             }
             else if(!strcmp(argv[i], "-a"))
             {
-                needExit = FALSE;
-                canExit = FALSE;
-#ifdef WIN32
-                _beginthread(startServer, 0, &userDB);
-#else
-                pthread_t thread;
-                pthread_create(&thread, NULL, startServer, &userDB);
-#endif
+                startServerThread(&userDB);
                 serverRunning = TRUE;
             }
         }
@@ -150,15 +155,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                needExit = FALSE;
-                canExit = FALSE;
-                //startServer(&userDB); //F_IX: remove
-#ifdef WIN32
-                _beginthread(startServer, 0, &userDB);
-#else
-                pthread_t thread;
-                pthread_create(&thread, NULL, startServer, &userDB);
-#endif
+                startServerThread(&userDB);
                 serverRunning = TRUE;
             }
             break;

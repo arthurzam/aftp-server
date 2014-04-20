@@ -141,17 +141,16 @@ void User::logIn()
 char* User::getRealFile(char* relativeFile, char* result)
 {
     char backup[FILENAME_MAX];
-    char* res;
+    char* res = NULL;
     strcpy(backup, this->_folderPath);
     if(!this->moveFolder(relativeFile))
     {
-        res = NULL;
         goto _exit;
     }
     res = getRealDirectory(this->_folderPath, result);
 _exit:
     strcpy(this->_folderPath, backup);
-    return (result ? NULL : res);
+    return (res);
 }
 
 void User::print() const

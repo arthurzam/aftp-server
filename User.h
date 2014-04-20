@@ -49,7 +49,6 @@ public:
 
     /*
      * returns a new char array allocated in HEAP that contains the path of the given path by the current folder,
-     * but still don't contain the real path on hard disk (without SERVER_BASE_FOLDER)
      */
     char* getRealFile(char* relativeFile, char* result);
 
