@@ -15,6 +15,7 @@
 
 bool_t needExit;
 bool_t canExit;
+unsigned short port = DEFAULT_PORT;
 extern UserList* listUsers;
 
 void stopServer()
@@ -79,11 +80,22 @@ int main(int argc, char **argv)
             {
                 userDB.load(argv[++i]);
             }
+            else if(!strcmp(argv[i], "-p") && i + 1 < argc)
+            {
+                data.choice = atoi(argv[++i]);
+                if(data.choice > 0xFFFF)
+                {
+                    fprintf(stderr, "Bad port specified!\n");
+                    return (0);
+                }
+                port = (short)data.choice;
+            }
             else if(!strcmp(argv[i], "-h"))
             {
                 printf("This is the AFTP server\n");
                 printf("  usage:\n");
-                printf("    -db [path]   load the Login database from this file\n");
+                printf("    -db (path)   load the Login database from this file\n");
+                printf("    -p  (port)   the port on which the server should listen\n");
                 printf("    -h           show this text\n");
                 printf("    -a           auto start server\n");
                 return (0);

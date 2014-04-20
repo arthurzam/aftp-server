@@ -25,6 +25,7 @@ SOCKET sock;
 
 extern bool_t needExit;
 extern bool_t canExit;
+extern unsigned short port;
 
 THREAD_RETURN_VALUE userControl(void* arg);
 
@@ -32,7 +33,6 @@ THREAD_RETURN_VALUE startServer(void* arg)
 {
     LoginDB* usersDB = (LoginDB*)arg;
     char Buffer[BUFFER_SERVER_SIZE];
-    unsigned short port = DEFAULT_PORT;
     int retval;
     User* user;
     struct sockaddr_in server;
