@@ -29,7 +29,7 @@ bool_t createDirectory(char* directory, User* user);
 bool_t moveFile  (char* from, char* to, User* user);
 bool_t copyFile  (char* from, char* to, User* user);
 bool_t removeFile(char* path, User* user);
-long getFilesize(char* path, User* user);
+unsigned long long int getFilesize(char* path, User* user);
 bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH]);
 
 #define moveDirectory moveFile

@@ -49,7 +49,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
         } src_dst;
         char* path;
         int i;
-        long l;
+        unsigned long long int l;
         byte_t md5[MD5_RESULT_LENGTH];
         struct {
             char* username;
@@ -244,7 +244,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
                 if(tempData.l == -1)
                     sendMessage(&from, 300, NULL, 0);
                 else
-                    sendMessage(&from, 200, &tempData.l, sizeof(long));
+                    sendMessage(&from, 200, &tempData.l, sizeof(unsigned long long int));
                 break;
             case 524: // get md5 of file
                 if(getMD5OfFile(Buffer + 2, user, tempData.md5))

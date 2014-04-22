@@ -161,7 +161,7 @@ bool_t removeFile(char* path, User* user)
     return (remove(src) == 0);
 }
 
-long getFilesize(char* path, User* user)
+unsigned long long int getFilesize(char* path, User* user)
 {
     char src[FILENAME_MAX];
     user->getRealFile(path, src);
