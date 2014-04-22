@@ -157,6 +157,7 @@ void User::print() const
 {
     if(this->_initialized)
     {
-        printf("{<%s:%d>, %s}\n", inet_ntoa(this->_from.sin_addr), this->_from.sin_port, this->_folderPath);
+        printf("{<%s:%d>, %s}\n", inet_ntoa(this->_from.sin_addr), this->_from.sin_port, (this->_folderPath[0] ? this->_folderPath : "/"));
+
     }
 }

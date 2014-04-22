@@ -100,6 +100,8 @@ int UserList::addUser(const struct sockaddr_in& user)
         this->head = createNewNode();
         this->head->arr[0] = new User(user);
         ++this->nodesCount;
+        ++this->userCount;
+        this->isSearching = FALSE;
         return (0);
     }
     while(curr) // move through all nodes
