@@ -1,6 +1,6 @@
 #include "Login.h"
 
-Login::Login(const char* username, const byte_t* password, LOGIN_ACCESS state)
+Login::Login(const char* username, const byte_t* password, byte_t state)
 {
     strcpy(this->username, username);
     memcpy(this->password, password, MD5_RESULT_LENGTH);
@@ -8,6 +8,7 @@ Login::Login(const char* username, const byte_t* password, LOGIN_ACCESS state)
     this->restrictedFolders = NULL;
     this->restrictedFoldersCount = 0;
     this->isInit = TRUE;
+    this->_next = NULL;
 }
 
 Login::Login(FILE* srcFile)
@@ -16,10 +17,11 @@ Login::Login(FILE* srcFile)
     {
         char folder[FILENAME_MAX + 1];
         byte_t i;
-        fread(this->username, 1, USERNAME_MAX_LENGTH, srcFile);
-        fread(this->password, 1, MD5_RESULT_LENGTH, srcFile);
-        fread(&this->state, 1, sizeof(this->state), srcFile);
-        fread(&i, 1, sizeof(i), srcFile);
+        if(fread(this->username, 1, USERNAME_MAX_LENGTH, srcFile) < USERNAME_MAX_LENGTH ||
+           fread(this->password, 1, MD5_RESULT_LENGTH, srcFile) < MD5_RESULT_LENGTH ||
+           fread(&this->state, 1, sizeof(this->state), srcFile) < sizeof(this->state) ||
+           fread(&i, 1, sizeof(i), srcFile) < sizeof(i))
+            goto _bad;
 
         this->restrictedFolders = NULL;
         this->restrictedFoldersCount = 0;
@@ -32,6 +34,7 @@ Login::Login(FILE* srcFile)
     }
     else
     {
+_bad:
         this->password[0] = 0;
         this->restrictedFolders = NULL;
         this->state = LOGIN_ACCESS_READ_ONLY;
@@ -39,6 +42,7 @@ Login::Login(FILE* srcFile)
         this->restrictedFoldersCount = 0;
         this->isInit = FALSE;
     }
+    this->_next = NULL;
 }
 
 Login::~Login()
@@ -50,6 +54,9 @@ Login::~Login()
         this->restrictedFolders = this->restrictedFolders->next;
         delete temp;
     }
+    if(this->_next)
+        delete this->_next;
+    this->_next = NULL;
 }
 
 bool_t Login::check(const char* username, const byte_t* password) const
@@ -106,4 +113,31 @@ bool_t Login::save(FILE* dstFile) const
         fputc('\n', dstFile);
     }
     return (TRUE);
+}
+
+void Login::print() const
+{
+    int i;
+    folder* temp;
+    printf("{%s, ", this->username);
+    for(i = 0; i < MD5_RESULT_LENGTH; ++i)
+        printf("%02x", this->password[i]);
+    switch(this->state)
+    {
+        case LOGIN_ACCESS_ADMIN: printf(", admin"); break;
+        case LOGIN_ACCESS_ALL: printf(", all"); break;
+        case LOGIN_ACCESS_READ_ONLY: printf(", read only"); break;
+        case LOGIN_ACCESS_LIMITED: printf(", limited"); break;
+        case LOGIN_ACCESS_LIMITED_READ_ONLY: printf(", limited read only"); break;
+    }
+    if(this->restrictedFolders)
+    {
+        printf(", [");
+        for(temp = this->restrictedFolders; temp; temp = temp->next)
+        {
+            printf("%s, ", temp->folder);
+        }
+        printf("\b\b]"); // remove last ", "
+    }
+    printf("}\n");
 }

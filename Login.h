@@ -32,8 +32,9 @@ private:
     folder* restrictedFolders;
     byte_t restrictedFoldersCount;
     bool_t isInit;
+    Login* _next;
 public:
-    Login(const char* username, const byte_t* password, LOGIN_ACCESS state);
+    Login(const char* username, const byte_t* password, byte_t state);
     Login(const Login& other);
     Login(FILE* srcFile);
     ~Login();
@@ -47,6 +48,17 @@ public:
     bool_t isRestrictedFolder(const char* path) const;
 
     bool_t save(FILE* dstFile) const;
+    void print() const;
+
+    bool_t isLoaded() const
+    {
+        return (this->isInit);
+    }
+
+    Login*& next()
+    {
+        return (this->_next);
+    }
 };
 
 #endif /* LOGIN_H_ */

@@ -16,21 +16,19 @@ LoginDB::LoginDB(const char* filePath)
 void LoginDB::load(const char* filePath)
 {
     FILE* src = fopen(filePath, "rb");
-    login_t* temp;
-    login_t* last = this->head;
+    Login* temp;
+    Login* last = this->head;
     if(last) // we need to put the last member in last
-        while(last->next)
-            last = last->next;
+        while(last->next())
+            last = last->next();
     if(!src)
         return;
     while(!feof(src))
     {
-        temp = (login_t*)malloc(sizeof(login_t));
-        temp->next = NULL;
-        if(fread(temp->username, 1, USERNAME_MAX_LENGTH, src) < USERNAME_MAX_LENGTH ||
-                fread(temp->password, 1, MD5_RESULT_LENGTH, src) < MD5_RESULT_LENGTH)
+        temp = new Login(src);
+        if(!temp->isLoaded())
         {
-            free(temp);
+            delete temp;
             break;
         }
         if(!this->head)
@@ -40,7 +38,7 @@ void LoginDB::load(const char* filePath)
         }
         else
         {
-            last->next = temp;
+            last->next() = temp;
             last = temp;
         }
         this->count++;
@@ -48,32 +46,31 @@ void LoginDB::load(const char* filePath)
     fclose(src);
 }
 
-void LoginDB::add(const char* username, const char* password)
+void LoginDB::add(const char* username, const char* password, byte_t state)
 {
-    login_t* curr = this->head;
-    login_t* newOne = (login_t*)malloc(sizeof(login_t));
-    strcpy(newOne->username, username);
-    md5((byte_t*)password, strlen(password), newOne->password);
-    newOne->next = NULL;
+    byte_t md5Res[16];
+    md5((byte_t*)password, strlen(password), md5Res);
+    Login* curr = this->head;
+    Login* newOne = new Login(username, md5Res, state);
     if(!curr)
     {
         this->head = newOne;
         this->count++;
         return;
     }
-    while(curr->next)
-        curr = curr->next;
-    curr->next = newOne;
+    while(curr->next())
+        curr = curr->next();
+    curr->next() = newOne;
 }
 
 bool_t LoginDB::check(const char* username, const byte_t* passwordMD5) const
 {
-    login_t* curr = this->head;
+    Login* curr = this->head;
     while(curr)
     {
-        if(!(memcmp(curr->password, passwordMD5, MD5_RESULT_LENGTH) || strcmp(curr->username, username)))
+        if(curr->check(username, passwordMD5))
             return (TRUE);
-        curr = curr->next;
+        curr = curr->next();
     }
     return (FALSE);
 }
@@ -85,12 +82,11 @@ bool_t LoginDB::save(const char* path) const
     FILE* dst = fopen(path, "wb");
     if(!dst)
         return (FALSE);
-    login_t* curr = this->head;
+    Login* curr = this->head;
     while(curr)
     {
-        fwrite(curr->username, 1, USERNAME_MAX_LENGTH, dst);
-        fwrite(curr->password, 1, MD5_RESULT_LENGTH, dst);
-        curr = curr->next;
+        curr->save(dst);
+        curr = curr->next();
     }
     fclose(dst);
     return (TRUE);
@@ -98,12 +94,9 @@ bool_t LoginDB::save(const char* path) const
 
 LoginDB::~LoginDB()
 {
-    login_t* temp = NULL;
-    while(this->head)
+    if(this->head)
     {
-        temp = this->head->next;
-        free(this->head);
-        this->head = temp;
+        delete (this->head);
     }
     this->head = NULL;
 }
@@ -115,17 +108,12 @@ bool_t LoginDB::isEmpty() const
 
 void LoginDB::print() const
 {
-    login_t* temp = this->head;
+    Login* temp = this->head;
     int i = 1; // for human it is better to start with #1
-    int j;
 
-    for(; temp; temp = temp->next, ++i)
+    for(; temp; temp = temp->next(), ++i)
     {
-        printf("user #%d: {%s, ", i, temp->username);
-
-        for(j = 0; j < MD5_RESULT_LENGTH; j++)
-            printf("%02x", temp->password[j]);
-
-        printf(" }\n");
+        printf("user #%d: ", i);
+        temp->print();
     }
 }

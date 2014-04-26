@@ -164,7 +164,7 @@ int main(int argc, char **argv)
             scanf("%s", data.user.username);
             printf("password: ");
             scanf("%s", data.user.password);
-            userDB.add(data.user.username, data.user.password);
+            userDB.add(data.user.username, data.user.password, 0);
             clearScreen();
             printf("added\n");
             break;
