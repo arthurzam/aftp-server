@@ -38,15 +38,13 @@ void User::resetTime()
 
 bool_t User::equals(const struct sockaddr_in& other) const
 {
-    if(other.sin_port != this->_from.sin_port)
-        return (FALSE);
+    return (other.sin_port == this->_from.sin_port &&
 #ifdef WIN32
-    if(other.sin_addr.S_un.S_addr != this->_from.sin_addr.S_un.S_addr)
+        other.sin_addr.S_un.S_addr == this->_from.sin_addr.S_un.S_addr
 #else
-    if(other.sin_addr.s_addr != this->_from.sin_addr.s_addr)
+        other.sin_addr.s_addr == this->_from.sin_addr.s_addr
 #endif
-        return (FALSE);
-    return (TRUE);
+        );
 }
 
 bool_t User::moveFolder(char* path)
