@@ -19,26 +19,39 @@ using namespace std;
 #include <unistd.h>
 #endif
 
-bool_t isDirectory(char* directory);
+typedef struct{
+    bool_t isLoaded;
+    User* user;
+    union {
+        char path[FILENAME_MAX];
+        struct{
+            char src[FILENAME_MAX];
+            char dst[FILENAME_MAX];
+        } path2;
+    } data;
+} fsData;
+
+void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* user);
+
 /*
  * returns the real folder of the given path, in an allocated char array
  * for example, from realativDirectory=/aaa\a will return {BASE_FOLDER}/aaa/a
  * if result is given, the result would be copied into the array and return NULL in success
  */
 char* getRealDirectory(char* realativDirectory, char* result);
+bool_t isDirectory(char* directory);
+bool_t isFileExists(char* path);
+
 bool_t getContentDirectory(char* directory, User* user);
 bool_t createDirectory(char* directory, User* user);
+#define moveDirectory moveFile
+bool_t removeFolder(char* path, User* user);
+bool_t copyFolder(char* from, char* to, User* user);
 
 bool_t moveFile  (char* from, char* to, User* user);
 bool_t copyFile  (char* from, char* to, User* user);
 bool_t removeFile(char* path, User* user);
 unsigned long long int getFilesize(char* path, User* user);
 bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH]);
-
-#define moveDirectory moveFile
-bool_t removeFolder(char* path, User* user);
-bool_t copyFolder(char* from, char* to, User* user);
-
-bool_t isFileExists(char* path);
 
 #endif

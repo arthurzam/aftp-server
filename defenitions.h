@@ -32,10 +32,8 @@ typedef int socklen_t;
 #define PATH_SEPERATOR_BAD  '/'
 #define PATH_SEPERATOR_GOOD '\\'
 #define CLEAR_SCREEN "cls"
-#define THREAD_RETURN_VALUE void
 typedef void threadReturnValue;
 #else
-#include <sys/socket.h>
 #define SERVER_BASE_FOLDER "/opt/server/"
 #define PATH_SEPERATOR_BAD  '\\'
 #define PATH_SEPERATOR_GOOD '/'

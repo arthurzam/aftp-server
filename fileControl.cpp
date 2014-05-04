@@ -13,6 +13,19 @@ bool_t isDirectory(char* directory)
     return (TRUE);
 }
 
+void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* user)
+{
+    data->isLoaded = FALSE;
+    data->user = user;
+#ifdef WIN32
+    _beginthread(function, 0, NULL);
+#else
+    pthread_t thread;
+    pthread_create(&thread, NULL, function, NULL);
+#endif
+    while(!data->isLoaded);
+}
+
 char* getRealDirectory(char* realativDirectory, char* result)
 {
     char* realDirectory;
