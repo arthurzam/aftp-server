@@ -119,39 +119,22 @@ bool_t moveFile(char* from, char* to, User* user)
 
 bool_t copyFile(char* from, char* to, User* user)
 {
-    bool_t flag = TRUE;
     char srcS[FILENAME_MAX], dstS[FILENAME_MAX];
     user->getRealFile(from, srcS);
     user->getRealFile(to, dstS);
 #ifdef WIN32
-    flag = CopyFileA(srcS, dstS, 0);
+    return (CopyFileA(srcS, dstS, 0));
 #else
-    char buffer[0x100];
-    FILE* src = fopen(srcS, "rb");
-    FILE* dst = NULL;
-    int i;
-
-    if(!src)
-    {
-        flag = FALSE;
-        goto _exit;
-    }
-    dst = fopen(dstS, "wb");
-
-    if(!dst)
-    {
-        flag = FALSE;
-        goto _exit;
-    }
-
-    while ((i = fread(buffer, 0x100, 1, src)))
-        fwrite(buffer, i, 1, dst);
-
-_exit:
-    fclose(dst);
-    fclose(src);
-#endif
+    bool_t flag = TRUE;
+    int src = open(srcS, O_RDONLY, 0);
+    int dst = open(dstS, O_WRONLY | O_CREAT, 0644);
+    struct stat stat_source;
+    fstat(src, &stat_source);
+    flag = (sendfile(dst, src, 0, stat_source.st_size) == stat_source.st_size);
+    close(dst);
+    close(src);
     return (flag);
+#endif
 }
 
 bool_t removeFile(char* path, User* user)

@@ -12,8 +12,11 @@ using namespace std;
 #ifdef WIN32
 #include <windows.h>
 #else
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
+#include <unistd.h>
 #endif
 
 bool_t isDirectory(char* directory);

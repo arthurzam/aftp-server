@@ -241,7 +241,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
                 break;
             case 523: // get file size
                 tempData.l = getFilesize(Buffer + 2, user);
-                if(tempData.l == -1)
+                if(tempData.l == (unsigned long long int)-1)
                     sendMessage(&from, 300, NULL, 0);
                 else
                     sendMessage(&from, 200, &tempData.l, sizeof(unsigned long long int));
