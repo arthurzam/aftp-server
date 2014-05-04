@@ -57,4 +57,5 @@ Client Messages:
 533 - move directory
 534 - copy directory
 535 - get contents of directory {[code][path]}
+536 - get current location
    

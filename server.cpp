@@ -256,7 +256,7 @@ threadReturnValue startServer(void* arg)
                 if(!user->moveFolder(Buffer + 2))
                     sendMessage(&from, 300, NULL, 0);
                 else
-                    sendMessage(&from, 200, (char*)user->folderPath(), strlen(user->folderPath()));
+                    sendMessage(&from, 200, NULL, 0);
                 break;
             case 531: // create directory
                 if(createDirectory(Buffer + 2, user))
@@ -286,6 +286,12 @@ threadReturnValue startServer(void* arg)
                 else
                     sendMessage(&from, 300, NULL, 0);
                 break;
+            case 536:
+                if(user->folderPath()[0])
+                    sendMessage(&from, 200, user->folderPath(), strlen(user->folderPath()));
+                else
+                    sendMessage(&from, 200, (char*)"/", 1);
+                break;
             default:
                 sendMessage(&from, 391, (char*)"unknown command", 15);
                 break;
@@ -308,7 +314,7 @@ _errorExit:
 #endif
 }
 
-int sendMessage(struct sockaddr_in* to, short msgCode, void* data, int datalen)
+int sendMessage(struct sockaddr_in* to, short msgCode, const void* data, int datalen)
 {
     static bool_t lockSend = FALSE; // mini mutex
 
