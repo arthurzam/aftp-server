@@ -208,12 +208,7 @@ bool_t removeFolder(char* path, User* user)
     const int baseCommandLen = 9;
 #endif
     user->getRealFile(path, command + baseCommandLen); // put the full path in the command buffer
-    if (!isDirectory(command + baseCommandLen))
-        return (FALSE);
-    system (command);
-    if (isDirectory(command + baseCommandLen))
-        return (FALSE);
-    return (TRUE);
+    return (system (command) == 0);
 }
 
 bool_t copyFolder(char* from, char* to, User* user)
@@ -227,16 +222,10 @@ bool_t copyFolder(char* from, char* to, User* user)
 #endif
     int i;
     user->getRealFile(from, command + baseCommandLen);
-    if(!isDirectory(command + baseCommandLen))
-        return (FALSE);
     i = strlen(command);
     command[i++] = ' ';
     user->getRealFile(to, command + i);
-    if (isDirectory(command + i))
-        return (FALSE);
-    system (command);
-    command[i - 1] = 0;
-    return (isDirectory(command + i)); // did create directory?
+    return (system (command) == 0);
 }
 
 bool_t isFileExists(char* path)
