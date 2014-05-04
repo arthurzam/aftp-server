@@ -27,20 +27,20 @@ typedef unsigned char byte_t;
 #endif
 
 #ifdef WIN32
-typedef int from_len_t;
+typedef int socklen_t;
 #define SERVER_BASE_FOLDER "C:\\server\\"
 #define PATH_SEPERATOR_BAD  '/'
 #define PATH_SEPERATOR_GOOD '\\'
 #define CLEAR_SCREEN "cls"
 #define THREAD_RETURN_VALUE void
+typedef void threadReturnValue;
 #else
 #include <sys/socket.h>
-typedef socklen_t from_len_t;
 #define SERVER_BASE_FOLDER "/opt/server/"
 #define PATH_SEPERATOR_BAD  '\\'
 #define PATH_SEPERATOR_GOOD '/'
 #define CLEAR_SCREEN "clear"
-#define THREAD_RETURN_VALUE void*
+typedef void* threadReturnValue;
 #endif
 
 #endif

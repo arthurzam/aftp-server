@@ -13,7 +13,7 @@
 #define BUFFER_SERVER_SIZE 0x400 // = 1024
 #define DEFAULT_PORT 7777
 
-THREAD_RETURN_VALUE startServer(void*);
+threadReturnValue startServer(void*);
 int sendMessage(struct sockaddr_in* to, short msgCode, void* data, int datalen);
 
 

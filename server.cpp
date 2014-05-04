@@ -27,9 +27,9 @@ extern bool_t needExit;
 extern bool_t canExit;
 extern unsigned short port;
 
-THREAD_RETURN_VALUE userControl(void* arg);
+threadReturnValue userControl(void* arg);
 
-THREAD_RETURN_VALUE startServer(void* arg)
+threadReturnValue startServer(void* arg)
 {
     LoginDB* usersDB = (LoginDB*)arg;
     char Buffer[BUFFER_SERVER_SIZE];
@@ -38,7 +38,7 @@ THREAD_RETURN_VALUE startServer(void* arg)
     struct sockaddr_in server;
     struct sockaddr_in from;
     short msgCode;
-    from_len_t fromlen = sizeof(from);
+    socklen_t fromlen = sizeof(from);
 
     union {
         struct {
@@ -326,7 +326,7 @@ int sendMessage(struct sockaddr_in* to, short msgCode, void* data, int datalen)
     return (retVal);
 }
 
-THREAD_RETURN_VALUE userControl(void* arg)
+threadReturnValue userControl(void* arg)
 {
 #ifdef WIN32
     const int WAIT_TIME = 50000; //mili-seconds
