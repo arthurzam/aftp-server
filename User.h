@@ -27,6 +27,17 @@ private:
     bool_t _timeout;
     bool_t _logedIn;
     bool_t _initialized;
+
+    /*
+     * changes the folder path using the given path (cdPath).
+     * the starting position should be in destination, and the result would be there.
+     * moves through every path between slash.
+     * possible bad parts of path:
+     *    two slash one after another
+     *    move back (..) when already on root
+     * return (TRUE) if everything is OK, and (FALSE) if error.
+     */
+    static bool_t parseChangeDir(char* cdPath, char* destination);
 public:
     FileTransfer* fileTransfer;
     User();
@@ -50,18 +61,11 @@ public:
     /*
      * returns a new char array allocated in HEAP that contains the path of the given path by the current folder,
      */
-    char* getRealFile(char* relativeFile, char* result);
-
-    /*
-     * changes the folder path using the given path.
-     * moves through every path between slash.
-     * Therefore if there is suddenly a bad part of path, all the parts until the bad part.
-     * possible bad parts of path:
-     *    two slash one after another
-     *    move back (..) when already on root
-     * return (TRUE) if everything is OK, and (FALSE) if error.
-     */
-    bool_t moveFolder(char* path);
+    char* getRealFile(char* relativeFile, char* result) const;
+    inline bool_t moveFolder(char* path)
+    {
+        return (User::parseChangeDir(path, this->_folderPath));
+    }
 
     bool_t equals(const struct sockaddr_in& other) const;
     inline bool_t equals(const User& other) const
