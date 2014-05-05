@@ -47,13 +47,14 @@ bool_t User::equals(const struct sockaddr_in& other) const
         );
 }
 
-bool_t User::moveFolder(char* path)
+bool_t User::parseChangeDir(char* path, char* dst)
 {
     if(*path == 0)
         return (TRUE);
     int i, j;
     int last = -1;
-    char newStr[FILENAME_MAX] = {PATH_SEPERATOR_GOOD, 0};
+    char newStr[FILENAME_MAX];
+    newStr[0] = 0;
 
     // replace all \ into /
     for(i = 0; path[i] != 0; ++i)
@@ -68,19 +69,19 @@ bool_t User::moveFolder(char* path)
 
     if(*path == PATH_SEPERATOR_GOOD) // for example /path/folder => just replace the current
     {
-        strcpy(this->_folderPath, path);
+        strcpy(dst, path);
         return (TRUE);
     }
 
-    if(this->_folderPath) // we have previous path
+    if(*dst) // we have previous path
     {
-        strcpy(newStr, this->_folderPath);
+        strcpy(newStr, dst);
     }
 
 _check_path:
     if(!*path) // path has ended
         goto _fin;
-    if(*path == '.' && path[1] == '.')
+    if(*path == '.' && path[1] == '.') // ../
     {
         if(newStr[1] == 0)
             return (FALSE); // trying to move back when we are already on root
@@ -106,7 +107,7 @@ _check_path:
         goto _check_path;
 
 _fin:
-    strcpy(this->_folderPath, newStr);
+    strcpy(dst, newStr);
     return (TRUE);
 }
 
@@ -136,18 +137,17 @@ void User::logIn()
     this->_logedIn = TRUE;
 }
 
-char* User::getRealFile(char* relativeFile, char* result)
+char* User::getRealFile(char* relativeFile, char* result) const
 {
-    char backup[FILENAME_MAX];
+    char dst[FILENAME_MAX];
     char* res = NULL;
-    strcpy(backup, this->_folderPath);
-    if(!this->moveFolder(relativeFile))
+    strcpy(dst, this->_folderPath);
+    if(!User::parseChangeDir(relativeFile, dst))
     {
         goto _exit;
     }
-    res = getRealDirectory(this->_folderPath, result);
+    res = getRealDirectory(dst, result);
 _exit:
-    strcpy(this->_folderPath, backup);
     return (res);
 }
 
