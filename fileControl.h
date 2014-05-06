@@ -23,10 +23,10 @@ typedef struct{
     bool_t isLoaded;
     User* user;
     union {
-        char path[FILENAME_MAX];
+        char* path;
         struct{
-            char src[FILENAME_MAX];
-            char dst[FILENAME_MAX];
+            char* src;
+            char* dst;
         } path2;
     } data;
 } fsData;
@@ -45,13 +45,13 @@ bool_t isFileExists(char* path);
 bool_t getContentDirectory(char* directory, User* user);
 bool_t createDirectory(char* directory, User* user);
 #define moveDirectory moveFile
-bool_t removeFolder(char* path, User* user);
+threadReturnValue removeFolder(void* data);
 bool_t copyFolder(char* from, char* to, User* user);
 
-bool_t moveFile  (char* from, char* to, User* user);
-bool_t copyFile  (char* from, char* to, User* user);
-bool_t removeFile(char* path, User* user);
+threadReturnValue moveFile(void* data);
+threadReturnValue copyFile(void* data);
+threadReturnValue removeFile(void* data);
 unsigned long long int getFilesize(char* path, User* user);
-bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH]);
+threadReturnValue getMD5OfFile(void* data);
 
 #endif

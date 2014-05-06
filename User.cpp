@@ -111,11 +111,6 @@ _fin:
     return (TRUE);
 }
 
-bool_t User::isLoged() const
-{
-    return (this->_logedIn);
-}
-
 bool_t User::timeout()
 {
     const int USER_TIME_MSG_SEND = 50;
@@ -132,22 +127,15 @@ bool_t User::timeout()
     return (FALSE);
 }
 
-void User::logIn()
-{
-    this->_logedIn = TRUE;
-}
-
 char* User::getRealFile(char* relativeFile, char* result) const
 {
     char dst[FILENAME_MAX];
     char* res = NULL;
     strcpy(dst, this->_folderPath);
-    if(!User::parseChangeDir(relativeFile, dst))
+    if(User::parseChangeDir(relativeFile, dst))
     {
-        goto _exit;
+        res = getRealDirectory(dst, result);
     }
-    res = getRealDirectory(dst, result);
-_exit:
     return (res);
 }
 

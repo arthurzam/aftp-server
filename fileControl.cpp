@@ -18,10 +18,10 @@ void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* use
     data->isLoaded = FALSE;
     data->user = user;
 #ifdef WIN32
-    _beginthread(function, 0, NULL);
+    _beginthread(function, 0, data);
 #else
     pthread_t thread;
-    pthread_create(&thread, NULL, function, NULL);
+    pthread_create(&thread, NULL, function, data);
 #endif
     while(!data->isLoaded);
 }
@@ -42,9 +42,9 @@ char* getRealDirectory(char* realativDirectory, char* result)
     return (result ? NULL : realDirectory);
 }
 
-#define FILE_LIST_SEPARATOR '|'
 bool_t getContentDirectory(char* directory, User* user)
 {
+    const char FILE_LIST_SEPARATOR = '|';
     char base[FILENAME_MAX];
     user->getRealFile(directory, base);
     int dirLen = strlen(base);
@@ -122,39 +122,61 @@ bool_t createDirectory(char* realativDirectory, User* user)
 #endif
 }
 
-bool_t moveFile(char* from, char* to, User* user)
+threadReturnValue moveFile(void* dataV)
 {
+    fsData* data = (fsData*)dataV;
     char src[FILENAME_MAX], dst[FILENAME_MAX];
-    user->getRealFile(from, src);
-    user->getRealFile(to, dst);
-    return (rename(src, dst) == 0);
+    data->user->getRealFile(data->data.path2.src, src);
+    data->user->getRealFile(data->data.path2.dst, dst);
+    if(rename(src, dst))
+        data->user->sendData(300);
+    else
+        data->user->sendData(200);
+#ifndef WIN32
+    return NULL;
+#endif
 }
 
-bool_t copyFile(char* from, char* to, User* user)
+threadReturnValue copyFile(void* dataV)
 {
+    fsData* data = (fsData*)dataV;
     char srcS[FILENAME_MAX], dstS[FILENAME_MAX];
-    user->getRealFile(from, srcS);
-    user->getRealFile(to, dstS);
+    data->user->getRealFile(data->data.path2.src, srcS);
+    data->user->getRealFile(data->data.path2.dst, dstS);
+    data->isLoaded = TRUE;
 #ifdef WIN32
-    return (CopyFileA(srcS, dstS, 0));
+    if(CopyFileA(srcS, dstS, 0))
+        data->user->sendData(200);
+    else
+        data->user->sendData(300);
 #else
-    bool_t flag = TRUE;
     int src = open(srcS, O_RDONLY, 0);
     int dst = open(dstS, O_WRONLY | O_CREAT, 0644);
     struct stat stat_source;
     fstat(src, &stat_source);
-    flag = (sendfile(dst, src, 0, stat_source.st_size) == stat_source.st_size);
+    if(sendfile(dst, src, 0, stat_source.st_size) == stat_source.st_size)
+        data->user->sendData(200);
+    else
+        data->user->sendData(300);
     close(dst);
     close(src);
-    return (flag);
+    return NULL;
 #endif
 }
 
-bool_t removeFile(char* path, User* user)
+threadReturnValue removeFile(void* dataV)
 {
+    fsData* data = (fsData*)dataV;
     char src[FILENAME_MAX];
-    user->getRealFile(path, src);
-    return (remove(src) == 0);
+    data->user->getRealFile(data->data.path, src);
+    data->isLoaded = TRUE;
+    if(remove(src))
+        data->user->sendData(300);
+    else
+        data->user->sendData(200);
+#ifndef WIN32
+    return NULL;
+#endif
 }
 
 unsigned long long int getFilesize(char* path, User* user)
@@ -176,10 +198,14 @@ unsigned long long int getFilesize(char* path, User* user)
     return (-1);
 }
 
-bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
+threadReturnValue getMD5OfFile(void* dataV)
 {
+    fsData* data = (fsData*)dataV;
+    byte_t result[MD5_RESULT_LENGTH];
     char filePath[FILENAME_MAX];
-    user->getRealFile(path, filePath);
+    data->user->getRealFile(data->data.path, filePath);
+    data->isLoaded = TRUE;
+
     md5_context ctx;
     int i;
     byte_t buffer[512];
@@ -187,18 +213,24 @@ bool_t getMD5OfFile(char* path, User* user, byte_t result[MD5_RESULT_LENGTH])
     FILE* f = fopen(filePath, "rb");
     if(!f)
     {
-        return (FALSE);
+        data->user->sendData(300);
     }
-    md5_init(&ctx);
-    while((i = fread(buffer, 1, 512, f)))
+    else
     {
-        md5_append(&ctx, buffer, i);
+        md5_init(&ctx);
+        while((i = fread(buffer, 1, 512, f)))
+        {
+            md5_append(&ctx, buffer, i);
+        }
+        md5_finish(&ctx, result);
+        data->user->sendData(200, result, MD5_RESULT_LENGTH);
     }
-    md5_finish(&ctx, result);
-    return (TRUE);
+#ifndef WIN32
+    return NULL;
+#endif
 }
 
-bool_t removeFolder(char* path, User* user)
+threadReturnValue removeFolder(void* dataV)
 {
 #ifdef WIN32
     char command[FILENAME_MAX + 9] = "rd /q /s ";
@@ -207,8 +239,16 @@ bool_t removeFolder(char* path, User* user)
     char command[FILENAME_MAX + 9] = "rm -r -f ";
     const int baseCommandLen = 9;
 #endif
-    user->getRealFile(path, command + baseCommandLen); // put the full path in the command buffer
-    return (system (command) == 0);
+    fsData* data = (fsData*)dataV;
+    data->user->getRealFile(data->data.path, command + baseCommandLen);
+    data->isLoaded = TRUE;
+    if(system(command))
+        data->user->sendData(300);
+    else
+        data->user->sendData(200);
+#ifndef WIN32
+    return NULL;
+#endif
 }
 
 bool_t copyFolder(char* from, char* to, User* user)

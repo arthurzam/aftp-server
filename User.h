@@ -51,8 +51,14 @@ public:
      * if the user is inactive first time, then sends timeout message (900) to this user.
      */
     bool_t timeout();
-    bool_t isLoged() const;
-    void logIn();
+    inline bool_t isLoged() const
+    {
+        return (this->_logedIn);
+    }
+    inline void logIn()
+    {
+        this->_logedIn = TRUE;
+    }
     inline const char* folderPath() const
     {
         return (this->_folderPath);

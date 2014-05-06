@@ -39,6 +39,7 @@ threadReturnValue startServer(void* arg)
     struct sockaddr_in from;
     short msgCode;
     socklen_t fromlen = sizeof(from);
+    fsData data;
 
     union {
         struct {
@@ -215,29 +216,21 @@ threadReturnValue startServer(void* arg)
                 break;
             case 520: // move file
                 tempData.src_dst.src_len = *(Buffer + 2);
-                tempData.src_dst.src = Buffer + 3;
+                data.data.path2.src = Buffer + 3;
                 tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                tempData.src_dst.dst = Buffer + 6 + tempData.src_dst.src_len;
-                if(moveFile(tempData.src_dst.src, tempData.src_dst.dst, user))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+                createFSthread(moveFile, &data, user);
                 break;
             case 521: // copy file
                 tempData.src_dst.src_len = *(Buffer + 2);
-                tempData.src_dst.src = Buffer + 3;
+                data.data.path2.src = Buffer + 3;
                 tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                tempData.src_dst.dst = Buffer + 6 + tempData.src_dst.src_len;
-                if(copyFile(tempData.src_dst.src, tempData.src_dst.dst, user))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+                createFSthread(copyFile, &data, user);
                 break;
             case 522: // remove file
-                if(removeFile(Buffer + 2, user))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path = Buffer + 2;
+                createFSthread(removeFile, &data, user);
                 break;
             case 523: // get file size
                 tempData.l = getFilesize(Buffer + 2, user);
@@ -247,10 +240,8 @@ threadReturnValue startServer(void* arg)
                     sendMessage(&from, 200, &tempData.l, sizeof(unsigned long long int));
                 break;
             case 524: // get md5 of file
-                if(getMD5OfFile(Buffer + 2, user, tempData.md5))
-                    sendMessage(&from, 200, tempData.md5, MD5_RESULT_LENGTH);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path = Buffer + 2;
+                createFSthread(getMD5OfFile, &data, user);
                 break;
             case 530: // cd
                 if(!user->moveFolder(Buffer + 2))
@@ -265,10 +256,8 @@ threadReturnValue startServer(void* arg)
                     sendMessage(&from, 300, NULL, 0);
                 break;
             case 532: // remove directory
-                if(removeFolder(Buffer + 2, user))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path = Buffer + 2;
+                createFSthread(removeFolder, &data, user);
                 break;
             case 534: // copy directory
                 tempData.src_dst.src_len = *(Buffer + 2);
@@ -286,7 +275,7 @@ threadReturnValue startServer(void* arg)
                 else
                     sendMessage(&from, 300, NULL, 0);
                 break;
-            case 536:
+            case 536: // pwd
                 if(user->folderPath()[0])
                     sendMessage(&from, 200, user->folderPath(), strlen(user->folderPath()));
                 else
