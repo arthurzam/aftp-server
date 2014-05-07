@@ -185,10 +185,9 @@ threadReturnValue startServer(void* arg)
                 sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2014", 41);
                 break;
             case 510: // upload
-                tempData.i = *(int*)(Buffer + 2);
                 if(user->fileTransfer)
                     delete user->fileTransfer;
-                user->fileTransfer = new FileTransfer(Buffer + 6, user, tempData.i);
+                user->fileTransfer = new FileTransfer(Buffer + 6, user, *(int*)(Buffer + 2));
                 if(user->fileTransfer->isLoaded())
                     sendMessage(&from, 200, NULL, 0);
                 else
@@ -244,16 +243,14 @@ threadReturnValue startServer(void* arg)
                 createFSthread(getMD5OfFile, &data, user);
                 break;
             case 530: // cd
-                if(!user->moveFolder(Buffer + 2))
-                    sendMessage(&from, 300, NULL, 0);
-                else
+                if(user->moveFolder(Buffer + 2))
                     sendMessage(&from, 200, NULL, 0);
+                else
+                    sendMessage(&from, 300, NULL, 0);
                 break;
             case 531: // create directory
-                if(createDirectory(Buffer + 2, user))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path = Buffer + 2;
+                createFSthread(createDirectory, &data, user);
                 break;
             case 532: // remove directory
                 data.data.path = Buffer + 2;
@@ -261,13 +258,10 @@ threadReturnValue startServer(void* arg)
                 break;
             case 534: // copy directory
                 tempData.src_dst.src_len = *(Buffer + 2);
-                tempData.src_dst.src = Buffer + 3;
+                data.data.path2.src = Buffer + 3;
                 tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                tempData.src_dst.dst = Buffer + 6 + tempData.src_dst.src_len;
-                if(copyFolder(tempData.src_dst.src, tempData.src_dst.dst, user))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+                createFSthread(copyFolder, &data, user);
                 break;
             case 535: // get contents of directory
                 if(getContentDirectory(Buffer + 2, user))

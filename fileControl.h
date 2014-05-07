@@ -43,10 +43,10 @@ bool_t isDirectory(char* directory);
 bool_t isFileExists(char* path);
 
 bool_t getContentDirectory(char* directory, User* user);
-bool_t createDirectory(char* directory, User* user);
+threadReturnValue createDirectory(void* data);
 #define moveDirectory moveFile
 threadReturnValue removeFolder(void* data);
-bool_t copyFolder(char* from, char* to, User* user);
+threadReturnValue copyFolder(void* data);
 
 threadReturnValue moveFile(void* data);
 threadReturnValue copyFile(void* data);

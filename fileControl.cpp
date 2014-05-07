@@ -99,26 +99,29 @@ bool_t getContentDirectory(char* directory, User* user)
     return (TRUE);
 }
 
-bool_t createDirectory(char* realativDirectory, User* user)
+threadReturnValue createDirectory(void* dataV)
 {
+    fsData* data = (fsData*)dataV;
     char directory[FILENAME_MAX];
-    user->getRealFile(realativDirectory, directory);
+    data->user->getRealFile(data->data.path, directory);
+    data->isLoaded = TRUE;
 #ifdef WIN32
     if(CreateDirectory(directory, NULL))
-    {
-        return (TRUE);
-    }
-    return (FALSE);
+        data->user->sendData(200);
+    else
+        data->user->sendData(300);
 #else
     struct stat st = {0};
     if (stat(directory, &st) == -1)
     {
         if(mkdir(directory, 0700) == 0)
         {
-            return (TRUE);
+            data->user->sendData(200);
+            return NULL;
         }
     }
-    return (FALSE);
+    data->user->sendData(300);
+    return NULL;
 #endif
 }
 
@@ -128,6 +131,7 @@ threadReturnValue moveFile(void* dataV)
     char src[FILENAME_MAX], dst[FILENAME_MAX];
     data->user->getRealFile(data->data.path2.src, src);
     data->user->getRealFile(data->data.path2.dst, dst);
+    data->isLoaded = TRUE;
     if(rename(src, dst))
         data->user->sendData(300);
     else
@@ -251,7 +255,7 @@ threadReturnValue removeFolder(void* dataV)
 #endif
 }
 
-bool_t copyFolder(char* from, char* to, User* user)
+threadReturnValue copyFolder(void* dataV)
 {
 #ifdef WIN32
     char command[2 * FILENAME_MAX + 20] = "xcopy /E /H /Y /i ";
@@ -260,12 +264,19 @@ bool_t copyFolder(char* from, char* to, User* user)
     char command[2 * FILENAME_MAX + 17] = "cp -r -f ";
     const int baseCommandLen = 9;
 #endif
-    int i;
-    user->getRealFile(from, command + baseCommandLen);
-    i = strlen(command);
+    fsData* data = (fsData*)dataV;
+    data->user->getRealFile(data->data.path2.src, command + baseCommandLen);
+    int i = strlen(command);
     command[i++] = ' ';
-    user->getRealFile(to, command + i);
-    return (system (command) == 0);
+    data->user->getRealFile(data->data.path2.dst, command + i);
+    data->isLoaded = TRUE;
+    if(system(command))
+        data->user->sendData(300);
+    else
+        data->user->sendData(200);
+#ifndef WIN32
+    return NULL;
+#endif
 }
 
 bool_t isFileExists(char* path)
