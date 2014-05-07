@@ -17,6 +17,7 @@ using namespace std;
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <unistd.h>
+#include <errno.h>
 #endif
 
 typedef struct{
@@ -41,6 +42,8 @@ void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* use
 char* getRealDirectory(char* realativDirectory, char* result);
 bool_t isDirectory(char* directory);
 bool_t isFileExists(char* path);
+
+threadReturnValue symbolicLink(void* data);
 
 bool_t getContentDirectory(char* directory, User* user);
 threadReturnValue createDirectory(void* data);

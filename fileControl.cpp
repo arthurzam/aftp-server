@@ -99,6 +99,32 @@ bool_t getContentDirectory(char* directory, User* user)
     return (TRUE);
 }
 
+threadReturnValue symbolicLink(void* dataV)
+{
+    fsData* data = (fsData*)dataV;
+    char src[FILENAME_MAX], dst[FILENAME_MAX];
+    data->user->getRealFile(data->data.path2.src, src);
+    data->user->getRealFile(data->data.path2.dst, dst);
+    data->isLoaded = TRUE;
+#ifdef WIN32 // TODO: test
+    DWORD isDir = (isDirectory(src) ? 1 : 0);
+    if(CreateSymbolicLink(dst, src, isDir))
+        data->user->sendData(300);
+    else
+        data->user->sendData(200);
+#else
+    char srcT[FILENAME_MAX];
+    while(readlink(src, srcT, FILENAME_MAX - 1) <= 0)
+        memcpy(src, srcT, FILENAME_MAX);
+    memcpy(src, srcT, FILENAME_MAX);
+    if(symlink(src, dst))
+        data->user->sendData(300);
+    else
+        data->user->sendData(200);
+    return NULL;
+#endif
+}
+
 threadReturnValue createDirectory(void* dataV)
 {
     fsData* data = (fsData*)dataV;
