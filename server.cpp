@@ -256,6 +256,13 @@ threadReturnValue startServer(void* arg)
                 data.data.path = Buffer + 2;
                 createFSthread(removeFolder, &data, user);
                 break;
+            case 533: // move directory
+                tempData.src_dst.src_len = *(Buffer + 2);
+                data.data.path2.src = Buffer + 3;
+                tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+                createFSthread(moveDirectory, &data, user);
+                break;
             case 534: // copy directory
                 tempData.src_dst.src_len = *(Buffer + 2);
                 data.data.path2.src = Buffer + 3;
