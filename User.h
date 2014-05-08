@@ -1,22 +1,21 @@
 #ifndef USER_H_
 #define USER_H_
 
-#include <string>
 #include <ctime>
 #include <cstdio>
-#include "defenitions.h"
-#include "fileControl.h"
-#include "server.h"
-#include "FileTransfer.h"
-
 #ifdef WIN32
 #include <winsock2.h>
 #else
 #include <arpa/inet.h>
 #endif
-using namespace std;
 
+#include "defenitions.h"
+#include "fileControl.h"
+#include "server.h"
+#include "FileTransfer.h"
+#include "Login.h"
 
+class Login;
 class FileTransfer;
 
 class User {
@@ -27,6 +26,7 @@ private:
     bool_t _timeout;
     bool_t _logedIn;
     bool_t _initialized;
+    Login* _login;
 
     /*
      * changes the folder path using the given path (cdPath).
@@ -55,9 +55,10 @@ public:
     {
         return (this->_logedIn);
     }
-    inline void logIn()
+    inline void logIn(Login* login)
     {
         this->_logedIn = TRUE;
+        this->_login = login;
     }
     inline const char* folderPath() const
     {

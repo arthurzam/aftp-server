@@ -50,12 +50,12 @@ public:
     bool_t save(FILE* dstFile) const;
     void print() const;
 
-    bool_t isLoaded() const
+    inline bool_t isLoaded() const
     {
         return (this->isInit);
     }
 
-    Login*& next()
+    inline Login*& next()
     {
         return (this->_next);
     }

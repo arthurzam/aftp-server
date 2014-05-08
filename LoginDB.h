@@ -31,10 +31,17 @@ public:
      * If error occurs on loading, the count variable will be empty.
      */
     LoginDB(const char* filePath);
+
     void add(const char* username, const char* password, byte_t state);
-    bool_t check(const char* username, const byte_t passwordMD5[16]) const;
+    /*
+     * Returns pointer to the Login object that matches the given login. If not found, returns NULL.
+     */
+    Login* check(const char* username, const byte_t passwordMD5[16]) const;
     bool_t save(const char* path) const;
-    bool_t isEmpty() const;
+    inline bool_t isEmpty() const
+    {
+        return (this->count == 0);
+    }
     void print() const;
     void load(const char* filePath);
     ~LoginDB();

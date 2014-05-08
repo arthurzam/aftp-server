@@ -63,16 +63,16 @@ void LoginDB::add(const char* username, const char* password, byte_t state)
     curr->next() = newOne;
 }
 
-bool_t LoginDB::check(const char* username, const byte_t* passwordMD5) const
+Login* LoginDB::check(const char* username, const byte_t* passwordMD5) const
 {
     Login* curr = this->head;
     while(curr)
     {
         if(curr->check(username, passwordMD5))
-            return (TRUE);
+            return (curr);
         curr = curr->next();
     }
-    return (FALSE);
+    return (NULL);
 }
 
 bool_t LoginDB::save(const char* path) const
@@ -99,11 +99,6 @@ LoginDB::~LoginDB()
         delete (this->head);
     }
     this->head = NULL;
-}
-
-bool_t LoginDB::isEmpty() const
-{
-    return (this->count == 0);
 }
 
 void LoginDB::print() const

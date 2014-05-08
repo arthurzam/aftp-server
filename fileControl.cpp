@@ -1,7 +1,4 @@
 #include "fileControl.h"
-#include "defenitions.h"
-#include <cstdio>
-#include <cstring>
 
 bool_t isDirectory(char* directory)
 {

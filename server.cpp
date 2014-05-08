@@ -1,3 +1,6 @@
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -11,9 +14,6 @@
 #include <netdb.h>
 #include <pthread.h>
 #endif
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
 
 #include "UserList.h"
 #include "server.h"
@@ -49,6 +49,7 @@ threadReturnValue startServer(void* arg)
             byte_t dst_len;
         } src_dst;
         char* path;
+        Login* loginClass;
         int i;
         unsigned long long int l;
         byte_t md5[MD5_RESULT_LENGTH];
@@ -116,20 +117,14 @@ threadReturnValue startServer(void* arg)
         if (retval == SOCKET_ERROR || retval < 2)
             continue;
         Buffer[retval] = 0;
-        msgCode = *((short*)Buffer);
+        memcpy(&msgCode, Buffer, sizeof(msgCode));
 
         if(!(user = listUsers->findUser(from)))
             user = (*listUsers)[listUsers->addUser(from)];
         else
             user->resetTime();
 
-        if(msgCode == 105)
-        {
-            listUsers->removeUser(user);
-            sendMessage(&from, 200, NULL, 0);
-            continue;
-        }
-        else if(msgCode != 100 && !user->isLoged())
+        if(msgCode != 100 && !user->isLoged())
         {
             sendMessage(&from, 100, NULL, 0);
         }
@@ -140,15 +135,19 @@ threadReturnValue startServer(void* arg)
             case 100: // login
                 tempData.login.username = Buffer + 18;
                 tempData.login.md5Password = (byte_t*)(Buffer + 2);
-                if(usersDB->check(tempData.login.username, tempData.login.md5Password))
-                {   // good username
-                    user->logIn();
+                if((tempData.loginClass = usersDB->check(tempData.login.username, tempData.login.md5Password)))
+                {
+                    user->logIn(tempData.loginClass);
                     sendMessage(&from, 101, NULL, 0);
                 }
                 else
-                {   // bad username
+                {
                     sendMessage(&from, 110, NULL, 0);
                 }
+                break;
+            case 105: // logout
+                listUsers->removeUser(user);
+                sendMessage(&from, 200, NULL, 0);
                 break;
             case 200:
                 sendMessage(&from, 200, NULL, 0);
@@ -297,9 +296,7 @@ _errorExit:
         delete listUsers;
     listUsers = NULL;
     canExit = TRUE;
-#ifdef WIN32
-    return;
-#else
+#ifndef WIN32
     return NULL;
 #endif
 }
@@ -338,9 +335,7 @@ threadReturnValue userControl(void* arg)
 #endif
         listUsers->userControl();
     }
-#ifdef WIN32
-    return;
-#else
+#ifndef WIN32
     return NULL;
 #endif
 }

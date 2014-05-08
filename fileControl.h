@@ -1,24 +1,25 @@
 #ifndef FILECONTROL_H_
 #define FILECONTROL_H_
 
+#include <cstdio>
+#include <cstring>
 #include <dirent.h>
-#include "defenitions.h"
-#include "User.h"
-#include "md5.h"
-class User;
-#include <string>
-using namespace std;
-
 #ifdef WIN32
 #include <windows.h>
 #else
+#include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <unistd.h>
-#include <errno.h>
 #endif
+
+#include "defenitions.h"
+#include "User.h"
+#include "md5.h"
+class User;
 
 typedef struct{
     bool_t isLoaded;

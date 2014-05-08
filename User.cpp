@@ -1,6 +1,4 @@
-#include <cstring>
 #include "User.h"
-#include "server.h"
 
 User::User()
 {
@@ -10,6 +8,7 @@ User::User()
     this->_timeout = FALSE;
     this->_initialized = FALSE;
     this->fileTransfer = NULL;
+    this->_login = NULL;
 }
 
 User::User(const struct sockaddr_in& from)
@@ -21,6 +20,7 @@ User::User(const struct sockaddr_in& from)
     this->_timeout = FALSE;
     this->_initialized = TRUE;
     this->fileTransfer = NULL;
+    this->_login = NULL;
 }
 
 User::~User()

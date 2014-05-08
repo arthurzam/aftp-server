@@ -1,4 +1,3 @@
-#include <cstring>
 #include "FileTransfer.h"
 
 FileTransfer::FileTransfer(char* relativePath, User* user) // Download
@@ -55,11 +54,6 @@ FileTransfer::~FileTransfer()
     if(this->file)
         fclose(this->file);
     this->file = NULL;
-}
-
-bool_t FileTransfer::isLoaded() const
-{
-    return (this->state);
 }
 
 void FileTransfer::recieveBlock(char* buffer, int dataLen)
