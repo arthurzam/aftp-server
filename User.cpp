@@ -51,59 +51,47 @@ bool_t User::parseChangeDir(char* path, char* dst)
 {
     if(*path == 0)
         return (TRUE);
-    int i, j;
-    int last = -1;
+    int i;
+    char* temp = path - 1;
     char newStr[FILENAME_MAX];
     newStr[0] = 0;
+    while((temp = strchr(temp + 1, PATH_SEPERATOR_BAD))) // replace every PATH_SEPERATOR_BAD into PATH_SEPERATOR_GOOD
+        *temp = PATH_SEPERATOR_GOOD;
+    if(path[i = strlen(path) - 1] == PATH_SEPERATOR_GOOD) // we can use i-1 because path[i] after the for is the '/0' ending
+        path[i] = 0; // if the path finishes in divider, remove it
 
-    // replace all \ into /
-    for(i = 0; path[i] != 0; ++i)
-    {
-        if(path[i] == PATH_SEPERATOR_BAD)
-            path[i] = PATH_SEPERATOR_GOOD;
-        if(i > 0 && path[i] == PATH_SEPERATOR_GOOD && path[i - 1] == PATH_SEPERATOR_GOOD) // we have two slashes one by one
-            return (FALSE);
-    }
-    if(path[i - 1] == PATH_SEPERATOR_GOOD) // we can use i-1 because path[i] after the for is the '/0' ending
-        path[i - 1] = 0; // if the path finishes in divider, remove it
-
-    if(*path == PATH_SEPERATOR_GOOD) // for example /path/folder => just replace the current
-    {
-        strcpy(dst, path);
-        return (TRUE);
-    }
-
-    if(*dst) // we have previous path
-    {
+    if(*path == PATH_SEPERATOR_GOOD) // for example /path/folder => remove previous
+        path++;
+    else if(dst[0]) // we have previous path
         strcpy(newStr, dst);
-    }
 
 _check_path:
     if(!*path) // path has ended
         goto _fin;
-    if(*path == '.' && path[1] == '.') // ../
+    if(*path == '.' && path[1] == '.')
     {
         if(newStr[1] == 0)
             return (FALSE); // trying to move back when we are already on root
-        for(i = 0; newStr[i] != 0; ++i)
-            if(newStr[i] == PATH_SEPERATOR_GOOD)
-                last = i; // find the last occurrence of '/'
-        newStr[last] = 0;
+        temp = strrchr(newStr, PATH_SEPERATOR_GOOD); // find the last occurrence of '/' and set it as '\0'
+        if(!temp)
+        {
+            newStr[0] = 0;
+            goto _fin;
+        }
+        *temp = 0;
         if(path[2] == 0)
             goto _fin;
         path += 3;
         goto _check_path;
     }
-
-    for(i = 0; path[i] != 0 && path[i] != '/'; ++i) ; // find the first occurrence of '/'
-    last = path[i];
-    path[i] = 0;
-    j = strlen(newStr);
-    newStr[j++] = PATH_SEPERATOR_GOOD;
-    strcpy(newStr + j, path);
-    path[i] = last;
+    i = (((temp = strchr(path, PATH_SEPERATOR_GOOD))) ? temp - path : strlen(path)); // find the first occurrence of '/', or whole length if no '/'
+    if(i != 0)
+    {
+        *(temp = newStr + strlen(newStr)) = PATH_SEPERATOR_GOOD;
+        *((char *)memcpy(temp + 1, path, i) + i) = 0;
+    }
     path += i + 1;
-    if(last != 0)
+    if(path[-1])
         goto _check_path;
 
 _fin:

@@ -33,7 +33,6 @@ private:
      * the starting position should be in destination, and the result would be there.
      * moves through every path between slash.
      * possible bad parts of path:
-     *    two slash one after another
      *    move back (..) when already on root
      * return (TRUE) if everything is OK, and (FALSE) if error.
      */
