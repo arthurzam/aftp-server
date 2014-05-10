@@ -46,7 +46,7 @@ bool_t isFileExists(char* path);
 
 threadReturnValue symbolicLink(void* data);
 
-bool_t getContentDirectory(char* directory, User* user);
+threadReturnValue getContentDirectory(void* data);
 threadReturnValue createDirectory(void* data);
 #define moveDirectory moveFile
 threadReturnValue removeFolder(void* data);

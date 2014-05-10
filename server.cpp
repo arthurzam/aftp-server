@@ -270,10 +270,8 @@ threadReturnValue startServer(void* arg)
                 createFSthread(copyFolder, &data, user);
                 break;
             case 535: // get contents of directory
-                if(getContentDirectory(Buffer + 2, user))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
+                data.data.path = Buffer + 2;
+                createFSthread(getContentDirectory, &data, user);
                 break;
             case 536: // pwd
                 if(user->folderPath()[0])

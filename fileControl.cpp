@@ -39,11 +39,14 @@ char* getRealDirectory(char* realativDirectory, char* result)
     return (result ? NULL : realDirectory);
 }
 
-bool_t getContentDirectory(char* directory, User* user)
+threadReturnValue getContentDirectory(void* dataV)
 {
+    fsData* data = (fsData*)dataV;
     const char FILE_LIST_SEPARATOR = '|';
     char base[FILENAME_MAX];
-    user->getRealFile(directory, base);
+    data->user->getRealFile(data->data.path, base);
+    data->isLoaded = TRUE;
+
     int dirLen = strlen(base);
     if(base[dirLen - 1] != PATH_SEPERATOR_GOOD)
     {
@@ -52,48 +55,45 @@ bool_t getContentDirectory(char* directory, User* user)
     }
 
     int resLen = 0;
-    char result[BUFFER_SERVER_SIZE + 5] = {0};
+    char result[BUFFER_SERVER_SIZE + 5];
+    result[0] = 0;
     result[BUFFER_SERVER_SIZE + 4] = 0; // just to be safe from BUFFER_OVERFLOW
 
-    DIR *dir;
     struct dirent *ent;
-    dir = opendir (base);
+    DIR* dir = opendir (base);
     if(!dir)
-        return (FALSE);
+        goto _exit;
     bool_t flag;
     int fileNameLen;
-    while ((ent = readdir (dir)) != NULL)
+    while ((ent = readdir (dir)))
     {
         if(ent->d_name[0] == '.' && (ent->d_name[1] == 0 || (ent->d_name[1] == '.' && ent->d_name[2] == 0))) // the path is not "." or ".."
             continue;
         fileNameLen = strlen(ent->d_name);
         if(resLen + fileNameLen >= BUFFER_SERVER_SIZE - 10)
         {
-            user->sendData(201, result, resLen);
+            data->user->sendData(201, result, resLen);
             result[0] = 0;
             resLen = 0;
         }
-        strcpy(base + dirLen, ent->d_name);
+        memcpy(base + dirLen, ent->d_name, fileNameLen + 1);
         flag = isDirectory(base);
         if(flag)
-        {
             result[resLen++] = '[';
-            result[resLen] =  0;
-        }
-        strcat(result + resLen, ent->d_name);
+        memcpy(result + resLen, ent->d_name, fileNameLen);
         resLen += fileNameLen;
         if(flag)
-        {
             result[resLen++] = ']';
-            result[resLen] =  0;
-        }
         result[resLen++] = FILE_LIST_SEPARATOR;
-        result[resLen] =  0;
     }
     closedir (dir);
     if(resLen)
-        user->sendData(201, result, resLen);
-    return (TRUE);
+        data->user->sendData(201, result, resLen);
+_exit:
+    data->user->sendData(dir ? 200 : 300);
+#ifndef WIN32
+    return NULL;
+#endif
 }
 
 threadReturnValue symbolicLink(void* dataV)
