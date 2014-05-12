@@ -47,17 +47,12 @@ threadReturnValue getContentDirectory(void* dataV)
     data->user->getRealFile(data->data.path, base);
     data->isLoaded = TRUE;
 
-    int dirLen = strlen(base);
-    if(base[dirLen - 1] != PATH_SEPERATOR_GOOD)
-    {
-        base[dirLen++] = PATH_SEPERATOR_GOOD;
-        base[dirLen] = 0;
-    }
+    char* dirP = base + strlen(base);
+    if(*(dirP - 1) != PATH_SEPERATOR_GOOD)
+        *(dirP++) = PATH_SEPERATOR_GOOD;
 
-    int resLen = 0;
     char result[BUFFER_SERVER_SIZE + 5];
-    result[0] = 0;
-    result[BUFFER_SERVER_SIZE + 4] = 0; // just to be safe from BUFFER_OVERFLOW
+    char* resP = result; // a pointer to the last character
 
     struct dirent *ent;
     DIR* dir = opendir (base);
@@ -70,25 +65,24 @@ threadReturnValue getContentDirectory(void* dataV)
         if(ent->d_name[0] == '.' && (ent->d_name[1] == 0 || (ent->d_name[1] == '.' && ent->d_name[2] == 0))) // the path is not "." or ".."
             continue;
         fileNameLen = strlen(ent->d_name);
-        if(resLen + fileNameLen >= BUFFER_SERVER_SIZE - 10)
+        if(resP - result + fileNameLen >= BUFFER_SERVER_SIZE - 10)
         {
-            data->user->sendData(201, result, resLen);
-            result[0] = 0;
-            resLen = 0;
+            data->user->sendData(201, result, resP - result);
+            resP = result;
         }
-        memcpy(base + dirLen, ent->d_name, fileNameLen + 1);
+        memcpy(dirP, ent->d_name, fileNameLen + 1);
         flag = isDirectory(base);
         if(flag)
-            result[resLen++] = '[';
-        memcpy(result + resLen, ent->d_name, fileNameLen);
-        resLen += fileNameLen;
+            *(resP++) = '[';
+        memcpy(resP, ent->d_name, fileNameLen);
+        resP += fileNameLen;
         if(flag)
-            result[resLen++] = ']';
-        result[resLen++] = FILE_LIST_SEPARATOR;
+            *(resP++) = ']';
+        *(resP++) = FILE_LIST_SEPARATOR;
     }
     closedir (dir);
-    if(resLen)
-        data->user->sendData(201, result, resLen);
+    if(resP != result)
+        data->user->sendData(201, result, resP - result);
 _exit:
     data->user->sendData(dir ? 200 : 300);
 #ifndef WIN32
