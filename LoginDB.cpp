@@ -46,7 +46,7 @@ void LoginDB::load(const char* filePath)
     fclose(src);
 }
 
-void LoginDB::add(const char* username, const char* password, byte_t state)
+void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCESS state)
 {
     byte_t md5Res[16];
     md5((byte_t*)password, strlen(password), md5Res);

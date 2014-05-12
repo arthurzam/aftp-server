@@ -89,7 +89,7 @@ _exit:
     return NULL;
 #endif
 }
-
+#ifndef WIN32
 threadReturnValue symbolicLink(void* dataV)
 {
     fsData* data = (fsData*)dataV;
@@ -97,13 +97,7 @@ threadReturnValue symbolicLink(void* dataV)
     data->user->getRealFile(data->data.path2.src, src);
     data->user->getRealFile(data->data.path2.dst, dst);
     data->isLoaded = TRUE;
-#ifdef WIN32 // TODO: test
-    DWORD isDir = (isDirectory(src) ? 1 : 0);
-    if(CreateSymbolicLink(dst, src, isDir))
-        data->user->sendData(300);
-    else
-        data->user->sendData(200);
-#else
+
     char srcT[FILENAME_MAX];
     while(readlink(src, srcT, FILENAME_MAX - 1) <= 0)
         memcpy(src, srcT, FILENAME_MAX);
@@ -113,8 +107,8 @@ threadReturnValue symbolicLink(void* dataV)
     else
         data->user->sendData(200);
     return NULL;
-#endif
 }
+#endif
 
 threadReturnValue createDirectory(void* dataV)
 {

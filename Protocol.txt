@@ -51,6 +51,7 @@ Client Messages:
 522 - remove file {[code][path]}
 523 - get file size
 524 - get md5 of file
+525 - create symbolic link (Only for servers on Unix system) {[code][src_len][src][dst_len][dst]}
 530 - cd
 531 - create directory {[code][path]}
 532 - remove directory

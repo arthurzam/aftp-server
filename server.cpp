@@ -2,7 +2,6 @@
 #include <cstdio>
 #include <cstring>
 #ifdef WIN32
-#include <winsock2.h>
 #include <windows.h>
 #include <process.h>
 #else
@@ -241,6 +240,15 @@ threadReturnValue startServer(void* arg)
                 data.data.path = Buffer + 2;
                 createFSthread(getMD5OfFile, &data, user);
                 break;
+#ifndef WIN32
+            case 525: // symlink file
+                tempData.src_dst.src_len = *(Buffer + 2);
+                data.data.path2.src = Buffer + 3;
+                tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+                createFSthread(copyFile, &data, user);
+                break;
+#endif
             case 530: // cd
                 if(user->moveFolder(Buffer + 2))
                     sendMessage(&from, 200, NULL, 0);

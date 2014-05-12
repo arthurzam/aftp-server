@@ -32,7 +32,7 @@ public:
      */
     LoginDB(const char* filePath);
 
-    void add(const char* username, const char* password, byte_t state);
+    void add(const char* username, const char* password, Login::LOGIN_ACCESS state);
     /*
      * Returns pointer to the Login object that matches the given login. If not found, returns NULL.
      */
