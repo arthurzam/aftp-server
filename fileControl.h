@@ -6,6 +6,7 @@
 #include <dirent.h>
 #ifdef WIN32
 #include <windows.h>
+#include <process.h>
 #else
 #include <errno.h>
 #include <fcntl.h>
@@ -21,7 +22,7 @@
 #include "md5.h"
 class User;
 
-typedef struct{
+typedef struct {
     bool_t isLoaded;
     User* user;
     union {
@@ -42,7 +43,12 @@ bool_t getRealDirectory(char* realativDirectory, char* result);
 bool_t isDirectory(char* directory);
 bool_t isFileExists(char* path);
 
+#ifndef WIN32
+/*
+ * only for Unix based OS
+ */
 threadReturnValue symbolicLink(void* data);
+#endif
 
 threadReturnValue getContentDirectory(void* data);
 threadReturnValue createDirectory(void* data);

@@ -3,18 +3,13 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include "defenitions.h"
 #include "md5.h"
 
 #define USERNAME_MAX_LENGTH 32
 
-enum LOGIN_ACCESS {
-    LOGIN_ACCESS_ADMIN = 0,
-    LOGIN_ACCESS_READ_ONLY,
-    LOGIN_ACCESS_LIMITED,
-    LOGIN_ACCESS_LIMITED_READ_ONLY,
-    LOGIN_ACCESS_ALL
-};
+
 
 /*
  * A class for holding login data, the permissions per Login and etc'.
@@ -34,7 +29,14 @@ private:
     bool_t isInit;
     Login* _next;
 public:
-    Login(const char* username, const byte_t* password, byte_t state);
+    enum LOGIN_ACCESS {
+        LOGIN_ACCESS_ADMIN = 0,
+        LOGIN_ACCESS_READ_ONLY,
+        LOGIN_ACCESS_LIMITED,
+        LOGIN_ACCESS_LIMITED_READ_ONLY,
+        LOGIN_ACCESS_ALL
+    };
+    Login(const char* username, const byte_t* password, LOGIN_ACCESS state);
     Login(const Login& other);
     Login(FILE* srcFile);
     ~Login();

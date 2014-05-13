@@ -1,8 +1,6 @@
 #ifndef DEFENITIONS_H_
 #define DEFENITIONS_H_
 
-#include <cstdlib>
-
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -14,12 +12,9 @@
 typedef unsigned char bool_t;
 typedef unsigned char byte_t;
 
-
 #ifndef FILENAME_MAX
 #define FILENAME_MAX 260
 #endif
-
-#define USERNAME_LENGTH 0x40
 
 #ifndef WIN32
 #define SOCKET int

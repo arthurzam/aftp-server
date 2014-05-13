@@ -34,7 +34,7 @@ void startServerThread(LoginDB* userDB)
     needExit = FALSE;
     canExit = FALSE;
 #ifdef WIN32
-    _beginthread(startServer, 0, &userDB);
+    _beginthread(startServer, 0, userDB);
 #else
     pthread_t thread;
     pthread_create(&thread, NULL, startServer, userDB);
@@ -64,7 +64,7 @@ void signalHandler(int signum)
 inline void clearScreen()
 {
 #ifdef WIN32
-    system("cls");
+    //system("cls");
 #else
     system("clear");
 #endif
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
             scanf("%s", data.user.username);
             printf("password: ");
             scanf("%s", data.user.password);
-            userDB.add(data.user.username, data.user.password, 0);
+            userDB.add(data.user.username, data.user.password, Login::LOGIN_ACCESS_ADMIN);
             clearScreen();
             printf("added\n");
             break;

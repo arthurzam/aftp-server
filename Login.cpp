@@ -1,10 +1,10 @@
 #include "Login.h"
 
-Login::Login(const char* username, const byte_t* password, byte_t state)
+Login::Login(const char* username, const byte_t* password, LOGIN_ACCESS state)
 {
     strcpy(this->username, username);
     memcpy(this->password, password, MD5_RESULT_LENGTH);
-    this->state = state;
+    this->state = (byte_t)state;
     this->restrictedFolders = NULL;
     this->restrictedFoldersCount = 0;
     this->isInit = TRUE;
