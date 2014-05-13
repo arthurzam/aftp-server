@@ -24,7 +24,6 @@ private:
     char _folderPath[FILENAME_MAX];
     time_t _lastUse;
     bool_t _timeout;
-    bool_t _logedIn;
     bool_t _initialized;
     Login* _login;
 
@@ -52,11 +51,10 @@ public:
     bool_t timeout();
     inline bool_t isLoged() const
     {
-        return (this->_logedIn);
+        return (this->_login != NULL);
     }
     inline void logIn(Login* login)
     {
-        this->_logedIn = TRUE;
         this->_login = login;
     }
     inline const char* folderPath() const
@@ -65,9 +63,10 @@ public:
     }
 
     /*
-     * returns a new char array allocated in HEAP that contains the path of the given path by the current folder,
+     * puts the full path in result array
+     * return FALSE if error in move directory or if a restricted folder, otherwise TRUE.
      */
-    char* getRealFile(char* relativeFile, char* result) const;
+    bool_t getRealFile(char* relativeFile, char* result) const;
     inline bool_t moveFolder(char* path)
     {
         return (User::parseChangeDir(path, this->_folderPath));

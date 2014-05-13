@@ -36,11 +36,9 @@ typedef struct{
 void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* user);
 
 /*
- * returns the real folder of the given path, in an allocated char array
- * for example, from realativDirectory=/aaa\a will return {BASE_FOLDER}/aaa/a
- * if result is given, the result would be copied into the array and return NULL in success
+ * returns the real folder of the given path, in the result array
  */
-char* getRealDirectory(char* realativDirectory, char* result);
+bool_t getRealDirectory(char* realativDirectory, char* result);
 bool_t isDirectory(char* directory);
 bool_t isFileExists(char* path);
 

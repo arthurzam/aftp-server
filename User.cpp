@@ -4,7 +4,6 @@ User::User()
 {
     this->_folderPath[0] = 0;
     this->_lastUse = 0;
-    this->_logedIn = FALSE;
     this->_timeout = FALSE;
     this->_initialized = FALSE;
     this->fileTransfer = NULL;
@@ -16,7 +15,6 @@ User::User(const struct sockaddr_in& from)
     this->_folderPath[0] = 0;
     memcpy(&(this->_from), &from, sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
-    this->_logedIn = FALSE;
     this->_timeout = FALSE;
     this->_initialized = TRUE;
     this->fileTransfer = NULL;
@@ -115,16 +113,17 @@ bool_t User::timeout()
     return (FALSE);
 }
 
-char* User::getRealFile(char* relativeFile, char* result) const
+bool_t User::getRealFile(char* relativeFile, char* result) const
 {
     char dst[FILENAME_MAX];
-    char* res = NULL;
     strcpy(dst, this->_folderPath);
     if(User::parseChangeDir(relativeFile, dst))
     {
-        res = getRealDirectory(dst, result);
+        if (this->_login->isRestrictedFolder(dst))
+            return (FALSE);
+        return (getRealDirectory(dst, result));
     }
-    return (res);
+    return (FALSE);
 }
 
 void User::print() const
@@ -132,6 +131,5 @@ void User::print() const
     if(this->_initialized)
     {
         printf("{<%s:%d>, %s}\n", inet_ntoa(this->_from.sin_addr), this->_from.sin_port, (this->_folderPath[0] ? this->_folderPath : "/"));
-
     }
 }

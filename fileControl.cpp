@@ -23,20 +23,14 @@ void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* use
     while(!data->isLoaded);
 }
 
-char* getRealDirectory(char* realativDirectory, char* result)
+bool_t getRealDirectory(char* realativDirectory, char* result)
 {
-    char* realDirectory;
-    if(result)
-        realDirectory = result;
-    else
-        realDirectory = (char*)malloc(FILENAME_MAX);
-    int i;
-    strcpy(realDirectory, SERVER_BASE_FOLDER);
-    for(i = 0; realativDirectory[i]; ++i)
-        if(realativDirectory[i] == PATH_SEPERATOR_BAD)
-            realativDirectory[i] = PATH_SEPERATOR_GOOD;
-    strcat(realDirectory, (*realativDirectory == PATH_SEPERATOR_GOOD ? realativDirectory + 1 : realativDirectory));
-    return (result ? NULL : realDirectory);
+    strcpy(result, SERVER_BASE_FOLDER);
+    char* relDirP = realativDirectory - 1;
+    while((relDirP = strchr(relDirP + 1, PATH_SEPERATOR_BAD)))
+        *relDirP = PATH_SEPERATOR_GOOD;
+    strcat(result, (realativDirectory[0] == PATH_SEPERATOR_GOOD ? realativDirectory + 1 : realativDirectory));
+    return (TRUE);
 }
 
 threadReturnValue getContentDirectory(void* dataV)
