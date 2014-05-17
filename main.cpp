@@ -32,6 +32,19 @@ void stopServer()
 
 bool_t startServerThread(LoginDB* userDB)
 {
+	// replace all bad separators into good one
+    char* pathP = base_server_folder - 1;
+    while((pathP = strchr(pathP + 1, PATH_SEPERATOR_BAD)))
+        *pathP = PATH_SEPERATOR_GOOD;
+
+    // check for last char is PATH_SEPERATOR_GOOD => if not set it
+    if(*((pathP = base_server_folder + strlen(base_server_folder)) - 1) != PATH_SEPERATOR_GOOD)
+    {
+        *(pathP++) = PATH_SEPERATOR_GOOD;
+        *(pathP) = '\0';
+    }
+
+
     if(!isDirectory(base_server_folder))
     {
 #ifdef WIN32
@@ -75,7 +88,7 @@ void signalHandler(int signum)
 inline void clearScreen()
 {
 #ifdef WIN32
-    //system("cls");
+    system("cls");
 #else
     system("clear");
 #endif
@@ -116,7 +129,8 @@ int main(int argc, char **argv)
             }
             else if(!strcmp(argv[i], "-f") && i + 1 < argc)
             {
-                base_server_folder = argv[++i];
+                strncpy(basePath, argv[++i], FILENAME_MAX);
+                base_server_folder = basePath;
             }
             else if(!strcmp(argv[i], "-h"))
             {
@@ -220,7 +234,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                printf("1. change port\n2. change server's base folder\n  your choice: ");
+                printf("0. return\n1. change port (%d)\n2. change server's base folder (%s)\n  your choice: ", port, base_server_folder);
                 scanf("%d", &data.choice);
                 switch(data.choice)
                 {
