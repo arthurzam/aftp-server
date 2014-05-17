@@ -113,7 +113,7 @@ threadReturnValue createDirectory(void* dataV)
     data->user->getRealFile(data->data.path, directory);
     data->isLoaded = TRUE;
 #ifdef WIN32
-    if(CreateDirectory(directory, NULL))
+    if(CreateDirectoryA(directory, NULL))
         data->user->sendData(200);
     else
         data->user->sendData(300);

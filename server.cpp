@@ -112,7 +112,7 @@ threadReturnValue startServer(void* arg)
 #endif
     while(!needExit)
     {
-        retval = recvfrom(sock,Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
+        retval = recvfrom(sock, Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
         if (retval == SOCKET_ERROR || retval < 2)
             continue;
         Buffer[retval] = 0;

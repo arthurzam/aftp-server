@@ -32,22 +32,14 @@ void stopServer()
 
 bool_t startServerThread(LoginDB* userDB)
 {
-    if(isFileExists(base_server_folder))
-    {
-        if(!isDirectory(base_server_folder)) // path is just a file
-            return (FALSE);
-    }
-    else // need to create directory
+    if(!isDirectory(base_server_folder))
     {
 #ifdef WIN32
-        if(!CreateDirectory(base_server_folder, NULL))
-            return (FALSE);
+    	if(!CreateDirectoryA(base_server_folder, NULL))
 #else
-        if(mkdir(base_server_folder, 0700))
-        {
-            return (FALSE);
-        }
+		if(mkdir(base_server_folder, 0700))
 #endif
+    		return (FALSE);
     }
     needExit = FALSE;
     canExit = FALSE;
@@ -83,7 +75,7 @@ void signalHandler(int signum)
 inline void clearScreen()
 {
 #ifdef WIN32
-    system("cls");
+    //system("cls");
 #else
     system("clear");
 #endif
@@ -139,7 +131,7 @@ int main(int argc, char **argv)
             }
             else if(!strcmp(argv[i], "-a"))
             {
-                serverRunning = startServerThread(&userDB);
+                serverRunning = TRUE;
             }
         }
     }
@@ -151,6 +143,8 @@ int main(int argc, char **argv)
 #else
     signal(SIGINT, signalHandler);
 #endif
+    if(serverRunning)
+        serverRunning = startServerThread(&userDB);
     do {
         if(canExit)
             serverRunning = FALSE;
