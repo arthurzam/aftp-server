@@ -23,13 +23,13 @@ typedef unsigned char byte_t;
 
 #ifdef WIN32
 typedef int socklen_t;
-#define SERVER_BASE_FOLDER "C:\\server\\"
+#define DEFAULT_SERVER_BASE_FOLDER "C:\\server\\"
 #define PATH_SEPERATOR_BAD  '/'
 #define PATH_SEPERATOR_GOOD '\\'
 #define CLEAR_SCREEN "cls"
 typedef void threadReturnValue;
 #else
-#define SERVER_BASE_FOLDER "/opt/server/"
+#define DEFAULT_SERVER_BASE_FOLDER "/opt/server/"
 #define PATH_SEPERATOR_BAD  '\\'
 #define PATH_SEPERATOR_GOOD '/'
 #define CLEAR_SCREEN "clear"

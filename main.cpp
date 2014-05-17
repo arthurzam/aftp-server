@@ -16,6 +16,7 @@
 bool_t needExit;
 bool_t canExit;
 unsigned short port = DEFAULT_PORT;
+char* base_server_folder = (char*)DEFAULT_SERVER_BASE_FOLDER;
 extern UserList* listUsers;
 
 void stopServer()
@@ -29,8 +30,25 @@ void stopServer()
         delete listUsers;
 }
 
-void startServerThread(LoginDB* userDB)
+bool_t startServerThread(LoginDB* userDB)
 {
+    if(isFileExists(base_server_folder))
+    {
+        if(!isDirectory(base_server_folder)) // path is just a file
+            return (FALSE);
+    }
+    else // need to create directory
+    {
+#ifdef WIN32
+        if(!CreateDirectory(base_server_folder, NULL))
+            return (FALSE);
+#else
+        if(mkdir(base_server_folder, 0700))
+        {
+            return (FALSE);
+        }
+#endif
+    }
     needExit = FALSE;
     canExit = FALSE;
 #ifdef WIN32
@@ -39,6 +57,7 @@ void startServerThread(LoginDB* userDB)
     pthread_t thread;
     pthread_create(&thread, NULL, startServer, userDB);
 #endif
+    return (TRUE);
 }
 
 #ifdef WIN32
@@ -64,7 +83,7 @@ void signalHandler(int signum)
 inline void clearScreen()
 {
 #ifdef WIN32
-    //system("cls");
+    system("cls");
 #else
     system("clear");
 #endif
@@ -84,6 +103,7 @@ int main(int argc, char **argv)
         } user;
         char filePath[FILENAME_MAX];
     } data;
+    char basePath[FILENAME_MAX];
     if(argc > 1) // there are parameters
     {
         for(int i = 1; i < argc; i++)
@@ -102,20 +122,24 @@ int main(int argc, char **argv)
                 }
                 port = (short)data.choice;
             }
+            else if(!strcmp(argv[i], "-f") && i + 1 < argc)
+            {
+                base_server_folder = argv[++i];
+            }
             else if(!strcmp(argv[i], "-h"))
             {
                 printf("This is the AFTP server\n");
                 printf("  usage:\n");
                 printf("    -db (path)   load the Login database from this file\n");
                 printf("    -p  (port)   the port on which the server should listen\n");
+                printf("    -f  (path)   the base folder path for the server root folder\n");
                 printf("    -h           show this text\n");
                 printf("    -a           auto start server\n");
                 return (0);
             }
             else if(!strcmp(argv[i], "-a"))
             {
-                startServerThread(&userDB);
-                serverRunning = TRUE;
+                serverRunning = startServerThread(&userDB);
             }
         }
     }
@@ -135,7 +159,7 @@ int main(int argc, char **argv)
             printf("1. stop server\n");
         else
             printf("1. start server\n");
-        printf("2. add new user\n3. load login database from file\n4. save login database to file\n5. print database\n6. print current connections\n7. clear screen\n  your choice: ");
+        printf("2. add new user\n3. load login database from file\n4. save login database to file\n5. print database\n6. print current connections\n7. clear screen\n8. server configurations\n  your choice: ");
         scanf("%d", &data.choice);
         switch(data.choice)
         {
@@ -155,8 +179,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                startServerThread(&userDB);
-                serverRunning = TRUE;
+                serverRunning = startServerThread(&userDB);
             }
             break;
         case 2:
@@ -195,6 +218,32 @@ int main(int argc, char **argv)
             break;
         case 7:
             clearScreen();
+            break;
+        case 8:
+            if(serverRunning)
+            {
+                printf("the server is running, you can't configure it in this state!\n");
+            }
+            else
+            {
+                printf("1. change port\n2. change server's base folder\n  your choice: ");
+                scanf("%d", &data.choice);
+                switch(data.choice)
+                {
+                case 1:
+                    printf("enter new port: ");
+                    scanf("%d", &data.choice);
+                    if(data.choice > 0xFFFF)
+                        fprintf(stderr, "Bad port specified!\n");
+                    else
+                        port = (short)data.choice;
+                    break;
+                case 2:
+                    printf("enter new base folder: ");
+                    scanf("%s", basePath);
+                    base_server_folder = basePath;
+                }
+            }
             break;
         }
     } while(!exit);

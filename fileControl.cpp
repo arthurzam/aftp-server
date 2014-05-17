@@ -1,5 +1,7 @@
 #include "fileControl.h"
 
+extern char* base_server_folder;
+
 bool_t isDirectory(char* directory)
 {
     DIR *dir;
@@ -25,7 +27,7 @@ void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* use
 
 bool_t getRealDirectory(char* realativDirectory, char* result)
 {
-    strcpy(result, SERVER_BASE_FOLDER);
+    strcpy(result, base_server_folder);
     char* relDirP = realativDirectory - 1;
     while((relDirP = strchr(relDirP + 1, PATH_SEPERATOR_BAD)))
         *relDirP = PATH_SEPERATOR_GOOD;
