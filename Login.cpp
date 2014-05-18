@@ -2,7 +2,8 @@
 
 Login::Login(const char* username, const byte_t* password, LOGIN_ACCESS state)
 {
-    strcpy(this->username, username);
+    strncpy(this->username, username, USERNAME_MAX_LENGTH - 1);
+    this->username[USERNAME_MAX_LENGTH - 1] = 0;
     memcpy(this->password, password, MD5_RESULT_LENGTH);
     this->state = (byte_t)state;
     this->restrictedFolders = NULL;
@@ -37,7 +38,7 @@ Login::Login(FILE* srcFile)
 _bad:
         this->password[0] = 0;
         this->restrictedFolders = NULL;
-        this->state = LOGIN_ACCESS_READ_ONLY;
+        this->state = LOGIN_ACCESS_LIMITED;
         this->username[0] = 0;
         this->restrictedFoldersCount = 0;
         this->isInit = FALSE;
@@ -68,7 +69,13 @@ void Login::addRestrictedFolder(const char* dir)
 {
     folder* newOne = (folder*)malloc(sizeof(folder));
     folder* temp = this->restrictedFolders;
-    memcpy(newOne->folder, dir, FILENAME_MAX);
+
+    strncpy(newOne->folder, dir, FILENAME_MAX - 1);
+    char* dirP = newOne->folder - 1;
+    while((dirP = strchr(dirP + 1, PATH_SEPERATOR_BAD)))
+        *dirP = PATH_SEPERATOR_GOOD;
+
+    newOne->folder[FILENAME_MAX - 1] = 0;
     newOne->folder[FILENAME_MAX] = 0;
     newOne->folderLen = strlen(dir);
     newOne->next = NULL;
@@ -87,7 +94,7 @@ void Login::addRestrictedFolder(const char* dir)
 
 bool_t Login::isRestrictedFolder(const char* path) const
 {
-    if(this->state == LOGIN_ACCESS_ADMIN)
+    if(this->state != LOGIN_ACCESS_LIMITED)
         return (FALSE);
     folder* temp;
     for(temp = this->restrictedFolders; temp; temp = temp->next)
@@ -126,9 +133,7 @@ void Login::print() const
     {
         case LOGIN_ACCESS_ADMIN: printf(", admin"); break;
         case LOGIN_ACCESS_ALL: printf(", all"); break;
-        case LOGIN_ACCESS_READ_ONLY: printf(", read only"); break;
         case LOGIN_ACCESS_LIMITED: printf(", limited"); break;
-        case LOGIN_ACCESS_LIMITED_READ_ONLY: printf(", limited read only"); break;
     }
     if(this->restrictedFolders)
     {

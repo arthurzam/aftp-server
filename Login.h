@@ -9,8 +9,6 @@
 
 #define USERNAME_MAX_LENGTH 32
 
-
-
 /*
  * A class for holding login data, the permissions per Login and etc'.
  */
@@ -31,9 +29,7 @@ private:
 public:
     enum LOGIN_ACCESS {
         LOGIN_ACCESS_ADMIN = 0,
-        LOGIN_ACCESS_READ_ONLY,
         LOGIN_ACCESS_LIMITED,
-        LOGIN_ACCESS_LIMITED_READ_ONLY,
         LOGIN_ACCESS_ALL
     };
     Login(const char* username, const byte_t* password, LOGIN_ACCESS state);
@@ -55,6 +51,10 @@ public:
     inline bool_t isLoaded() const
     {
         return (this->isInit);
+    }
+    inline bool_t isAdmin() const
+    {
+        return (this->state == LOGIN_ACCESS_ADMIN);
     }
 
     inline Login*& next()
