@@ -12,14 +12,14 @@ class UserList {
 private:
     typedef struct _listNode {
         User* arr[USERS_IN_USERS_ARRAY];
-        bool_t isFull;
+        bool isFull;
         struct _listNode* next;
     } ListNode;
 
     int userCount;
     int nodesCount;
     ListNode* head;
-    mutable bool_t isSearching;
+    mutable bool isSearching;
 
     static ListNode* createNewNode();
 public:

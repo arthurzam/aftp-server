@@ -17,13 +17,13 @@ FileTransfer::FileTransfer(char* relativePath, User* user) // Download
     this->currentCursorBlock = 0;
 
     fseek(this->file, 0, SEEK_END);
-    long temp = ftell(this->file);
+    uint64_t temp = ftell(this->file);
     this->blocksCount = temp / FILE_BLOCK_SIZE;
     if((temp & (FILE_BLOCK_SIZE - 1)) != 0) // works only if FILE_BLOCK_SIZE is 2^x; check that there is a partial block
         this->blocksCount++;
     fseek(this->file, 0, SEEK_SET);
 
-    this->blocks = (byte_t*)malloc(this->blocksCount);
+    this->blocks = (uint8_t*)malloc(this->blocksCount);
     memset(this->blocks, 0, this->blocksCount);
 }
 
@@ -42,7 +42,7 @@ FileTransfer::FileTransfer(char* relativePath, User* user, unsigned int blocksCo
     this->user = user;
     this->blocksCount = blocksCount;
     this->currentCursorBlock = 0;
-    this->blocks = (byte_t*)malloc(blocksCount);
+    this->blocks = (uint8_t*)malloc(blocksCount);
     memset(this->blocks, 0, blocksCount);
 }
 
@@ -59,13 +59,13 @@ FileTransfer::~FileTransfer()
 void FileTransfer::recieveBlock(char* buffer, int dataLen)
 {
     struct dat_t {
-        unsigned int blockNum;
-        unsigned short size;
-        byte_t md5Res[16];
-        byte_t dataFile[FILE_BLOCK_SIZE];
+        uint32_t blockNum;
+        uint16_t size;
+        uint8_t md5Res[16];
+        uint8_t dataFile[FILE_BLOCK_SIZE];
     };
     struct dat_t* data = (struct dat_t*)buffer;
-    byte_t md5R[16];
+    uint8_t md5R[16];
     md5(data->dataFile, data->size, md5R);
     if(memcmp(md5R, data->md5Res, 16)) // not equal
     {
@@ -94,10 +94,10 @@ void FileTransfer::askForBlock(unsigned int blockNum)
         return;
     }
     struct {
-        int blockNum;
-        unsigned short size;
-        byte_t md5[16];
-        byte_t data[FILE_BLOCK_SIZE];
+        uint32_t blockNum;
+        uint16_t size;
+        uint8_t md5[16];
+        uint8_t data[FILE_BLOCK_SIZE];
     } buffer;
     if(this->currentCursorBlock != blockNum)
         fseek(this->file, (blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);

@@ -1,20 +1,19 @@
 #include "fileControl.h"
-
 extern char* base_server_folder;
-
-bool_t isDirectory(char* directory)
+#include <stdbool.h>
+bool isDirectory(char* directory)
 {
     DIR *dir;
     dir = opendir(directory);
     if(!dir)
-        return (FALSE);
+        return (false);
     closedir (dir);
-    return (TRUE);
+    return (true);
 }
 
 void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* user)
 {
-    data->isLoaded = FALSE;
+    data->isLoaded = false;
     data->user = user;
 #ifdef WIN32
     _beginthread(function, 0, data);
@@ -25,14 +24,14 @@ void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* use
     while(!data->isLoaded);
 }
 
-bool_t getRealDirectory(char* realativDirectory, char* result)
+bool getRealDirectory(char* realativDirectory, char* result)
 {
     strcpy(result, base_server_folder);
     char* relDirP = realativDirectory - 1;
     while((relDirP = strchr(relDirP + 1, PATH_SEPERATOR_BAD)))
         *relDirP = PATH_SEPERATOR_GOOD;
     strcat(result, (realativDirectory[0] == PATH_SEPERATOR_GOOD ? realativDirectory + 1 : realativDirectory));
-    return (TRUE);
+    return (true);
 }
 
 threadReturnValue getContentDirectory(void* dataV)
@@ -40,8 +39,8 @@ threadReturnValue getContentDirectory(void* dataV)
     fsData* data = (fsData*)dataV;
     const char FILE_LIST_SEPARATOR = '|';
     char base[FILENAME_MAX];
-    bool_t flag = data->user->getRealFile(data->data.path, base);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path, base);
+    data->isLoaded = true;
     char *dirP, *resP;
     DIR* dir;
     if(!flag)
@@ -93,9 +92,9 @@ threadReturnValue symbolicLink(void* dataV)
 {
     fsData* data = (fsData*)dataV;
     char src[FILENAME_MAX], dst[FILENAME_MAX];
-    bool_t flag = data->user->getRealFile(data->data.path2.src, src) &&
-                  data->user->getRealFile(data->data.path2.dst, dst);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path2.src, src) &&
+                data->user->getRealFile(data->data.path2.dst, dst);
+    data->isLoaded = true;
 
     char srcT[FILENAME_MAX];
     if(flag)
@@ -117,8 +116,8 @@ threadReturnValue createDirectory(void* dataV)
 {
     fsData* data = (fsData*)dataV;
     char directory[FILENAME_MAX];
-    bool_t flag = data->user->getRealFile(data->data.path, directory);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path, directory);
+    data->isLoaded = true;
 #ifdef WIN32
     if(flag && CreateDirectoryA(directory, NULL))
         data->user->sendData(200);
@@ -143,9 +142,9 @@ threadReturnValue moveFile(void* dataV)
 {
     fsData* data = (fsData*)dataV;
     char src[FILENAME_MAX], dst[FILENAME_MAX];
-    bool_t flag = data->user->getRealFile(data->data.path2.src, src) &&
-                  data->user->getRealFile(data->data.path2.dst, dst);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path2.src, src) &&
+                data->user->getRealFile(data->data.path2.dst, dst);
+    data->isLoaded = true;
     if(!flag || rename(src, dst))
         data->user->sendData(300);
     else
@@ -159,9 +158,9 @@ threadReturnValue copyFile(void* dataV)
 {
     fsData* data = (fsData*)dataV;
     char srcS[FILENAME_MAX], dstS[FILENAME_MAX];
-    bool_t flag = data->user->getRealFile(data->data.path2.src, srcS) &&
-                  data->user->getRealFile(data->data.path2.dst, dstS);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path2.src, srcS) &&
+                data->user->getRealFile(data->data.path2.dst, dstS);
+    data->isLoaded = true;
 #ifdef WIN32
     if(flag && CopyFileA(srcS, dstS, 0))
         data->user->sendData(200);
@@ -188,8 +187,8 @@ threadReturnValue removeFile(void* dataV)
 {
     fsData* data = (fsData*)dataV;
     char src[FILENAME_MAX];
-    bool_t flag = data->user->getRealFile(data->data.path, src);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path, src);
+    data->isLoaded = true;
     if(!flag || remove(src))
         data->user->sendData(300);
     else
@@ -199,7 +198,7 @@ threadReturnValue removeFile(void* dataV)
 #endif
 }
 
-unsigned long long int getFilesize(char* path, User* user)
+uint64_t getFilesize(char* path, User* user)
 {
     char src[FILENAME_MAX];
     if(!user->getRealFile(path, src))
@@ -222,15 +221,15 @@ unsigned long long int getFilesize(char* path, User* user)
 threadReturnValue getMD5OfFile(void* dataV)
 {
     fsData* data = (fsData*)dataV;
-    byte_t result[MD5_RESULT_LENGTH];
+    uint8_t result[MD5_RESULT_LENGTH];
     char filePath[FILENAME_MAX];
-    bool_t flag = data->user->getRealFile(data->data.path, filePath);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path, filePath);
+    data->isLoaded = true;
 
     md5_context ctx;
     int i;
     FILE* f = NULL;
-    byte_t buffer[512];
+    uint8_t buffer[512];
 
     if(!(flag && (f = fopen(filePath, "rb"))))
     {
@@ -262,8 +261,8 @@ threadReturnValue removeFolder(void* dataV)
     const int baseCommandLen = 9;
 #endif
     fsData* data = (fsData*)dataV;
-    bool_t flag = data->user->getRealFile(data->data.path, command + baseCommandLen);
-    data->isLoaded = TRUE;
+    bool flag = data->user->getRealFile(data->data.path, command + baseCommandLen);
+    data->isLoaded = true;
     if(!flag || system(command))
         data->user->sendData(300);
     else
@@ -289,7 +288,7 @@ threadReturnValue copyFolder(void* dataV)
     i = strlen(command);
     command[i++] = ' ';
     data->user->getRealFile(data->data.path2.dst, command + i);
-    data->isLoaded = TRUE;
+    data->isLoaded = true;
     if(system(command))
 _bad:
         data->user->sendData(300);
@@ -300,11 +299,11 @@ _bad:
 #endif
 }
 
-bool_t isFileExists(char* path)
+bool isFileExists(char* path)
 {
     FILE* file = fopen(path, "rb");
     if(!file)
-        return (FALSE);
+        return (false);
     fclose(file);
-    return (TRUE);
+    return (true);
 }

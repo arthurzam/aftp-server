@@ -7,12 +7,12 @@ UserList::UserList()
     this->head = NULL;
     this->userCount = 0;
     this->nodesCount = 0;
-    this->isSearching = FALSE;
+    this->isSearching = false;
 }
 
 UserList::~UserList()
 {
-    this->isSearching = TRUE;
+    this->isSearching = true;
     ListNode* temp = NULL;
     int i;
     while(this->head)
@@ -58,12 +58,12 @@ int UserList::removeUser(int index)
     if(!curr) // if we exited the bound of list
         return (EXIT_FAILURE);
 
-    this->isSearching = TRUE;
+    this->isSearching = true;
     delete curr->arr[index];
     curr->arr[index] = NULL;
-    curr->isFull = FALSE;
+    curr->isFull = false;
     --this->userCount;
-    this->isSearching = FALSE;
+    this->isSearching = false;
 
     return (EXIT_SUCCESS);
 }
@@ -72,7 +72,7 @@ int UserList::removeUser(const User* user)
 {
     int i;
     ListNode* curr = this->head;
-    this->isSearching = TRUE;
+    this->isSearching = true;
     while(curr)
     {
         for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
@@ -81,12 +81,12 @@ int UserList::removeUser(const User* user)
                 delete curr->arr[i];
                 curr->arr[i] = NULL;
                 --this->userCount;
-                this->isSearching = FALSE;
+                this->isSearching = false;
                 return (EXIT_SUCCESS);
             }
         curr = curr->next;
     }
-    this->isSearching = FALSE;
+    this->isSearching = false;
     return (EXIT_FAILURE);
 }
 
@@ -101,14 +101,14 @@ int UserList::addUser(const struct sockaddr_in& user)
         this->head->arr[0] = new User(user);
         ++this->nodesCount;
         ++this->userCount;
-        this->isSearching = FALSE;
+        this->isSearching = false;
         return (0);
     }
     while(curr) // move through all nodes
     {
         if(!curr->isFull)
         {
-            curr->isFull = TRUE;
+            curr->isFull = true;
             for(i = 0; i < USERS_IN_USERS_ARRAY; ++i) // find an empty spot on the current array
             {
                 if(!curr->arr[i]) // is empty (==NULL)
@@ -122,7 +122,7 @@ int UserList::addUser(const struct sockaddr_in& user)
             {
                 if(!curr->arr[i]) // is empty?
                 {
-                    curr->isFull = FALSE; // update the current node flag, that isn't full
+                    curr->isFull = false; // update the current node flag, that isn't full
                     break;
                 }
             }
@@ -130,7 +130,7 @@ int UserList::addUser(const struct sockaddr_in& user)
             return (index);
         }
 
-        this->isSearching = TRUE;
+        this->isSearching = true;
         index += USERS_IN_USERS_ARRAY;
         if(!curr->next) // we didn't found a not full node => we need to create
         {
@@ -139,7 +139,7 @@ int UserList::addUser(const struct sockaddr_in& user)
             curr->arr[0] = new User(user);
             ++this->userCount;
             ++this->nodesCount;
-            this->isSearching = FALSE;
+            this->isSearching = false;
             return (index);
         }
         curr = curr->next;
@@ -151,19 +151,19 @@ int UserList::findIndexOfUser(const User &user) const
 {
     int index = 0, i;
     ListNode* curr = this->head;
-    this->isSearching = TRUE;
+    this->isSearching = true;
     while(curr)
     {
         for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
             if(curr->arr[i] && curr->arr[i]->equals(user))
             {
-                this->isSearching = FALSE;
+                this->isSearching = false;
                 return (index + i);
             }
         curr = curr->next;
         index += USERS_IN_USERS_ARRAY;
     }
-    this->isSearching = FALSE;
+    this->isSearching = false;
     return (-1);
 }
 
@@ -171,18 +171,18 @@ User* UserList::findUser(const struct sockaddr_in& user) const
 {
     int i;
     ListNode* curr = this->head;
-    this->isSearching = TRUE;
+    this->isSearching = true;
     while(curr)
     {
         for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
             if(curr->arr[i] && curr->arr[i]->equals(user))
             {
-                this->isSearching = FALSE;
+                this->isSearching = false;
                 return (curr->arr[i]);
             }
         curr = curr->next;
     }
-    this->isSearching = FALSE;
+    this->isSearching = false;
     return (NULL);
 }
 
@@ -190,7 +190,7 @@ UserList::ListNode* UserList::createNewNode()
 {
     ListNode* result = (ListNode*)malloc(sizeof(ListNode));
     int i;
-    result->isFull = FALSE;
+    result->isFull = false;
     result->next = NULL;
     for(i = 0; i < USERS_IN_USERS_ARRAY; ++i)
     {
@@ -215,7 +215,7 @@ void UserList::userControl()
                     --this->userCount;
                     delete curr->arr[i];
                     curr->arr[i] = NULL;
-                    curr->isFull = FALSE;
+                    curr->isFull = false;
                 }
             }
         }

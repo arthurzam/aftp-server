@@ -23,8 +23,8 @@ private:
     struct sockaddr_in _from;
     char _folderPath[FILENAME_MAX];
     time_t _lastUse;
-    bool_t _timeout;
-    bool_t _initialized;
+    bool _timeout;
+    bool _initialized;
     Login* _login;
 
     /*
@@ -35,7 +35,7 @@ private:
      *    move back (..) when already on root
      * return (TRUE) if everything is OK, and (FALSE) if error.
      */
-    static bool_t parseChangeDir(char* cdPath, char* destination);
+    static bool parseChangeDir(char* cdPath, char* destination);
 public:
     FileTransfer* fileTransfer;
     User();
@@ -48,8 +48,8 @@ public:
      * returns TRUE if user is to long not activated (timeout send + time moved).
      * if the user is inactive first time, then sends timeout message (900) to this user.
      */
-    bool_t timeout();
-    inline bool_t isLoged() const
+    bool timeout();
+    inline bool isLoged() const
     {
         return (this->_login != NULL);
     }
@@ -66,26 +66,26 @@ public:
      * puts the full path in result array
      * return FALSE if error in move directory or if a restricted folder, otherwise TRUE.
      */
-    bool_t getRealFile(char* relativeFile, char* result) const;
-    inline bool_t moveFolder(char* path)
+    bool getRealFile(char* relativeFile, char* result) const;
+    inline bool moveFolder(char* path)
     {
         return (User::parseChangeDir(path, this->_folderPath));
     }
 
-    bool_t equals(const struct sockaddr_in& other) const;
-    inline bool_t equals(const User& other) const
+    bool equals(const struct sockaddr_in& other) const;
+    inline bool equals(const User& other) const
     {
         return (this->equals(other._from));
     }
 
     void print() const;
 
-    inline int sendData(short msgCode, void* data, int datalen)
+    inline int sendData(uint16_t msgCode, void* data, int datalen)
     {
         return (sendMessage(&this->_from, msgCode, data, datalen));
     }
 
-    inline int sendData(short msgCode)
+    inline int sendData(uint16_t msgCode)
     {
         return (sendMessage(&this->_from, msgCode, NULL, 0));
     }

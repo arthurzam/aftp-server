@@ -1,14 +1,14 @@
 #include "Login.h"
 
-Login::Login(const char* username, const byte_t* password, LOGIN_ACCESS state)
+Login::Login(const char* username, const uint8_t* password, LOGIN_ACCESS state)
 {
     strncpy(this->username, username, USERNAME_MAX_LENGTH - 1);
     this->username[USERNAME_MAX_LENGTH - 1] = 0;
     memcpy(this->password, password, MD5_RESULT_LENGTH);
-    this->state = (byte_t)state;
+    this->state = (uint8_t)state;
     this->restrictedFolders = NULL;
     this->restrictedFoldersCount = 0;
-    this->isInit = TRUE;
+    this->isInit = true;
     this->_next = NULL;
 }
 
@@ -17,11 +17,11 @@ Login::Login(FILE* srcFile)
     if(srcFile)
     {
         char folder[FILENAME_MAX + 1];
-        byte_t i;
+        uint8_t i;
         if(fread(this->username, 1, USERNAME_MAX_LENGTH, srcFile) < USERNAME_MAX_LENGTH ||
-           fread(this->password, 1, MD5_RESULT_LENGTH, srcFile) < MD5_RESULT_LENGTH ||
-           fread(&this->state, 1, sizeof(this->state), srcFile) < sizeof(this->state) ||
-           fread(&i, 1, sizeof(i), srcFile) < sizeof(i))
+                fread(this->password, 1, MD5_RESULT_LENGTH, srcFile) < MD5_RESULT_LENGTH ||
+                fread(&this->state, 1, sizeof(this->state), srcFile) < sizeof(this->state) ||
+                fread(&i, 1, sizeof(i), srcFile) < sizeof(i))
             goto _bad;
 
         this->restrictedFolders = NULL;
@@ -31,7 +31,7 @@ Login::Login(FILE* srcFile)
             fgets(folder, FILENAME_MAX + 1, srcFile);
             this->addRestrictedFolder(folder);
         }
-        this->isInit = TRUE;
+        this->isInit = true;
     }
     else
     {
@@ -41,7 +41,7 @@ _bad:
         this->state = LOGIN_ACCESS_LIMITED;
         this->username[0] = 0;
         this->restrictedFoldersCount = 0;
-        this->isInit = FALSE;
+        this->isInit = false;
     }
     this->_next = NULL;
 }
@@ -60,7 +60,7 @@ Login::~Login()
     this->_next = NULL;
 }
 
-bool_t Login::check(const char* username, const byte_t* password) const
+bool Login::check(const char* username, const uint8_t* password) const
 {
     return (!(memcmp(this->password, password, MD5_RESULT_LENGTH) || strcmp(this->username, username)));
 }
@@ -92,23 +92,23 @@ void Login::addRestrictedFolder(const char* dir)
     this->restrictedFoldersCount++;
 }
 
-bool_t Login::isRestrictedFolder(const char* path) const
+bool Login::isRestrictedFolder(const char* path) const
 {
     if(this->state != LOGIN_ACCESS_LIMITED)
-        return (FALSE);
+        return (false);
     folder* temp;
     for(temp = this->restrictedFolders; temp; temp = temp->next)
     {
         if(!strncmp(path, temp->folder, temp->folderLen))
-            return (TRUE);
+            return (true);
     }
-    return (FALSE);
+    return (false);
 }
 
-bool_t Login::save(FILE* dstFile) const
+bool Login::save(FILE* dstFile) const
 {
     if(!dstFile)
-        return (FALSE);
+        return (false);
     fwrite(this->username, 1, USERNAME_MAX_LENGTH, dstFile);
     fwrite(this->password, 1, MD5_RESULT_LENGTH, dstFile);
     fwrite(&this->state, 1, sizeof(this->state), dstFile);
@@ -119,7 +119,7 @@ bool_t Login::save(FILE* dstFile) const
         fputs(temp->folder, dstFile);
         fputc('\n', dstFile);
     }
-    return (TRUE);
+    return (true);
 }
 
 void Login::print() const
@@ -131,9 +131,15 @@ void Login::print() const
         printf("%02x", this->password[i]);
     switch(this->state)
     {
-        case LOGIN_ACCESS_ADMIN: printf(", admin"); break;
-        case LOGIN_ACCESS_ALL: printf(", all"); break;
-        case LOGIN_ACCESS_LIMITED: printf(", limited"); break;
+    case LOGIN_ACCESS_ADMIN:
+        printf(", admin");
+        break;
+    case LOGIN_ACCESS_ALL:
+        printf(", all");
+        break;
+    case LOGIN_ACCESS_LIMITED:
+        printf(", limited");
+        break;
     }
     if(this->restrictedFolders)
     {

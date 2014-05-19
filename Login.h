@@ -20,11 +20,11 @@ class Login {
     } folder;
 private:
     char username[USERNAME_MAX_LENGTH];
-    byte_t password[MD5_RESULT_LENGTH];
-    byte_t state;
+    uint8_t password[MD5_RESULT_LENGTH];
+    uint8_t state;
     folder* restrictedFolders;
-    byte_t restrictedFoldersCount;
-    bool_t isInit;
+    uint8_t restrictedFoldersCount;
+    bool isInit;
     Login* _next;
 public:
     enum LOGIN_ACCESS {
@@ -32,27 +32,27 @@ public:
         LOGIN_ACCESS_LIMITED,
         LOGIN_ACCESS_ALL
     };
-    Login(const char* username, const byte_t* password, LOGIN_ACCESS state);
+    Login(const char* username, const uint8_t* password, LOGIN_ACCESS state);
     Login(const Login& other);
     Login(FILE* srcFile);
     ~Login();
 
-    bool_t check(const char* username, const byte_t* password) const;
+    bool check(const char* username, const uint8_t* password) const;
 
     /*
      * the folder path should be the relative one!
      */
     void addRestrictedFolder(const char* folder);
-    bool_t isRestrictedFolder(const char* path) const;
+    bool isRestrictedFolder(const char* path) const;
 
-    bool_t save(FILE* dstFile) const;
+    bool save(FILE* dstFile) const;
     void print() const;
 
-    inline bool_t isLoaded() const
+    inline bool isLoaded() const
     {
         return (this->isInit);
     }
-    inline bool_t isAdmin() const
+    inline bool isAdmin() const
     {
         return (this->state == LOGIN_ACCESS_ADMIN);
     }

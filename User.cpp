@@ -4,8 +4,8 @@ User::User()
 {
     this->_folderPath[0] = 0;
     this->_lastUse = 0;
-    this->_timeout = FALSE;
-    this->_initialized = FALSE;
+    this->_timeout = false;
+    this->_initialized = false;
     this->fileTransfer = NULL;
     this->_login = NULL;
 }
@@ -15,8 +15,8 @@ User::User(const struct sockaddr_in& from)
     this->_folderPath[0] = 0;
     memcpy(&(this->_from), &from, sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
-    this->_timeout = FALSE;
-    this->_initialized = TRUE;
+    this->_timeout = false;
+    this->_initialized = false;
     this->fileTransfer = NULL;
     this->_login = NULL;
 }
@@ -31,24 +31,24 @@ User::~User()
 void User::resetTime()
 {
     this->_lastUse = time(NULL);
-    this->_timeout = FALSE;
+    this->_timeout = false;
 }
 
-bool_t User::equals(const struct sockaddr_in& other) const
+bool User::equals(const struct sockaddr_in& other) const
 {
     return (other.sin_port == this->_from.sin_port &&
 #ifdef WIN32
-        other.sin_addr.S_un.S_addr == this->_from.sin_addr.S_un.S_addr
+            other.sin_addr.S_un.S_addr == this->_from.sin_addr.S_un.S_addr
 #else
-        other.sin_addr.s_addr == this->_from.sin_addr.s_addr
+            other.sin_addr.s_addr == this->_from.sin_addr.s_addr
 #endif
-        );
+           );
 }
 
-bool_t User::parseChangeDir(char* path, char* dst)
+bool User::parseChangeDir(char* path, char* dst)
 {
     if(*path == 0)
-        return (TRUE);
+        return (true);
     int i;
     char* temp = path - 1;
     char newStr[FILENAME_MAX];
@@ -69,7 +69,7 @@ _check_path:
     if(*path == '.' && path[1] == '.')
     {
         if(newStr[1] == 0)
-            return (FALSE); // trying to move back when we are already on root
+            return (false); // trying to move back when we are already on root
         temp = strrchr(newStr, PATH_SEPERATOR_GOOD); // find the last occurrence of '/' and set it as '\0'
         if(!temp)
         {
@@ -94,10 +94,10 @@ _check_path:
 
 _fin:
     strcpy(dst, newStr);
-    return (TRUE);
+    return (true);
 }
 
-bool_t User::timeout()
+bool User::timeout()
 {
     const int USER_TIME_MSG_SEND = 50;
     const int USER_TIME_REMOVE = 100;
@@ -108,22 +108,22 @@ bool_t User::timeout()
     else if (seconds > USER_TIME_MSG_SEND)
     {
         this->sendData(900); // send timeout
-        this->_timeout = TRUE;
+        this->_timeout = true;
     }
-    return (FALSE);
+    return (false);
 }
 
-bool_t User::getRealFile(char* relativeFile, char* result) const
+bool User::getRealFile(char* relativeFile, char* result) const
 {
     char dst[FILENAME_MAX];
     strcpy(dst, this->_folderPath);
     if(User::parseChangeDir(relativeFile, dst))
     {
         if (this->_login->isRestrictedFolder(dst))
-            return (FALSE);
+            return (false);
         return (getRealDirectory(dst, result));
     }
-    return (FALSE);
+    return (true);
 }
 
 void User::print() const

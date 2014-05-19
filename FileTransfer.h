@@ -20,7 +20,7 @@ private:
     } STATE;
 
     STATE state;
-    byte_t* blocks; // pointer to HEAP located array
+    uint8_t* blocks; // pointer to HEAP located array
     unsigned int blocksCount;
     unsigned int currentCursorBlock; // the block where the file's cursor is located
     FILE* file;
@@ -29,7 +29,7 @@ public:
     FileTransfer(char* relativePath, User* user); // Download
     FileTransfer(char* relativePath, User* user, unsigned int blocksCount); // Upload
 
-    inline bool_t isLoaded() const
+    inline bool isLoaded() const
     {
         return (this->state);
     }

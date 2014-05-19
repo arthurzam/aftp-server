@@ -1,16 +1,8 @@
 #ifndef DEFENITIONS_H_
 #define DEFENITIONS_H_
 
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#ifndef TRUE
-#define TRUE !FALSE
-#endif
-
-typedef unsigned char bool_t;
-typedef unsigned char byte_t;
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifndef FILENAME_MAX
 #define FILENAME_MAX 260

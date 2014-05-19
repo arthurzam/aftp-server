@@ -22,8 +22,8 @@
 UserList* listUsers = NULL;
 SOCKET sock;
 
-extern bool_t needExit;
-extern bool_t canExit;
+extern bool needExit;
+extern bool canExit;
 extern unsigned short port;
 
 threadReturnValue userControl(void* arg);
@@ -36,7 +36,7 @@ threadReturnValue startServer(void* arg)
     User* user;
     struct sockaddr_in server;
     struct sockaddr_in from;
-    short msgCode;
+    uint16_t msgCode;
     socklen_t fromlen = sizeof(from);
     fsData data;
 
@@ -44,17 +44,17 @@ threadReturnValue startServer(void* arg)
         struct {
             char* src;
             char* dst;
-            byte_t src_len;
-            byte_t dst_len;
+            uint8_t src_len;
+            uint8_t dst_len;
         } src_dst;
         char* path;
         Login* loginClass;
         int i;
-        unsigned long long int l;
-        byte_t md5[MD5_RESULT_LENGTH];
+        uint64_t l;
+        uint8_t md5[MD5_RESULT_LENGTH];
         struct {
             char* username;
-            byte_t* md5Password;
+            uint8_t* md5Password;
         } login;
     } tempData;
 
@@ -133,7 +133,7 @@ threadReturnValue startServer(void* arg)
             {
             case 100: // login
                 tempData.login.username = Buffer + 18;
-                tempData.login.md5Password = (byte_t*)(Buffer + 2);
+                tempData.login.md5Password = (uint8_t*)(Buffer + 2);
                 if((tempData.loginClass = usersDB->check(tempData.login.username, tempData.login.md5Password)))
                 {
                     user->logIn(tempData.loginClass);
@@ -161,13 +161,13 @@ threadReturnValue startServer(void* arg)
                 if(!user->fileTransfer)
                     sendMessage(&from, 300, NULL, 0);
                 else
-                    user->fileTransfer->askForBlocksRange(*((int*)(Buffer + 2)), *((int*)(Buffer + 6)));
+                    user->fileTransfer->askForBlocksRange(*((uint32_t*)(Buffer + 2)), *((uint32_t*)(Buffer + 6)));
                 break;
             case 212: // ask for block
                 if(!user->fileTransfer)
                     sendMessage(&from, 300, NULL, 0);
                 else
-                    user->fileTransfer->askForBlock(*((int*)(Buffer + 2)));
+                    user->fileTransfer->askForBlock(*((uint32_t*)(Buffer + 2)));
                 break;
             case 213: // finish file transfer
                 if(!user->fileTransfer)
@@ -185,7 +185,7 @@ threadReturnValue startServer(void* arg)
             case 510: // upload
                 if(user->fileTransfer)
                     delete user->fileTransfer;
-                user->fileTransfer = new FileTransfer(Buffer + 6, user, *(int*)(Buffer + 2));
+                user->fileTransfer = new FileTransfer(Buffer + 6, user, *(uint32_t*)(Buffer + 2));
                 if(user->fileTransfer->isLoaded())
                     sendMessage(&from, 200, NULL, 0);
                 else
@@ -231,10 +231,10 @@ threadReturnValue startServer(void* arg)
                 break;
             case 523: // get file size
                 tempData.l = getFilesize(Buffer + 2, user);
-                if(tempData.l == (unsigned long long int)-1)
+                if(tempData.l == (uint64_t)-1)
                     sendMessage(&from, 300, NULL, 0);
                 else
-                    sendMessage(&from, 200, &tempData.l, sizeof(unsigned long long int));
+                    sendMessage(&from, 200, &tempData.l, sizeof(uint64_t));
                 break;
             case 524: // get md5 of file
                 data.data.path = Buffer + 2;
@@ -301,27 +301,27 @@ _errorExit:
     if(listUsers)
         delete listUsers;
     listUsers = NULL;
-    canExit = TRUE;
+    canExit = true;
 #ifndef WIN32
     return NULL;
 #endif
 }
 
-int sendMessage(struct sockaddr_in* to, short msgCode, const void* data, int datalen)
+int sendMessage(struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen)
 {
-    static bool_t lockSend = FALSE; // mini mutex
+    static bool lockSend = false; // mini mutex
 
     char buffer[BUFFER_SERVER_SIZE + 5];
-    memcpy(buffer, &msgCode, 2);
+    memcpy(buffer, &msgCode, sizeof(msgCode));
     if(datalen > BUFFER_SERVER_SIZE)
         datalen = BUFFER_SERVER_SIZE;
     if(data && datalen > 0)
-        memcpy(buffer + 2, data, datalen);
+        memcpy(buffer + sizeof(msgCode), data, datalen);
 
     while (lockSend) ;
-    lockSend = TRUE;
-    int retVal = sendto(sock, buffer, datalen + 2, 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
-    lockSend = FALSE;
+    lockSend = true;
+    int retVal = sendto(sock, buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
+    lockSend = false;
     return (retVal);
 }
 

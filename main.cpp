@@ -13,8 +13,8 @@
 #include "LoginDB.h"
 #include "UserList.h"
 
-bool_t needExit;
-bool_t canExit;
+bool needExit;
+bool canExit;
 unsigned short port = DEFAULT_PORT;
 char* base_server_folder = (char*)DEFAULT_SERVER_BASE_FOLDER;
 extern UserList* listUsers;
@@ -22,7 +22,7 @@ extern UserList* listUsers;
 void stopServer()
 {
     printf("the server is stopping!\n");
-    needExit = TRUE;
+    needExit = true;
     while(!canExit); // wait for all to exit
     printf("the server stopped\n");
 
@@ -30,9 +30,9 @@ void stopServer()
         delete listUsers;
 }
 
-bool_t startServerThread(LoginDB* userDB)
+bool startServerThread(LoginDB* userDB)
 {
-	// replace all bad separators into good one
+    // replace all bad separators into good one
     char* pathP = base_server_folder - 1;
     while((pathP = strchr(pathP + 1, PATH_SEPERATOR_BAD)))
         *pathP = PATH_SEPERATOR_GOOD;
@@ -48,21 +48,21 @@ bool_t startServerThread(LoginDB* userDB)
     if(!isDirectory(base_server_folder))
     {
 #ifdef WIN32
-    	if(!CreateDirectoryA(base_server_folder, NULL))
+        if(!CreateDirectoryA(base_server_folder, NULL))
 #else
-		if(mkdir(base_server_folder, 0700))
+        if(mkdir(base_server_folder, 0700))
 #endif
-    		return (FALSE);
+            return (false);
     }
-    needExit = FALSE;
-    canExit = FALSE;
+    needExit = false;
+    canExit = false;
 #ifdef WIN32
     _beginthread(startServer, 0, userDB);
 #else
     pthread_t thread;
     pthread_create(&thread, NULL, startServer, userDB);
 #endif
-    return (TRUE);
+    return (true);
 }
 
 #ifdef WIN32
@@ -96,8 +96,8 @@ inline void clearScreen()
 
 int main(int argc, char **argv)
 {
-    bool_t exit = FALSE;
-    bool_t serverRunning = FALSE;
+    bool exit = true;
+    bool serverRunning = false;
     listUsers = NULL;
     LoginDB userDB;
     union {
@@ -145,12 +145,12 @@ int main(int argc, char **argv)
             }
             else if(!strcmp(argv[i], "-a"))
             {
-                serverRunning = TRUE;
+                serverRunning = true;
             }
         }
     }
 #ifdef WIN32
-    if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)signalHandler,TRUE))
+    if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)signalHandler, true))
     {
         fprintf(stderr, "Unable to install handler!\n");
     }
@@ -161,7 +161,7 @@ int main(int argc, char **argv)
         serverRunning = startServerThread(&userDB);
     do {
         if(canExit)
-            serverRunning = FALSE;
+            serverRunning = true;
         printf("0. exit\n");
         if(serverRunning)
             printf("1. stop server\n");
@@ -172,18 +172,18 @@ int main(int argc, char **argv)
         switch(data.choice)
         {
         case 0:
-            exit = TRUE;
+            exit = true;
             if(serverRunning)
             {
                 stopServer();
-                serverRunning = FALSE;
+                serverRunning = false;
             }
             break;
         case 1:
             if(serverRunning)
             {
                 stopServer();
-                serverRunning = FALSE;
+                serverRunning = false;
             }
             else
             {

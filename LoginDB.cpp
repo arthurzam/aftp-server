@@ -48,8 +48,8 @@ void LoginDB::load(const char* filePath)
 
 void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCESS state)
 {
-    byte_t md5Res[16];
-    md5((byte_t*)password, strlen(password), md5Res);
+    uint8_t md5Res[16];
+    md5(password, strlen(password), md5Res);
     Login* curr = this->head;
     Login* newOne = new Login(username, md5Res, state);
     if(!curr)
@@ -63,7 +63,7 @@ void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCES
     curr->next() = newOne;
 }
 
-Login* LoginDB::check(const char* username, const byte_t* passwordMD5) const
+Login* LoginDB::check(const char* username, const uint8_t* passwordMD5) const
 {
     Login* curr = this->head;
     while(curr)
@@ -75,13 +75,13 @@ Login* LoginDB::check(const char* username, const byte_t* passwordMD5) const
     return (NULL);
 }
 
-bool_t LoginDB::save(const char* path) const
+bool LoginDB::save(const char* path) const
 {
     if(!this->head)
-        return (FALSE);
+        return (false);
     FILE* dst = fopen(path, "wb");
     if(!dst)
-        return (FALSE);
+        return (false);
     Login* curr = this->head;
     while(curr)
     {
@@ -89,7 +89,7 @@ bool_t LoginDB::save(const char* path) const
         curr = curr->next();
     }
     fclose(dst);
-    return (TRUE);
+    return (true);
 }
 
 LoginDB::~LoginDB()
