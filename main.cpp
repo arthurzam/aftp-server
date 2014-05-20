@@ -96,7 +96,7 @@ inline void clearScreen()
 
 int main(int argc, char **argv)
 {
-    bool exit = true;
+    bool exit = false;
     bool serverRunning = false;
     listUsers = NULL;
     LoginDB userDB;
