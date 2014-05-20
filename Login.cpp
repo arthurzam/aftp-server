@@ -4,7 +4,7 @@ Login::Login(const char* username, const uint8_t* password, LOGIN_ACCESS state)
 {
     strncpy(this->username, username, USERNAME_MAX_LENGTH - 1);
     this->username[USERNAME_MAX_LENGTH - 1] = 0;
-    memcpy(this->password, password, MD5_RESULT_LENGTH);
+    memcpy(this->password, password, MD5_DIGEST_LENGTH);
     this->state = (uint8_t)state;
     this->restrictedFolders = NULL;
     this->restrictedFoldersCount = 0;
@@ -19,7 +19,7 @@ Login::Login(FILE* srcFile)
         char folder[FILENAME_MAX + 1];
         uint8_t i;
         if(fread(this->username, 1, USERNAME_MAX_LENGTH, srcFile) < USERNAME_MAX_LENGTH ||
-                fread(this->password, 1, MD5_RESULT_LENGTH, srcFile) < MD5_RESULT_LENGTH ||
+                fread(this->password, 1, MD5_DIGEST_LENGTH, srcFile) < MD5_DIGEST_LENGTH ||
                 fread(&this->state, 1, sizeof(this->state), srcFile) < sizeof(this->state) ||
                 fread(&i, 1, sizeof(i), srcFile) < sizeof(i))
             goto _bad;
@@ -62,7 +62,7 @@ Login::~Login()
 
 bool Login::check(const char* username, const uint8_t* password) const
 {
-    return (!(memcmp(this->password, password, MD5_RESULT_LENGTH) || strcmp(this->username, username)));
+    return (!(memcmp(this->password, password, MD5_DIGEST_LENGTH) || strcmp(this->username, username)));
 }
 
 void Login::addRestrictedFolder(const char* dir)
@@ -110,7 +110,7 @@ bool Login::save(FILE* dstFile) const
     if(!dstFile)
         return (false);
     fwrite(this->username, 1, USERNAME_MAX_LENGTH, dstFile);
-    fwrite(this->password, 1, MD5_RESULT_LENGTH, dstFile);
+    fwrite(this->password, 1, MD5_DIGEST_LENGTH, dstFile);
     fwrite(&this->state, 1, sizeof(this->state), dstFile);
     fwrite(&this->restrictedFoldersCount, 1, sizeof(this->restrictedFoldersCount), dstFile);
     folder* temp;
@@ -127,7 +127,7 @@ void Login::print() const
     int i;
     folder* temp;
     printf("{%s, ", this->username);
-    for(i = 0; i < MD5_RESULT_LENGTH; ++i)
+    for(i = 0; i < MD5_DIGEST_LENGTH; ++i)
         printf("%02x", this->password[i]);
     switch(this->state)
     {

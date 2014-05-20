@@ -4,8 +4,8 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <openssl/md5.h>
 #include "defenitions.h"
-#include "md5.h"
 
 #define USERNAME_MAX_LENGTH 32
 
@@ -20,7 +20,7 @@ class Login {
     } folder;
 private:
     char username[USERNAME_MAX_LENGTH];
-    uint8_t password[MD5_RESULT_LENGTH];
+    uint8_t password[MD5_DIGEST_LENGTH];
     uint8_t state;
     folder* restrictedFolders;
     uint8_t restrictedFoldersCount;

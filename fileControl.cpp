@@ -220,12 +220,12 @@ uint64_t getFilesize(char* path, User* user)
 threadReturnValue getMD5OfFile(void* dataV)
 {
     fsData* data = (fsData*)dataV;
-    uint8_t result[MD5_RESULT_LENGTH];
+    uint8_t result[MD5_DIGEST_LENGTH];
     char filePath[FILENAME_MAX];
     bool flag = data->user->getRealFile(data->data.path, filePath);
     data->isLoaded = true;
 
-    md5_context ctx;
+    MD5_CTX ctx;
     int i;
     FILE* f = NULL;
     uint8_t buffer[512];
@@ -236,13 +236,13 @@ threadReturnValue getMD5OfFile(void* dataV)
     }
     else
     {
-        md5_init(&ctx);
+        MD5_Init(&ctx);
         while((i = fread(buffer, 1, 512, f)))
         {
-            md5_append(&ctx, buffer, i);
+            MD5_Update(&ctx, buffer, i);
         }
-        md5_finish(&ctx, result);
-        data->user->sendData(200, result, MD5_RESULT_LENGTH);
+        MD5_Final(result, &ctx);
+        data->user->sendData(200, result, MD5_DIGEST_LENGTH);
     }
     fclose(f);
 #ifndef WIN32

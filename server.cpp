@@ -51,7 +51,7 @@ threadReturnValue startServer(void* arg)
         Login* loginClass;
         int i;
         uint64_t l;
-        uint8_t md5[MD5_RESULT_LENGTH];
+        uint8_t md5[MD5_DIGEST_LENGTH];
         struct {
             char* username;
             uint8_t* md5Password;

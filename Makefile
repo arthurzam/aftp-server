@@ -1,10 +1,11 @@
 CC=g++
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=md5.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
+SOURCES=fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
 LIBS=
+OPENSSL_LIB=-lssl -lcrypto
 REMOVEFILECOMMAND=rm -f
 
 ifeq ($(OS),Windows_NT)
@@ -16,12 +17,10 @@ endif
 all: $(SOURCES) $(EXECUTABLE)
 	
 $(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS) $(OPENSSL_LIB)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
-
-clear: clean
 
 clean:
 	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)*

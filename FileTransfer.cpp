@@ -66,7 +66,7 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     };
     struct dat_t* data = (struct dat_t*)buffer;
     uint8_t md5R[16];
-    md5(data->dataFile, data->size, md5R);
+    MD5(data->dataFile, data->size, md5R);
     if(memcmp(md5R, data->md5Res, 16)) // not equal
     {
         this->user->sendData(310);
@@ -103,7 +103,7 @@ void FileTransfer::askForBlock(unsigned int blockNum)
         fseek(this->file, (blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
     buffer.size = fread(buffer.data, 1, FILE_BLOCK_SIZE, this->file);
     this->currentCursorBlock = blockNum + 1;
-    md5(buffer.data, buffer.size, buffer.md5);
+    MD5(buffer.data, buffer.size, buffer.md5);
     buffer.blockNum = blockNum;
     this->user->sendData(210, &buffer, 22 + buffer.size);
     this->blocks[blockNum] = 1;

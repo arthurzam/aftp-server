@@ -49,7 +49,7 @@ void LoginDB::load(const char* filePath)
 void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCESS state)
 {
     uint8_t md5Res[16];
-    md5(password, strlen(password), md5Res);
+    MD5((uint8_t*)password, strlen(password), md5Res);
     Login* curr = this->head;
     Login* newOne = new Login(username, md5Res, state);
     if(!curr)

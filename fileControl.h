@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <dirent.h>
+#include <openssl/md5.h>
 #ifdef WIN32
 #include <windows.h>
 #include <process.h>
@@ -19,7 +20,6 @@
 
 #include "defenitions.h"
 #include "User.h"
-#include "md5.h"
 class User;
 
 typedef struct {
