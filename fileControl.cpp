@@ -1,10 +1,9 @@
 #include "fileControl.h"
 extern char* base_server_folder;
-#include <stdbool.h>
+
 bool isDirectory(char* directory)
 {
-    DIR *dir;
-    dir = opendir(directory);
+    DIR *dir = opendir(directory);
     if(!dir)
         return (false);
     closedir (dir);
@@ -42,7 +41,7 @@ threadReturnValue getContentDirectory(void* dataV)
     bool flag = data->user->getRealFile(data->data.path, base);
     data->isLoaded = true;
     char *dirP, *resP;
-    DIR* dir;
+    DIR* dir = NULL;
     if(!flag)
         goto _exit;
     dirP = base + strlen(base);

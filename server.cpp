@@ -113,186 +113,182 @@ threadReturnValue startServer(void* arg)
     while(!needExit)
     {
         retval = recvfrom(sock, Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
-        if (retval == SOCKET_ERROR || retval < 2)
-            continue;
+        if (retval < 2) continue;
         Buffer[retval] = 0;
         memcpy(&msgCode, Buffer, sizeof(msgCode));
 
-        if(!(user = listUsers->findUser(from)))
-            user = (*listUsers)[listUsers->addUser(from)];
-        else
+        if((user = listUsers->findUser(from)))
             user->resetTime();
+        else
+            user = (*listUsers)[listUsers->addUser(from)];
 
         if(msgCode != 100 && !user->isLoged())
         {
             sendMessage(&from, 100, NULL, 0);
+            continue;
         }
-        else
+        switch(msgCode)
         {
-            switch(msgCode)
+        case 100: // login
+            tempData.login.username = Buffer + 18;
+            tempData.login.md5Password = (uint8_t*)(Buffer + 2);
+            if((tempData.loginClass = usersDB->check(tempData.login.username, tempData.login.md5Password)))
             {
-            case 100: // login
-                tempData.login.username = Buffer + 18;
-                tempData.login.md5Password = (uint8_t*)(Buffer + 2);
-                if((tempData.loginClass = usersDB->check(tempData.login.username, tempData.login.md5Password)))
-                {
-                    user->logIn(tempData.loginClass);
-                    sendMessage(&from, 101, NULL, 0);
-                }
-                else
-                {
-                    sendMessage(&from, 110, NULL, 0);
-                }
-                break;
-            case 105: // logout
-                listUsers->removeUser(user);
-                sendMessage(&from, 200, NULL, 0);
-                break;
-            case 200:
-                sendMessage(&from, 200, NULL, 0);
-                break;
-            case 210: // block in File Upload
-                if(!user->fileTransfer)
-                    sendMessage(&from, 300, NULL, 0);
-                else
-                    user->fileTransfer->recieveBlock(Buffer + 2, retval - 2);
-                break;
-            case 211: // ask for block range
-                if(!user->fileTransfer)
-                    sendMessage(&from, 300, NULL, 0);
-                else
-                    user->fileTransfer->askForBlocksRange(*((uint32_t*)(Buffer + 2)), *((uint32_t*)(Buffer + 6)));
-                break;
-            case 212: // ask for block
-                if(!user->fileTransfer)
-                    sendMessage(&from, 300, NULL, 0);
-                else
-                    user->fileTransfer->askForBlock(*((uint32_t*)(Buffer + 2)));
-                break;
-            case 213: // finish file transfer
-                if(!user->fileTransfer)
-                    sendMessage(&from, 300, NULL, 0);
-                else
-                {
-                    delete user->fileTransfer;
-                    user->fileTransfer = NULL;
-                    sendMessage(&from, 200, NULL, 0);
-                }
-                break;
-            case 500: // info
-                sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2014", 41);
-                break;
-            case 510: // upload
-                if(user->fileTransfer)
-                    delete user->fileTransfer;
-                user->fileTransfer = new FileTransfer(Buffer + 6, user, *(uint32_t*)(Buffer + 2));
-                if(user->fileTransfer->isLoaded())
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                {
-                    sendMessage(&from, 300, NULL, 0);
-                    delete user->fileTransfer;
-                    user->fileTransfer = NULL;
-                }
-                break;
-            case 511: // download
-                if(user->fileTransfer)
-                    delete user->fileTransfer;
-                user->fileTransfer = new FileTransfer(Buffer + 2, user);
-                if(user->fileTransfer->isLoaded())
-                {
-                    tempData.i = user->fileTransfer->getBlocksCount();
-                    sendMessage(&from, 200, &tempData.i, 4);
-                }
-                else
-                {
-                    sendMessage(&from, 300, NULL, 0);
-                    delete user->fileTransfer;
-                    user->fileTransfer = NULL;
-                }
-                break;
-            case 520: // move file
-                tempData.src_dst.src_len = *(Buffer + 2);
-                data.data.path2.src = Buffer + 3;
-                tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-                createFSthread(moveFile, &data, user);
-                break;
-            case 521: // copy file
-                tempData.src_dst.src_len = *(Buffer + 2);
-                data.data.path2.src = Buffer + 3;
-                tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-                createFSthread(copyFile, &data, user);
-                break;
-            case 522: // remove file
-                data.data.path = Buffer + 2;
-                createFSthread(removeFile, &data, user);
-                break;
-            case 523: // get file size
-                tempData.l = getFilesize(Buffer + 2, user);
-                if(tempData.l == (uint64_t)-1)
-                    sendMessage(&from, 300, NULL, 0);
-                else
-                    sendMessage(&from, 200, &tempData.l, sizeof(uint64_t));
-                break;
-            case 524: // get md5 of file
-                data.data.path = Buffer + 2;
-                createFSthread(getMD5OfFile, &data, user);
-                break;
-#ifndef WIN32
-            case 525: // symlink file
-                tempData.src_dst.src_len = *(Buffer + 2);
-                data.data.path2.src = Buffer + 3;
-                tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-                createFSthread(copyFile, &data, user);
-                break;
-#endif
-            case 530: // cd
-                if(user->moveFolder(Buffer + 2))
-                    sendMessage(&from, 200, NULL, 0);
-                else
-                    sendMessage(&from, 300, NULL, 0);
-                break;
-            case 531: // create directory
-                data.data.path = Buffer + 2;
-                createFSthread(createDirectory, &data, user);
-                break;
-            case 532: // remove directory
-                data.data.path = Buffer + 2;
-                createFSthread(removeFolder, &data, user);
-                break;
-            case 533: // move directory
-                tempData.src_dst.src_len = *(Buffer + 2);
-                data.data.path2.src = Buffer + 3;
-                tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-                createFSthread(moveDirectory, &data, user);
-                break;
-            case 534: // copy directory
-                tempData.src_dst.src_len = *(Buffer + 2);
-                data.data.path2.src = Buffer + 3;
-                tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-                data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-                createFSthread(copyFolder, &data, user);
-                break;
-            case 535: // get contents of directory
-                data.data.path = Buffer + 2;
-                createFSthread(getContentDirectory, &data, user);
-                break;
-            case 536: // pwd
-                if(user->folderPath()[0])
-                    sendMessage(&from, 200, user->folderPath(), strlen(user->folderPath()));
-                else
-                    sendMessage(&from, 200, (char*)"/", 1);
-                break;
-            default:
-                sendMessage(&from, 391, (char*)"unknown command", 15);
-                break;
+                user->logIn(tempData.loginClass);
+                sendMessage(&from, 101, NULL, 0);
             }
+            else
+            {
+                sendMessage(&from, 110, NULL, 0);
+            }
+            break;
+        case 105: // logout
+            listUsers->removeUser(user);
+            sendMessage(&from, 200, NULL, 0);
+            break;
+        case 200:
+            sendMessage(&from, 200, NULL, 0);
+            break;
+        case 210: // block in File Upload
+            if(!user->fileTransfer)
+                sendMessage(&from, 300, NULL, 0);
+            else
+                user->fileTransfer->recieveBlock(Buffer + 2, retval - 2);
+            break;
+        case 211: // ask for block range
+            if(!user->fileTransfer)
+                sendMessage(&from, 300, NULL, 0);
+            else
+                user->fileTransfer->askForBlocksRange(*((uint32_t*)(Buffer + 2)), *((uint32_t*)(Buffer + 6)));
+            break;
+        case 212: // ask for block
+            if(!user->fileTransfer)
+                sendMessage(&from, 300, NULL, 0);
+            else
+                user->fileTransfer->askForBlock(*((uint32_t*)(Buffer + 2)));
+            break;
+        case 213: // finish file transfer
+            if(!user->fileTransfer)
+                sendMessage(&from, 300, NULL, 0);
+            else
+            {
+                delete user->fileTransfer;
+                user->fileTransfer = NULL;
+                sendMessage(&from, 200, NULL, 0);
+            }
+            break;
+        case 500: // info
+            sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2014", 41);
+            break;
+        case 510: // upload
+            if(user->fileTransfer)
+                delete user->fileTransfer;
+            user->fileTransfer = new FileTransfer(Buffer + 6, user, *(uint32_t*)(Buffer + 2));
+            if(user->fileTransfer->isLoaded())
+                sendMessage(&from, 200, NULL, 0);
+            else
+            {
+                sendMessage(&from, 300, NULL, 0);
+                delete user->fileTransfer;
+                user->fileTransfer = NULL;
+            }
+            break;
+        case 511: // download
+            if(user->fileTransfer)
+                delete user->fileTransfer;
+            user->fileTransfer = new FileTransfer(Buffer + 2, user);
+            if(user->fileTransfer->isLoaded())
+            {
+                tempData.i = user->fileTransfer->getBlocksCount();
+                sendMessage(&from, 200, &tempData.i, 4);
+            }
+            else
+            {
+                sendMessage(&from, 300, NULL, 0);
+                delete user->fileTransfer;
+                user->fileTransfer = NULL;
+            }
+            break;
+        case 520: // move file
+            tempData.src_dst.src_len = *(Buffer + 2);
+            data.data.path2.src = Buffer + 3;
+            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+            createFSthread(moveFile, &data, user);
+            break;
+        case 521: // copy file
+            tempData.src_dst.src_len = *(Buffer + 2);
+            data.data.path2.src = Buffer + 3;
+            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+            createFSthread(copyFile, &data, user);
+            break;
+        case 522: // remove file
+            data.data.path = Buffer + 2;
+            createFSthread(removeFile, &data, user);
+            break;
+        case 523: // get file size
+            tempData.l = getFilesize(Buffer + 2, user);
+            if(tempData.l == (uint64_t)-1)
+                sendMessage(&from, 300, NULL, 0);
+            else
+                sendMessage(&from, 200, &tempData.l, sizeof(uint64_t));
+            break;
+        case 524: // get md5 of file
+            data.data.path = Buffer + 2;
+            createFSthread(getMD5OfFile, &data, user);
+            break;
+#ifndef WIN32
+        case 525: // symlink file
+            tempData.src_dst.src_len = *(Buffer + 2);
+            data.data.path2.src = Buffer + 3;
+            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+            createFSthread(copyFile, &data, user);
+            break;
+#endif
+        case 530: // cd
+            if(user->moveFolder(Buffer + 2))
+                sendMessage(&from, 200, NULL, 0);
+            else
+                sendMessage(&from, 300, NULL, 0);
+            break;
+        case 531: // create directory
+            data.data.path = Buffer + 2;
+            createFSthread(createDirectory, &data, user);
+            break;
+        case 532: // remove directory
+            data.data.path = Buffer + 2;
+            createFSthread(removeFolder, &data, user);
+            break;
+        case 533: // move directory
+            tempData.src_dst.src_len = *(Buffer + 2);
+            data.data.path2.src = Buffer + 3;
+            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+            createFSthread(moveDirectory, &data, user);
+            break;
+        case 534: // copy directory
+            tempData.src_dst.src_len = *(Buffer + 2);
+            data.data.path2.src = Buffer + 3;
+            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
+            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
+            createFSthread(copyFolder, &data, user);
+            break;
+        case 535: // get contents of directory
+            data.data.path = Buffer + 2;
+            createFSthread(getContentDirectory, &data, user);
+            break;
+        case 536: // pwd
+            if(user->folderPath()[0])
+                sendMessage(&from, 200, user->folderPath(), strlen(user->folderPath()));
+            else
+                sendMessage(&from, 200, (char*)"/", 1);
+            break;
+        default:
+            sendMessage(&from, 391, (char*)"unknown command", 15);
+            break;
         }
-
     }
 _errorExit:
 #ifdef WIN32
