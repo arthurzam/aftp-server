@@ -191,11 +191,7 @@ int main(int argc, char **argv)
             }
             break;
         case 2:
-            printf("username: ");
-            scanf("%s", data.user.username);
-            printf("password: ");
-            scanf("%s", data.user.password);
-            userDB.add(data.user.username, data.user.password, Login::LOGIN_ACCESS_ADMIN);
+            userDB.input();
             clearScreen();
             printf("added\n");
             break;

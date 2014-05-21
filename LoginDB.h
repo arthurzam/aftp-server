@@ -21,6 +21,8 @@ class LoginDB {
 private:
     Login* head;
     unsigned short count;
+
+    void add(Login* next);
 public:
     /*
      * create empty list
@@ -43,6 +45,7 @@ public:
         return (this->count == 0);
     }
     void print() const;
+    void input();
     void load(const char* filePath);
     ~LoginDB();
 };

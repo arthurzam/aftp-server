@@ -46,21 +46,27 @@ void LoginDB::load(const char* filePath)
     fclose(src);
 }
 
-void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCESS state)
+void LoginDB::add(Login* next)
 {
-    uint8_t md5Res[16];
-    MD5((uint8_t*)password, strlen(password), md5Res);
     Login* curr = this->head;
-    Login* newOne = new Login(username, md5Res, state);
     if(!curr)
     {
-        this->head = newOne;
-        this->count++;
-        return;
+        this->head = next;
     }
-    while(curr->next())
-        curr = curr->next();
-    curr->next() = newOne;
+    else
+    {
+        while(curr->next())
+            curr = curr->next();
+        curr->next() = next;
+    }
+    this->count++;
+}
+
+void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCESS state)
+{
+    uint8_t md5Res[MD5_DIGEST_LENGTH];
+    MD5((uint8_t*)password, strlen(password), md5Res);
+    this->add(new Login(username, md5Res, state));
 }
 
 Login* LoginDB::check(const char* username, const uint8_t* passwordMD5) const
@@ -112,3 +118,36 @@ void LoginDB::print() const
         temp->print();
     }
 }
+
+void LoginDB::input()
+{
+    char username[USERNAME_MAX_LENGTH];
+    uint8_t md5R[MD5_DIGEST_LENGTH];
+    char str[FILENAME_MAX];
+    Login::LOGIN_ACCESS state;
+
+    printf("enter username: ");
+    scanf("%s", username);
+    printf("enter password: ");
+    scanf("%s", str);
+    MD5((uint8_t*)str, strlen(str), md5R);
+    printf("choose state:\n 0. admin\n 1. limited\n 2. all\nyour choice: ");
+    scanf("%hhd", (uint8_t*)&state);
+    Login* n = new Login(username, md5R, state);
+    if(state == Login::LOGIN_ACCESS_LIMITED)
+    {
+        printf("now you add the restricted folders [press only ENTER to finish]\n(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
+        fgetc(stdin); // input empty \n from previous scanf - I don't know why but we need!
+        do {
+            fgets(str, FILENAME_MAX, stdin);
+            str[strlen(str) - 1] = 0;
+            if(str[0])
+            {
+                n->addRestrictedFolder(str);
+            }
+        } while(str[0]);
+    }
+
+    this->add(n);
+}
+
