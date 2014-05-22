@@ -120,7 +120,7 @@ threadReturnValue startServer(void* arg)
         if((user = listUsers->findUser(from)))
             user->resetTime();
         else
-            user = (*listUsers)[listUsers->addUser(from)];
+            user = listUsers->addUser(from);
 
         if(msgCode != 100 && !user->isLoged())
         {

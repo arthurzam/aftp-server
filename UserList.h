@@ -26,13 +26,9 @@ public:
     UserList();
     ~UserList();
 
-    int removeUser(int index);
     int removeUser(const User* user);
-    int addUser(const struct sockaddr_in& user);
-    int findIndexOfUser(const User& user) const;
+    User* addUser(const struct sockaddr_in& user);
     User* findUser(const struct sockaddr_in& user) const;
-
-    User* operator[](int index) const;
 
     inline int getUserCount() const
     {
