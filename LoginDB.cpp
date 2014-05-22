@@ -124,6 +124,7 @@ void LoginDB::input()
     char username[USERNAME_MAX_LENGTH];
     uint8_t md5R[MD5_DIGEST_LENGTH];
     char str[FILENAME_MAX];
+    int i;
     Login::LOGIN_ACCESS state;
 
     printf("enter username: ");
@@ -132,7 +133,8 @@ void LoginDB::input()
     scanf("%s", str);
     MD5((uint8_t*)str, strlen(str), md5R);
     printf("choose state:\n 0. admin\n 1. limited\n 2. all\nyour choice: ");
-    scanf("%hhd", (uint8_t*)&state);
+    scanf("%u", &i);
+    state = (i < 3 ? (Login::LOGIN_ACCESS)i : Login::LOGIN_ACCESS_LIMITED);
     Login* n = new Login(username, md5R, state);
     if(state == Login::LOGIN_ACCESS_LIMITED)
     {
