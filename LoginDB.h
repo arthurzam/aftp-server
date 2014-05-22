@@ -38,7 +38,7 @@ public:
     /*
      * Returns pointer to the Login object that matches the given login. If not found, returns NULL.
      */
-    Login* check(const char* username, const uint8_t passwordMD5[16]) const;
+    const Login* check(const char* username, const uint8_t passwordMD5[16]) const;
     bool save(const char* path) const;
     inline bool isEmpty() const
     {

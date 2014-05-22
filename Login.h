@@ -61,6 +61,11 @@ public:
     {
         return (this->_next);
     }
+
+    inline const Login* next() const
+    {
+        return (this->_next);
+    }
 };
 
 #endif /* LOGIN_H_ */

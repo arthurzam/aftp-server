@@ -1,6 +1,6 @@
 #include "FileTransfer.h"
 
-FileTransfer::FileTransfer(char* relativePath, User* user) // Download
+FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
 {
     char fPath[FILENAME_MAX];
 
@@ -31,7 +31,7 @@ FileTransfer::FileTransfer(char* relativePath, User* user) // Download
     memset(this->blocks, 0, this->blocksCount);
 }
 
-FileTransfer::FileTransfer(char* relativePath, User* user, unsigned int blocksCount) // Upload
+FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int blocksCount) // Upload
 {
     char fPath[FILENAME_MAX];
     if(!user->getRealFile(relativePath, fPath))

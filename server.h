@@ -14,7 +14,7 @@
 #define DEFAULT_PORT 7777
 
 threadReturnValue startServer(void*);
-int sendMessage(struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen);
+int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen);
 
 
 #endif /* SERVER_H_ */

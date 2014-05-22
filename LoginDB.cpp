@@ -69,9 +69,9 @@ void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCES
     this->add(new Login(username, md5Res, state));
 }
 
-Login* LoginDB::check(const char* username, const uint8_t* passwordMD5) const
+const Login* LoginDB::check(const char* username, const uint8_t* passwordMD5) const
 {
-    Login* curr = this->head;
+    const Login* curr = this->head;
     while(curr)
     {
         if(curr->check(username, passwordMD5))
@@ -88,7 +88,7 @@ bool LoginDB::save(const char* path) const
     FILE* dst = fopen(path, "wb");
     if(!dst)
         return (false);
-    Login* curr = this->head;
+    const Login* curr = this->head;
     while(curr)
     {
         curr->save(dst);

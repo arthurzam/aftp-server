@@ -24,10 +24,10 @@ private:
     unsigned int blocksCount;
     unsigned int currentCursorBlock; // the block where the file's cursor is located
     FILE* file;
-    User* user; // just a pointer
+    const User* user; // just a pointer
 public:
-    FileTransfer(char* relativePath, User* user); // Download
-    FileTransfer(char* relativePath, User* user, unsigned int blocksCount); // Upload
+    FileTransfer(char* relativePath, const User* user); // Download
+    FileTransfer(char* relativePath, const User* user, unsigned int blocksCount); // Upload
 
     inline bool isLoaded() const
     {

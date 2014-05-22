@@ -25,7 +25,7 @@ private:
     time_t _lastUse;
     bool _timeout;
     bool _initialized;
-    Login* _login;
+    const Login* _login;
 
     /*
      * changes the folder path using the given path (cdPath).
@@ -53,7 +53,7 @@ public:
     {
         return (this->_login != NULL);
     }
-    inline void logIn(Login* login)
+    inline void logIn(const Login* login)
     {
         this->_login = login;
     }
@@ -80,12 +80,12 @@ public:
 
     void print() const;
 
-    inline int sendData(uint16_t msgCode, void* data, int datalen)
+    inline int sendData(uint16_t msgCode, void* data, int datalen) const
     {
         return (sendMessage(&this->_from, msgCode, data, datalen));
     }
 
-    inline int sendData(uint16_t msgCode)
+    inline int sendData(uint16_t msgCode) const
     {
         return (sendMessage(&this->_from, msgCode, NULL, 0));
     }

@@ -48,7 +48,7 @@ threadReturnValue startServer(void* arg)
             uint8_t dst_len;
         } src_dst;
         char* path;
-        Login* loginClass;
+        const Login* loginClass;
         int i;
         uint64_t l;
         uint8_t md5[MD5_DIGEST_LENGTH];
@@ -303,7 +303,7 @@ _errorExit:
 #endif
 }
 
-int sendMessage(struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen)
+int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen)
 {
     static bool lockSend = false; // mini mutex
 

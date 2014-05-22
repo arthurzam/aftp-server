@@ -24,7 +24,7 @@ class User;
 
 typedef struct {
     bool isLoaded;
-    User* user;
+    const User* user;
     union {
         char* path;
         struct {
@@ -34,14 +34,14 @@ typedef struct {
     } data;
 } fsData;
 
-void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* user);
+void createFSthread(threadReturnValue(*function)(void*), fsData* data, const User* user);
 
 /*
  * returns the real folder of the given path, in the result array
  */
 bool getRealDirectory(char* realativDirectory, char* result);
-bool isDirectory(char* directory);
-bool isFileExists(char* path);
+bool isDirectory(const char* directory);
+bool isFileExists(const char* path);
 
 #ifndef WIN32
 /*
@@ -59,7 +59,7 @@ threadReturnValue copyFolder(void* data);
 threadReturnValue moveFile(void* data);
 threadReturnValue copyFile(void* data);
 threadReturnValue removeFile(void* data);
-uint64_t getFilesize(char* path, User* user);
+uint64_t getFilesize(char* path, const User* user);
 threadReturnValue getMD5OfFile(void* data);
 
 #endif

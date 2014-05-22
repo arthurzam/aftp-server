@@ -1,7 +1,7 @@
 #include "fileControl.h"
 extern char* base_server_folder;
 
-bool isDirectory(char* directory)
+bool isDirectory(const char* directory)
 {
     DIR *dir = opendir(directory);
     if(!dir)
@@ -10,7 +10,7 @@ bool isDirectory(char* directory)
     return (true);
 }
 
-void createFSthread(threadReturnValue(*function)(void*), fsData* data, User* user)
+void createFSthread(threadReturnValue(*function)(void*), fsData* data, const User* user)
 {
     data->isLoaded = false;
     data->user = user;
@@ -197,7 +197,7 @@ threadReturnValue removeFile(void* dataV)
 #endif
 }
 
-uint64_t getFilesize(char* path, User* user)
+uint64_t getFilesize(char* path, const User* user)
 {
     char src[FILENAME_MAX];
     if(!user->getRealFile(path, src))
@@ -298,7 +298,7 @@ _bad:
 #endif
 }
 
-bool isFileExists(char* path)
+bool isFileExists(const char* path)
 {
     FILE* file = fopen(path, "rb");
     if(!file)
