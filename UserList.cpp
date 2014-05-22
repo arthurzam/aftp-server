@@ -142,23 +142,26 @@ UserList::ListNode* UserList::createNewNode()
 void UserList::userControl()
 {
     const int CLEAR_AFTER_COUNT = 128;
-    int i;
+    int i, usersPassed = 0;
     ListNode* curr;
-    if(this->userCount >= CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
-        for(curr = this->head; curr; curr = curr->next)
+    if(this->userCount < CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
+        return;
+    for(curr = this->head; curr && usersPassed != this->userCount; curr = curr->next)
+    {
+        while(this->isSearching);
+        for (i = 0; i < USERS_IN_USERS_ARRAY && usersPassed != this->userCount; ++i)
         {
-            while(this->isSearching);
-            for (i = 0; i < USERS_IN_USERS_ARRAY; ++i)
+            if(curr->arr[i] && curr->arr[i]->timeout())
             {
-                if(curr->arr[i] && curr->arr[i]->timeout())
-                {
-                    --this->userCount;
-                    delete curr->arr[i];
-                    curr->arr[i] = NULL;
-                    curr->isFull = false;
-                }
+                --this->userCount;
+                delete curr->arr[i];
+                curr->arr[i] = NULL;
+                curr->isFull = false;
             }
+            else
+                ++usersPassed;
         }
+    }
 }
 
 void UserList::print() const
