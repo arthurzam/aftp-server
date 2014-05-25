@@ -47,6 +47,10 @@ public:
     void print() const;
     void input();
     void load(const char* filePath);
+    /*
+     * removed the Login in place number (starts with 1)
+     */
+    bool remove(int number);
     ~LoginDB();
 };
 

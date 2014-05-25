@@ -69,6 +69,29 @@ void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCES
     this->add(new Login(username, md5Res, state));
 }
 
+bool LoginDB::remove(int number)
+{
+    Login* toDel;
+    if(number > this->count || number <= 0)
+        return (false);
+    if(number > 1)
+    {
+        Login* temp = this->head;
+        for(int i = 1; i < number; ++i, temp = temp->next()) ;
+        toDel = temp->next();
+        temp->next() = toDel->next();
+    }
+    else
+    {
+        toDel = this->head;
+        this->head = toDel->next();
+    }
+    toDel->next() = NULL;
+    delete toDel;
+    --this->count;
+    return (true);
+}
+
 const Login* LoginDB::check(const char* username, const uint8_t* passwordMD5) const
 {
     const Login* curr = this->head;
@@ -128,7 +151,7 @@ void LoginDB::input()
     Login::LOGIN_ACCESS state;
 
     printf("enter username: ");
-    scanf("%s", username);
+    scanf("%32s", username);
     printf("enter password: ");
     scanf("%s", str);
     MD5((uint8_t*)str, strlen(str), md5R);
@@ -139,7 +162,7 @@ void LoginDB::input()
     if(state == Login::LOGIN_ACCESS_LIMITED)
     {
         printf("now you add the restricted folders [press only ENTER to finish]\n(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
-        fgetc(stdin); // input empty \n from previous scanf - I don't know why but we need!
+        fgetc(stdin); // input empty \n from previous scanf - I don't know why, but we need!
         do {
             fgets(str, FILENAME_MAX, stdin);
             str[strlen(str) - 1] = 0;
