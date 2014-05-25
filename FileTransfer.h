@@ -21,8 +21,8 @@ private:
 
     STATE state;
     uint8_t* blocks; // pointer to HEAP located array
-    unsigned int blocksCount;
-    unsigned int currentCursorBlock; // the block where the file's cursor is located
+    uint32_t blocksCount;
+    uint32_t currentCursorBlock; // the block where the file's cursor is located
     FILE* file;
     const User* user; // just a pointer
 public:
@@ -33,15 +33,15 @@ public:
     {
         return (this->state);
     }
-    inline unsigned int getBlocksCount() const
+    inline uint32_t getBlocksCount() const
     {
         return (this->blocksCount);
     }
 
-    void askForBlock(unsigned int blockNum);
-    void askForBlocksRange(unsigned int start, unsigned int end);
+    void askForBlock(uint32_t blockNum);
+    void askForBlocksRange(uint32_t start, uint32_t end);
 
-    void recieveBlock(char* buffer, int dataLen);
+    void recieveBlock(const char* buffer);
 
     ~FileTransfer();
 };

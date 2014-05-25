@@ -153,7 +153,7 @@ threadReturnValue startServer(void* arg)
             if(!user->fileTransfer)
                 sendMessage(&from, 300, NULL, 0);
             else
-                user->fileTransfer->recieveBlock(Buffer + 2, retval - 2);
+                user->fileTransfer->recieveBlock(Buffer + 2);
             break;
         case 211: // ask for block range
             if(!user->fileTransfer)

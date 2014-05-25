@@ -4,15 +4,10 @@ FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
 {
     char fPath[FILENAME_MAX];
 
-    if(!user->getRealFile(relativePath, fPath))
+    if(!user->getRealFile(relativePath, fPath) || !(this->file = fopen(fPath, "rb")))
     {
         this->state = STATE_ERROR;
-        return;
-    }
-    this->file = fopen(fPath, "rb");
-    if(!this->file)
-    {
-        this->state = STATE_ERROR;
+        this->file = NULL;
         return;
     }
 
@@ -34,16 +29,11 @@ FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
 FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int blocksCount) // Upload
 {
     char fPath[FILENAME_MAX];
-    if(!user->getRealFile(relativePath, fPath))
+
+    if(!user->getRealFile(relativePath, fPath) || !(this->file = fopen(fPath, "w+b")))
     {
         this->state = STATE_ERROR;
         this->file = NULL;
-        return;
-    }
-    this->file = fopen(fPath, "w+b");
-    if(!this->file)
-    {
-        this->state = STATE_ERROR;
         return;
     }
 
@@ -65,7 +55,7 @@ FileTransfer::~FileTransfer()
     this->file = NULL;
 }
 
-void FileTransfer::recieveBlock(char* buffer, int dataLen)
+void FileTransfer::recieveBlock(const char* buffer)
 {
     struct dat_t {
         uint32_t blockNum;
@@ -75,6 +65,11 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     };
     struct dat_t* data = (struct dat_t*)buffer;
     uint8_t md5R[16];
+    if(this->state != STATE_DOWNLOAD)
+    {
+        this->user->sendData(300);
+        return;
+    }
     MD5(data->dataFile, data->size, md5R);
     if(memcmp(md5R, data->md5Res, 16)) // not equal
     {
@@ -89,13 +84,13 @@ void FileTransfer::recieveBlock(char* buffer, int dataLen)
     this->user->sendData(200, &data->blockNum, sizeof(data->blockNum));
 }
 
-void FileTransfer::askForBlocksRange(unsigned int start, unsigned int end)
+void FileTransfer::askForBlocksRange(uint32_t start, uint32_t end)
 {
     for(; start < end; ++start)
         askForBlock(start);
 }
 
-void FileTransfer::askForBlock(unsigned int blockNum)
+void FileTransfer::askForBlock(uint32_t blockNum)
 {
     if(blockNum > this->blocksCount)
     {
@@ -108,6 +103,11 @@ void FileTransfer::askForBlock(unsigned int blockNum)
         uint8_t md5[16];
         uint8_t data[FILE_BLOCK_SIZE];
     } buffer;
+    if(this->state != STATE_UPLOAD)
+    {
+        this->user->sendData(300);
+        return;
+    }
     if(this->currentCursorBlock != blockNum)
         fseek(this->file, (blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
     buffer.size = fread(buffer.data, 1, FILE_BLOCK_SIZE, this->file);
