@@ -1,6 +1,9 @@
 #include "fileControl.h"
 extern char* base_server_folder;
 
+#define MAXIMUM_IO_THREADS 0x8F
+int runningIOthreads = 0;
+
 bool isDirectory(const char* directory)
 {
     DIR *dir = opendir(directory);
@@ -12,6 +15,12 @@ bool isDirectory(const char* directory)
 
 void createFSthread(threadReturnValue(*function)(void*), fsData* data, const User* user)
 {
+    if(runningIOthreads >= MAXIMUM_IO_THREADS)
+    {
+        user->sendData(302);
+        return;
+    }
+
     data->isLoaded = false;
     data->user = user;
 #ifdef WIN32
@@ -40,6 +49,7 @@ threadReturnValue getContentDirectory(void* dataV)
     char base[FILENAME_MAX];
     bool flag = data->user->getRealFile(data->data.path, base);
     data->isLoaded = true;
+
     char *dirP, *resP;
     DIR* dir = NULL;
     if(!flag)
@@ -52,6 +62,7 @@ threadReturnValue getContentDirectory(void* dataV)
     resP = result; // a pointer to the last character
 
     struct dirent *ent;
+    ++runningIOthreads;
     dir = opendir (base);
     if(!dir)
         goto _exit;
@@ -80,6 +91,7 @@ threadReturnValue getContentDirectory(void* dataV)
     if(resP != result)
         data->user->sendData(201, result, resP - result);
 _exit:
+    --runningIOthreads;
     data->user->sendData(dir ? 200 : 300);
 #ifndef WIN32
     return NULL;
@@ -96,6 +108,7 @@ threadReturnValue symbolicLink(void* dataV)
     data->isLoaded = true;
 
     char srcT[FILENAME_MAX];
+    ++runningIOthreads;
     if(flag)
     {
         while(readlink(src, srcT, FILENAME_MAX - 1) <= 0)
@@ -106,7 +119,7 @@ threadReturnValue symbolicLink(void* dataV)
         data->user->sendData(300);
     else
         data->user->sendData(200);
-
+    --runningIOthreads;
     return NULL;
 }
 #endif
@@ -117,11 +130,13 @@ threadReturnValue createDirectory(void* dataV)
     char directory[FILENAME_MAX];
     bool flag = data->user->getRealFile(data->data.path, directory);
     data->isLoaded = true;
+    ++runningIOthreads;
 #ifdef WIN32
     if(flag && CreateDirectoryA(directory, NULL))
         data->user->sendData(200);
     else
         data->user->sendData(300);
+    --runningIOthreads;
 #else
     struct stat st = {0};
     if (flag && stat(directory, &st) == -1)
@@ -133,6 +148,7 @@ threadReturnValue createDirectory(void* dataV)
         }
     }
     data->user->sendData(300);
+    --runningIOthreads;
     return NULL;
 #endif
 }
@@ -144,10 +160,12 @@ threadReturnValue moveFile(void* dataV)
     bool flag = data->user->getRealFile(data->data.path2.src, src) &&
                 data->user->getRealFile(data->data.path2.dst, dst);
     data->isLoaded = true;
+    ++runningIOthreads;
     if(!flag || rename(src, dst))
         data->user->sendData(300);
     else
         data->user->sendData(200);
+    --runningIOthreads;
 #ifndef WIN32
     return NULL;
 #endif
@@ -160,11 +178,13 @@ threadReturnValue copyFile(void* dataV)
     bool flag = data->user->getRealFile(data->data.path2.src, srcS) &&
                 data->user->getRealFile(data->data.path2.dst, dstS);
     data->isLoaded = true;
+    ++runningIOthreads;
 #ifdef WIN32
     if(flag && CopyFileA(srcS, dstS, 0))
         data->user->sendData(200);
     else
         data->user->sendData(300);
+    --runningIOthreads;
 #else
     if(!flag)
         data->user->sendData(300);
@@ -178,6 +198,7 @@ threadReturnValue copyFile(void* dataV)
         data->user->sendData(300);
     close(dst);
     close(src);
+    --runningIOthreads;
     return NULL;
 #endif
 }
@@ -188,10 +209,12 @@ threadReturnValue removeFile(void* dataV)
     char src[FILENAME_MAX];
     bool flag = data->user->getRealFile(data->data.path, src);
     data->isLoaded = true;
+    ++runningIOthreads;
     if(!flag || remove(src))
         data->user->sendData(300);
     else
         data->user->sendData(200);
+    --runningIOthreads;
 #ifndef WIN32
     return NULL;
 #endif
@@ -227,10 +250,11 @@ threadReturnValue getMD5OfFile(void* dataV)
 
     MD5_CTX ctx;
     int i;
-    FILE* f = NULL;
+    FILE* f;
     uint8_t buffer[512];
 
-    if(!(flag && (f = fopen(filePath, "rb"))))
+    ++runningIOthreads;
+    if(!flag || !(f = fopen(filePath, "rb")))
     {
         data->user->sendData(300);
     }
@@ -238,13 +262,12 @@ threadReturnValue getMD5OfFile(void* dataV)
     {
         MD5_Init(&ctx);
         while((i = fread(buffer, 1, 512, f)))
-        {
             MD5_Update(&ctx, buffer, i);
-        }
         MD5_Final(result, &ctx);
         data->user->sendData(200, result, MD5_DIGEST_LENGTH);
+        fclose(f);
     }
-    fclose(f);
+    --runningIOthreads;
 #ifndef WIN32
     return NULL;
 #endif
@@ -262,10 +285,12 @@ threadReturnValue removeFolder(void* dataV)
     fsData* data = (fsData*)dataV;
     bool flag = data->user->getRealFile(data->data.path, command + baseCommandLen);
     data->isLoaded = true;
+    ++runningIOthreads;
     if(!flag || system(command))
         data->user->sendData(300);
     else
         data->user->sendData(200);
+    --runningIOthreads;
 #ifndef WIN32
     return NULL;
 #endif
@@ -282,17 +307,19 @@ threadReturnValue copyFolder(void* dataV)
 #endif
     fsData* data = (fsData*)dataV;
     int i;
-    if(!data->user->getRealFile(data->data.path2.src, command + baseCommandLen))
-        goto _bad;
-    i = strlen(command);
-    command[i++] = ' ';
-    data->user->getRealFile(data->data.path2.dst, command + i);
+    bool flag = data->user->getRealFile(data->data.path2.src, command + baseCommandLen);
+    if(flag)
+    {
+        command[(i = strlen(command) + 1)] = ' ';
+        flag = data->user->getRealFile(data->data.path2.dst, command + i);
+    }
     data->isLoaded = true;
-    if(system(command))
-_bad:
+    ++runningIOthreads;
+    if(!flag || system(command))
         data->user->sendData(300);
     else
         data->user->sendData(200);
+    --runningIOthreads;
 #ifndef WIN32
     return NULL;
 #endif
