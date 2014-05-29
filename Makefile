@@ -1,17 +1,15 @@
 CC=g++
-CFLAGS=-c -Wall
-LDFLAGS=
+CFLAGS+=-c -Wall
 SOURCES=fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
-LIBS=
-OPENSSL_LIB=-lssl -lcrypto
+LIBS=-lssl -lcrypto
 REMOVEFILECOMMAND=rm -f
 
 ifeq ($(OS),Windows_NT)
-	LIBS = -lws2_32
+	LIBS+=-lws2_32
 else
-	LIBS = -lpthread
+	LIBS+=-lpthread
 endif
 
 all: $(SOURCES) $(EXECUTABLE)
