@@ -80,7 +80,7 @@ public:
 
     void print() const;
 
-    inline int sendData(uint16_t msgCode, void* data, int datalen) const
+    inline int sendData(uint16_t msgCode, const void* data, int datalen) const
     {
         return (sendMessage(&this->_from, msgCode, data, datalen));
     }

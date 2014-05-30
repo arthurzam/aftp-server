@@ -306,12 +306,12 @@ threadReturnValue copyFolder(void* dataV)
     const int baseCommandLen = 9;
 #endif
     fsData* data = (fsData*)dataV;
-    int i;
-    bool flag = data->user->getRealFile(data->data.path2.src, command + baseCommandLen);
+    char* cP = command + baseCommandLen;
+    bool flag = data->user->getRealFile(data->data.path2.src, cP);
     if(flag)
     {
-        command[(i = strlen(command) + 1)] = ' ';
-        flag = data->user->getRealFile(data->data.path2.dst, command + i);
+        *(cP += strlen(cP)) = ' ';
+        flag = data->user->getRealFile(data->data.path2.dst, cP + 1);
     }
     data->isLoaded = true;
     ++runningIOthreads;

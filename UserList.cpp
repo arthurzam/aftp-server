@@ -18,7 +18,7 @@ UserList::~UserList()
     while(this->head)
     {
         temp = this->head->next;
-        for(i = 0; i < USERS_IN_USERS_ARRAY && this->userCount > 0; ++i)
+        for(i = 0; i < USERS_IN_USERS_ARRAY && this->userCount != 0; ++i)
             if(this->head->arr[i])
             {
                 delete this->head->arr[i];
