@@ -1,23 +1,6 @@
 #ifndef FILECONTROL_H_
 #define FILECONTROL_H_
 
-#include <cstdio>
-#include <cstring>
-#include <dirent.h>
-#include <openssl/md5.h>
-#ifdef WIN32
-#include <windows.h>
-#include <process.h>
-#else
-#include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/sendfile.h>
-#include <unistd.h>
-#endif
-
 #include "defenitions.h"
 #include "User.h"
 class User;

@@ -1,3 +1,7 @@
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+
 #include "Login.h"
 
 Login::Login(const char* username, const uint8_t* password, LOGIN_ACCESS state)

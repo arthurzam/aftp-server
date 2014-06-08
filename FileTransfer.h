@@ -2,8 +2,6 @@
 #define FILETRANSFER_H_
 
 #include <cstdio>
-#include <cstdlib>
-#include <openssl/md5.h>
 #include "defenitions.h"
 #include "User.h"
 

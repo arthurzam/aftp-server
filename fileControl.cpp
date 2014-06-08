@@ -1,4 +1,23 @@
+#include <cstdio>
+#include <cstring>
+#include <dirent.h>
+#include <openssl/md5.h>
+#ifdef WIN32
+#include <winsock2.h>
+#include <windows.h>
+#include <process.h>
+#else
+#include <errno.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+#include <unistd.h>
+#endif
+
 #include "fileControl.h"
+
 extern char* base_server_folder;
 
 #define MAXIMUM_IO_THREADS 0x8F
@@ -45,7 +64,6 @@ bool getRealDirectory(char* realativDirectory, char* result)
 threadReturnValue getContentDirectory(void* dataV)
 {
     fsData* data = (fsData*)dataV;
-    const char FILE_LIST_SEPARATOR = '|';
     char base[FILENAME_MAX];
     bool flag = data->user->getRealFile(data->data.path, base);
     data->isLoaded = true;
@@ -85,7 +103,7 @@ threadReturnValue getContentDirectory(void* dataV)
         resP += fileNameLen;
         if(flag)
             *(resP++) = ']';
-        *(resP++) = FILE_LIST_SEPARATOR;
+        *(resP++) = '|';
     }
     closedir (dir);
     if(resP != result)

@@ -1,11 +1,6 @@
 #ifndef LOGINDB_H_
 #define LOGINDB_H_
 
-#include <string.h>
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
-#include <openssl/md5.h>
 #include "defenitions.h"
 #include "Login.h"
 

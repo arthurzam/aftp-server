@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #ifdef WIN32
+#include <winsock2.h>
 #include <windows.h>
 #include <process.h>
 #else
@@ -323,17 +324,12 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
 
 threadReturnValue userControl(void* arg)
 {
-#ifdef WIN32
-    const int WAIT_TIME = 50000; //mili-seconds
-#else
-    const int WAIT_TIME = 50;    // seconds
-#endif
     while (!needExit)
     {
 #ifdef WIN32
-        Sleep(WAIT_TIME);
+        Sleep(50000); //mili-seconds
 #else
-        sleep(WAIT_TIME);
+        sleep(50);    // seconds
 #endif
         listUsers->userControl();
     }

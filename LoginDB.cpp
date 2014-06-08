@@ -1,3 +1,7 @@
+#include <cstdio>
+#include <cstring>
+#include <openssl/md5.h>
+
 #include "LoginDB.h"
 
 LoginDB::LoginDB()
@@ -32,15 +36,10 @@ void LoginDB::load(const char* filePath)
             break;
         }
         if(!this->head)
-        {
             this->head = temp;
-            last = temp;
-        }
         else
-        {
             last->next() = temp;
-            last = temp;
-        }
+        last = temp;
         this->count++;
     }
     fclose(src);
@@ -124,9 +123,7 @@ bool LoginDB::save(const char* path) const
 LoginDB::~LoginDB()
 {
     if(this->head)
-    {
         delete (this->head);
-    }
     this->head = NULL;
 }
 

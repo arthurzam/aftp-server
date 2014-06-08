@@ -2,9 +2,8 @@
 #define USER_H_
 
 #include <ctime>
-#include <cstdio>
 #ifdef WIN32
-#include <winsock2.h>
+#include <windows.h>
 #else
 #include <arpa/inet.h>
 #endif

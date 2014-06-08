@@ -1,3 +1,5 @@
+#include <cstdio>
+
 #include "User.h"
 
 User::User()

@@ -1,9 +1,6 @@
 #ifndef LOGIN_H_
 #define LOGIN_H_
 
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
 #include <openssl/md5.h>
 #include "defenitions.h"
 

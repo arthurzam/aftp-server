@@ -1,3 +1,6 @@
+#include <cstring>
+#include <openssl/md5.h>
+
 #include "FileTransfer.h"
 
 FileTransfer::FileTransfer(char* relativePath, const User* user) // Download

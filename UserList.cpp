@@ -129,13 +129,7 @@ User* UserList::findUser(const struct sockaddr_in& user) const
 UserList::ListNode* UserList::createNewNode()
 {
     ListNode* result = (ListNode*)malloc(sizeof(ListNode));
-    int i;
-    result->isFull = false;
-    result->next = NULL;
-    for(i = 0; i < USERS_IN_USERS_ARRAY; ++i)
-    {
-        result->arr[i] = NULL;
-    }
+    memset(result, 0, sizeof(ListNode));
     return (result);
 }
 
