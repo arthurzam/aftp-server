@@ -1,5 +1,4 @@
 CC=g++
-CFLAGS+=-c -Wall
 SOURCES=fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
@@ -15,10 +14,10 @@ endif
 all: $(SOURCES) $(EXECUTABLE)
 	
 $(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS) $(OPENSSL_LIB)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
 
 .cpp.o:
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) -c -Wall $(CFLAGS) $< -o $@
 
 clean:
 	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)*
