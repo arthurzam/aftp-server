@@ -1,4 +1,5 @@
 #include <cstring>
+#include <cstdlib>
 #include <openssl/md5.h>
 
 #include "FileTransfer.h"

@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <dirent.h>
 #include <openssl/md5.h>
 #ifdef WIN32

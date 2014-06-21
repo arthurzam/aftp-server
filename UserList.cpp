@@ -1,6 +1,8 @@
 #include "UserList.h"
 
-#include "stdio.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 UserList::UserList()
 {

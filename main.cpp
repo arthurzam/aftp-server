@@ -7,6 +7,7 @@
 #else
 #include <pthread.h>
 #include <signal.h>
+#include <sys/stat.h>
 #endif
 
 #include "server.h"
