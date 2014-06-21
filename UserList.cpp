@@ -26,7 +26,7 @@ UserList::~UserList()
                 delete this->head->arr[i];
                 --this->userCount;
             }
-        delete this->head;
+        free(this->head);
         this->head = temp;
     }
     this->head = NULL;

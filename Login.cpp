@@ -57,7 +57,7 @@ Login::~Login()
     {
         temp = this->restrictedFolders;
         this->restrictedFolders = this->restrictedFolders->next;
-        delete temp;
+        free(temp);
     }
     if(this->_next)
         delete this->_next;
