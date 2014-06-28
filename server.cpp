@@ -245,7 +245,7 @@ threadReturnValue startServer(void* arg)
             data.data.path2.src = Buffer + 3;
             tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
             data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-            createFSthread(copyFile, &data, user);
+            createFSthread(symbolicLink, &data, user);
             break;
 #endif
         case 530: // cd
