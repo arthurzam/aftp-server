@@ -3,9 +3,16 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
-#ifndef FILENAME_MAX
-#define FILENAME_MAX 260
+#ifdef FILENAME_MAX
+#if FILENAME_MAX > (128 + 20)
+#define REL_PATH_MAX 128
+#else
+#define REL_PATH_MAX (FILENAME_MAX - 20)
+#endif
+#else
+#define REL_PATH_MAX 128
 #endif
 
 #ifndef WIN32
