@@ -12,7 +12,7 @@ class UserList {
 private:
     typedef struct _listNode {
         User* arr[USERS_IN_USERS_ARRAY];
-        bool isFull;
+        uint16_t count;
         struct _listNode* next;
     } ListNode;
 
@@ -26,7 +26,7 @@ public:
     UserList();
     ~UserList();
 
-    int removeUser(const User* user);
+    bool removeUser(const User* user);
     User* addUser(const struct sockaddr_in& user);
     User* findUser(const struct sockaddr_in& user) const;
 

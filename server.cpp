@@ -144,8 +144,8 @@ threadReturnValue startServer(void* arg)
             }
             break;
         case 105: // logout
-            listUsers->removeUser(user);
             sendMessage(&from, 200, NULL, 0);
+            listUsers->removeUser(user);
             break;
         case 200:
             sendMessage(&from, 200, NULL, 0);
