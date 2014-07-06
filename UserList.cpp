@@ -57,7 +57,6 @@ User* UserList::addUser(const struct sockaddr_in& user)
 {
     ListNode* curr = this->head;
     User* res = NULL;
-    int i;
     this->isSearching = true;
     if(!curr)
     {

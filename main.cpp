@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 #include "server.h"
@@ -51,7 +52,8 @@ bool startServerThread(LoginDB* userDB)
 #ifdef WIN32
         if(!CreateDirectoryA(base_server_folder, NULL))
 #else
-        if(mkdir(base_server_folder, 0700))
+		struct stat st = {0};
+        if (stat(base_server_folder, &st) == -1 && mkdir(base_server_folder, 0755))
 #endif
             return (false);
     }
