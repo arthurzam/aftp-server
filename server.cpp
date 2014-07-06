@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <thread>
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -27,7 +28,7 @@ extern bool needExit;
 extern bool canExit;
 extern unsigned short port;
 
-threadReturnValue userControl(void* arg);
+void userControl();
 
 threadReturnValue startServer(void* arg)
 {
@@ -40,6 +41,7 @@ threadReturnValue startServer(void* arg)
     uint16_t msgCode;
     socklen_t fromlen = sizeof(from);
     fsData data;
+    std::thread userControlThread;
 
     union {
         struct {
@@ -105,12 +107,8 @@ threadReturnValue startServer(void* arg)
     if(listUsers)
         delete listUsers;
     listUsers = new UserList();
-#ifdef WIN32
-    _beginthread(userControl, 0, NULL);
-#else
-    pthread_t thread;
-    pthread_create(&thread, NULL, userControl, NULL);
-#endif
+
+    userControlThread = std::thread(userControl);
     while(!needExit)
     {
         retval = recvfrom(sock, Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
@@ -295,6 +293,7 @@ _errorExit:
 #ifdef WIN32
     WSACleanup();
 #endif
+    userControlThread.join();
     if(listUsers)
         delete listUsers;
     listUsers = NULL;
@@ -322,18 +321,19 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
     return (retVal);
 }
 
-threadReturnValue userControl(void* arg)
+void userControl()
 {
+#define WAIT_USER_CONTROL_SECONDS 50
+	int i;
     while (!needExit)
     {
+        for(i = 0;!needExit && i < WAIT_USER_CONTROL_SECONDS; ++i)
 #ifdef WIN32
-        Sleep(50000); //mili-seconds
+            Sleep(1000); //mili-seconds
 #else
-        sleep(50);    // seconds
+            sleep(1);    // seconds
 #endif
-        listUsers->userControl();
+        if(needExit)
+        	listUsers->userControl();
     }
-#ifndef WIN32
-    return NULL;
-#endif
 }

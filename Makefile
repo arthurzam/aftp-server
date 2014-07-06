@@ -14,10 +14,10 @@ endif
 all: $(SOURCES) $(EXECUTABLE)
 	
 $(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
+	$(CC) -std=c++0x $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
 
 .cpp.o:
-	$(CC) -c -Wall $(CFLAGS) $< -o $@
+	$(CC) -std=c++0x -c -Wall $(CFLAGS) $< -o $@
 
 clean:
 	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)*
