@@ -7,6 +7,7 @@ REMOVEFILECOMMAND=rm -f
 
 ifeq ($(OS),Windows_NT)
 	LIBS+=-lws2_32
+	CFLAGS+=-DWIN32
 else
 	LIBS+=-lpthread
 endif
