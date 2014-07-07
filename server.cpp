@@ -13,26 +13,23 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <pthread.h>
 #endif
 
-#include "UserList.h"
 #include "server.h"
 #include "fileControl.h"
+#include "UserList.h"
 #include "LoginDB.h"
 
-UserList* listUsers = NULL;
 SOCKET sock;
 
 extern bool needExit;
 extern bool canExit;
 extern unsigned short port;
 
-void userControl();
+void userControl(UserList* listUsers);
 
-threadReturnValue startServer(void* arg)
+void startServer(LoginDB* usersDB, UserList* listUsers)
 {
-    LoginDB* usersDB = (LoginDB*)arg;
     char Buffer[BUFFER_SERVER_SIZE];
     int retval;
     User* user;
@@ -104,11 +101,7 @@ threadReturnValue startServer(void* arg)
     }
 #endif
 
-    if(listUsers)
-        delete listUsers;
-    listUsers = new UserList();
-
-    userControlThread = std::thread(userControl);
+    userControlThread = std::thread(userControl, listUsers);
     while(!needExit)
     {
         retval = recvfrom(sock, Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
@@ -294,13 +287,7 @@ _errorExit:
     WSACleanup();
 #endif
     userControlThread.join();
-    if(listUsers)
-        delete listUsers;
-    listUsers = NULL;
     canExit = true;
-#ifndef WIN32
-    return NULL;
-#endif
 }
 
 int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen)
@@ -321,7 +308,7 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
     return (retVal);
 }
 
-void userControl()
+void userControl(UserList* listUsers)
 {
 #define WAIT_USER_CONTROL_SECONDS 50
 	int i;

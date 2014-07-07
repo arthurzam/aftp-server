@@ -1,6 +1,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <thread>
 #ifdef WIN32
 #include <windows.h>
 #include <process.h>
@@ -11,28 +12,27 @@
 #include <sys/types.h>
 #endif
 
-#include "server.h"
 #include "LoginDB.h"
 #include "UserList.h"
+
+// Implemented in server.cpp
+void startServer(LoginDB* usersDB, UserList* listUsers);
+
 
 bool needExit;
 bool canExit;
 unsigned short port = DEFAULT_PORT;
 char* base_server_folder = (char*)DEFAULT_SERVER_BASE_FOLDER;
-extern UserList* listUsers;
 
-void stopServer()
+void stopServer(std::thread& serverThread)
 {
     printf("the server is stopping!\n");
     needExit = true;
-    while(!canExit); // wait for all to exit
+    serverThread.join();
     printf("the server stopped\n");
-
-    if(listUsers)
-        delete listUsers;
 }
 
-bool startServerThread(LoginDB* userDB)
+bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread& serverThread)
 {
     // replace all bad separators into good one
     char* pathP = base_server_folder - 1;
@@ -59,33 +59,8 @@ bool startServerThread(LoginDB* userDB)
     }
     needExit = false;
     canExit = false;
-#ifdef WIN32
-    _beginthread(startServer, 0, userDB);
-#else
-    pthread_t thread;
-    pthread_create(&thread, NULL, startServer, userDB);
-#endif
+    serverThread = std::thread(startServer, userDB, listUsers);
     return (true);
-}
-
-#ifdef WIN32
-BOOL WINAPI signalHandler(DWORD signum)
-#else
-void signalHandler(int signum)
-#endif
-{
-    switch(signum)
-    {
-#ifdef WIN32
-    case CTRL_C_EVENT:
-#else
-    case SIGINT:
-#endif
-        if(listUsers)
-            delete listUsers;
-        break;
-    }
-    exit(signum);
 }
 
 inline void clearScreen()
@@ -101,8 +76,9 @@ int main(int argc, char **argv)
 {
     bool exit = false;
     bool serverRunning = false;
-    listUsers = NULL;
     LoginDB userDB;
+    UserList listUsers;
+    std::thread serverThread;
     union {
         int choice;
         struct {
@@ -152,19 +128,9 @@ int main(int argc, char **argv)
             }
         }
     }
-#ifdef WIN32
-    if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)signalHandler, true))
-    {
-        fprintf(stderr, "Unable to install handler!\n");
-    }
-#else
-    signal(SIGINT, signalHandler);
-#endif
     if(serverRunning)
-        serverRunning = startServerThread(&userDB);
+        serverRunning = startServerThread(&userDB, &listUsers, serverThread);
     do {
-        if(canExit)
-            serverRunning = true;
         printf("0. exit\n");
         if(serverRunning)
             printf("1. stop server\n");
@@ -178,19 +144,19 @@ int main(int argc, char **argv)
             exit = true;
             if(serverRunning)
             {
-                stopServer();
+                stopServer(serverThread);
                 serverRunning = false;
             }
             break;
         case 1:
             if(serverRunning)
             {
-                stopServer();
+                stopServer(serverThread);
                 serverRunning = false;
             }
             else
             {
-                serverRunning = startServerThread(&userDB);
+                serverRunning = startServerThread(&userDB, &listUsers, serverThread);
             }
             break;
         case 2:
@@ -218,8 +184,8 @@ int main(int argc, char **argv)
             break;
         case 6:
             clearScreen();
-            if(listUsers && listUsers->getUserCount() > 0)
-                listUsers->print();
+            if(listUsers.getUserCount() > 0)
+                listUsers.print();
             else
                 printf("empty\n");
             break;
@@ -254,6 +220,4 @@ int main(int argc, char **argv)
             break;
         }
     } while(!exit);
-    if(listUsers)
-        delete listUsers;
 }

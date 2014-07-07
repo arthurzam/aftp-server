@@ -2,6 +2,7 @@
 #define LOGIN_H_
 
 #include <openssl/md5.h>
+#include <cstdio>
 #include "defenitions.h"
 
 #define USERNAME_MAX_LENGTH 32
