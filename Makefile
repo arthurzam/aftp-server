@@ -13,6 +13,11 @@ else
 endif
 
 all: $(SOURCES) $(EXECUTABLE)
+
+debug: CFLAGS += -DDEBUG -g
+debug: LDFLAGS += -DDEBUG -g
+debug: $(SOURCES) $(EXECUTABLE)
+	
 	
 $(EXECUTABLE): $(OBJECTS) 
 	$(CC) -std=c++0x $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
