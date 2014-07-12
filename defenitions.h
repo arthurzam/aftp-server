@@ -16,6 +16,8 @@
 #define REL_PATH_MAX 128
 #endif
 
+#define DEFAULT_PORT 7777
+
 #ifndef WIN32
 #define SOCKET int
 #define SOCKET_ERROR	(-1)

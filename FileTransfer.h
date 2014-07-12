@@ -3,7 +3,6 @@
 
 #include <cstdio>
 #include "defenitions.h"
-#include "User.h"
 
 #define FILE_BLOCK_SIZE 0x200 //=512
 

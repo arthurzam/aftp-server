@@ -42,7 +42,7 @@ Login::Login(FILE* srcFile)
 _bad:
         this->password[0] = 0;
         this->restrictedFolders = NULL;
-        this->state = LOGIN_ACCESS_LIMITED;
+        this->state = LOGIN_ACCESS::LIMITED;
         this->username[0] = 0;
         this->restrictedFoldersCount = 0;
         this->isInit = false;
@@ -98,7 +98,7 @@ void Login::addRestrictedFolder(const char* dir)
 
 bool Login::isRestrictedFolder(const char* path) const
 {
-    if(this->state != LOGIN_ACCESS_LIMITED)
+    if(this->state != LOGIN_ACCESS::LIMITED)
         return (false);
     folder* temp;
     for(temp = this->restrictedFolders; temp; temp = temp->next)
@@ -135,13 +135,13 @@ void Login::print() const
         printf("%02x", this->password[i]);
     switch(this->state)
     {
-    case LOGIN_ACCESS_ADMIN:
+    case LOGIN_ACCESS::ADMIN:
         printf(", admin");
         break;
-    case LOGIN_ACCESS_ALL:
+    case LOGIN_ACCESS::ALL:
         printf(", all");
         break;
-    case LOGIN_ACCESS_LIMITED:
+    case LOGIN_ACCESS::LIMITED:
         printf(", limited");
         break;
     }

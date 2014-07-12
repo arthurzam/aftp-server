@@ -154,9 +154,9 @@ void LoginDB::input()
     MD5((uint8_t*)str, strlen(str), md5R);
     printf("choose state:\n 0. admin\n 1. limited\n 2. all\nyour choice: ");
     scanf("%u", &i);
-    state = (i < 3 ? (Login::LOGIN_ACCESS)i : Login::LOGIN_ACCESS_LIMITED);
+    state = (i < 3 ? (Login::LOGIN_ACCESS)i : Login::LOGIN_ACCESS::LIMITED);
     Login* n = new Login(username, md5R, state);
-    if(state == Login::LOGIN_ACCESS_LIMITED)
+    if(state == Login::LOGIN_ACCESS::LIMITED)
     {
         printf("now you add the restricted folders [press only ENTER to finish]\n(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
         fgetc(stdin); // input empty \n from previous scanf - I don't know why, but we need!

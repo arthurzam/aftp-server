@@ -1,7 +1,6 @@
 #ifndef AFTP_SRC_USERLIST_H_
 #define AFTP_SRC_USERLIST_H_
 
-#include "User.h"
 #include "defenitions.h"
 
 #define USERS_IN_USERS_ARRAY 0x400 // =1024

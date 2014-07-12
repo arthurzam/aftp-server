@@ -14,6 +14,8 @@
 
 #include "LoginDB.h"
 #include "UserList.h"
+#include "defenitions.h"
+#include "fileControl.h"
 
 // Implemented in server.cpp
 void startServer(LoginDB* usersDB, UserList* listUsers);

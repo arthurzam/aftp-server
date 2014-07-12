@@ -26,9 +26,9 @@ private:
     Login* _next;
 public:
     enum LOGIN_ACCESS {
-        LOGIN_ACCESS_ADMIN = 0,
-        LOGIN_ACCESS_LIMITED,
-        LOGIN_ACCESS_ALL
+        ADMIN = 0,
+        LIMITED,
+        ALL
     };
     Login(const char* username, const uint8_t* password, LOGIN_ACCESS state);
     Login(const Login& other);
@@ -52,7 +52,7 @@ public:
     }
     inline bool isAdmin() const
     {
-        return (this->state == LOGIN_ACCESS_ADMIN);
+        return (this->state == LOGIN_ACCESS::ADMIN);
     }
 
     inline Login*& next()

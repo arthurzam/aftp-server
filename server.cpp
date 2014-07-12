@@ -18,6 +18,7 @@
 #include "server.h"
 #include "fileControl.h"
 #include "UserList.h"
+#include "User.h"
 #include "LoginDB.h"
 
 SOCKET sock;
