@@ -1,5 +1,5 @@
 CC=g++
-SOURCES=fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
+SOURCES=IOThreadPool.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
 LIBS=-lssl -lcrypto

@@ -5,11 +5,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define BASE_FOLDER_MAX 32
 #ifdef FILENAME_MAX
-#if FILENAME_MAX > (128 + 20)
+#if FILENAME_MAX > (128 + BASE_FOLDER_MAX)
 #define REL_PATH_MAX 128
 #else
-#define REL_PATH_MAX (FILENAME_MAX - 20)
+#define REL_PATH_MAX (FILENAME_MAX - BASE_FOLDER_MAX)
 #endif
 #else
 #define REL_PATH_MAX 128

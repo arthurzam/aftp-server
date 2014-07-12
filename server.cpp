@@ -37,8 +37,8 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
     struct sockaddr_in from;
     uint16_t msgCode;
     socklen_t fromlen = sizeof(from);
-    fsData data;
     std::thread userControlThread;
+    IOThreadPool ioThreadPool;
 
     union {
         struct {
@@ -202,41 +202,23 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
             }
             break;
         case 520: // move file
-            tempData.src_dst.src_len = *(Buffer + 2);
-            data.data.path2.src = Buffer + 3;
-            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-            createFSthread(moveFile, &data, user);
+            ioThreadPool.add2pathFunction(Buffer + 2, user, moveFile);
             break;
         case 521: // copy file
-            tempData.src_dst.src_len = *(Buffer + 2);
-            data.data.path2.src = Buffer + 3;
-            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-            createFSthread(copyFile, &data, user);
+            ioThreadPool.add2pathFunction(Buffer + 2, user, copyFile);
             break;
         case 522: // remove file
-            data.data.path = Buffer + 2;
-            createFSthread(removeFile, &data, user);
+            ioThreadPool.add1pathFunction(Buffer + 2, user, removeFile);
             break;
         case 523: // get file size
-            tempData.l = getFilesize(Buffer + 2, user);
-            if(tempData.l == (uint64_t)-1)
-                sendMessage(&from, 300, NULL, 0);
-            else
-                sendMessage(&from, 200, &tempData.l, sizeof(uint64_t));
+            ioThreadPool.add1pathFunction(Buffer + 2, user, getFilesize);
             break;
         case 524: // get md5 of file
-            data.data.path = Buffer + 2;
-            createFSthread(getMD5OfFile, &data, user);
+            ioThreadPool.add1pathFunction(Buffer + 2, user, getMD5OfFile);
             break;
 #ifndef WIN32
         case 525: // symlink file
-            tempData.src_dst.src_len = *(Buffer + 2);
-            data.data.path2.src = Buffer + 3;
-            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-            createFSthread(symbolicLink, &data, user);
+            ioThreadPool.add2pathFunction(Buffer + 2, user, symbolicLink);
             break;
 #endif
         case 530: // cd
@@ -246,30 +228,19 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                 sendMessage(&from, 300, NULL, 0);
             break;
         case 531: // create directory
-            data.data.path = Buffer + 2;
-            createFSthread(createDirectory, &data, user);
+            ioThreadPool.add1pathFunction(Buffer + 2, user, createDirectory);
             break;
         case 532: // remove directory
-            data.data.path = Buffer + 2;
-            createFSthread(removeFolder, &data, user);
+            ioThreadPool.add1pathFunction(Buffer + 2, user, removeFolder);
             break;
         case 533: // move directory
-            tempData.src_dst.src_len = *(Buffer + 2);
-            data.data.path2.src = Buffer + 3;
-            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-            createFSthread(moveDirectory, &data, user);
+            ioThreadPool.add2pathFunction(Buffer + 2, user, moveDirectory);
             break;
         case 534: // copy directory
-            tempData.src_dst.src_len = *(Buffer + 2);
-            data.data.path2.src = Buffer + 3;
-            tempData.src_dst.dst_len = *(Buffer + 5 + tempData.src_dst.src_len);
-            data.data.path2.dst = Buffer + 6 + tempData.src_dst.src_len;
-            createFSthread(copyFolder, &data, user);
+            ioThreadPool.add2pathFunction(Buffer + 2, user, copyFolder);
             break;
         case 535: // get contents of directory
-            data.data.path = Buffer + 2;
-            createFSthread(getContentDirectory, &data, user);
+            ioThreadPool.add1pathFunction(Buffer + 2, user, getContentDirectory);
             break;
         case 536: // pwd
             if(user->folderPath()[0])

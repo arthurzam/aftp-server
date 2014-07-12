@@ -2,22 +2,9 @@
 #define FILECONTROL_H_
 
 #include "defenitions.h"
-#include "User.h"
+#include "IOThreadPool.h"
+
 class User;
-
-typedef struct {
-    bool isLoaded;
-    const User* user;
-    union {
-        char* path;
-        struct {
-            char* src;
-            char* dst;
-        } path2;
-    } data;
-} fsData;
-
-void createFSthread(threadReturnValue(*function)(void*), fsData* data, const User* user);
 
 /*
  * returns the real folder of the given path, in the result array
@@ -30,19 +17,19 @@ bool isFileExists(const char* path);
 /*
  * only for Unix based OS
  */
-threadReturnValue symbolicLink(void* data);
+void symbolicLink(fsData* data);
 #endif
 
-threadReturnValue getContentDirectory(void* data);
-threadReturnValue createDirectory(void* data);
+void getContentDirectory(fsData* data);
+void createDirectory(fsData* data);
 #define moveDirectory moveFile
-threadReturnValue removeFolder(void* data);
-threadReturnValue copyFolder(void* data);
+void removeFolder(fsData* data);
+void copyFolder(fsData* data);
 
-threadReturnValue moveFile(void* data);
-threadReturnValue copyFile(void* data);
-threadReturnValue removeFile(void* data);
-uint64_t getFilesize(char* path, const User* user);
-threadReturnValue getMD5OfFile(void* data);
+void moveFile(fsData* data);
+void copyFile(fsData* data);
+void removeFile(fsData* data);
+void getFilesize(fsData* data);
+void getMD5OfFile(fsData* data);
 
 #endif
