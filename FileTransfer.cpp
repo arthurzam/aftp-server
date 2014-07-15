@@ -26,9 +26,6 @@ FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
     if((temp & (FILE_BLOCK_SIZE - 1)) != 0) // works only if FILE_BLOCK_SIZE is 2^x; check that there is a partial block
         this->blocksCount++;
     fseek(this->file, 0, SEEK_SET);
-
-    this->blocks = (uint8_t*)malloc(this->blocksCount);
-    memset(this->blocks, 0, this->blocksCount);
 }
 
 FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int blocksCount) // Upload
@@ -46,15 +43,10 @@ FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int bl
     this->user = user;
     this->blocksCount = blocksCount;
     this->currentCursorBlock = 0;
-    this->blocks = (uint8_t*)malloc(blocksCount);
-    memset(this->blocks, 0, blocksCount);
 }
 
 FileTransfer::~FileTransfer()
 {
-    if (this->blocks)
-        free(this->blocks);
-    this->blocks = NULL;
     if(this->file)
         fclose(this->file);
     this->file = NULL;
@@ -85,14 +77,7 @@ void FileTransfer::recieveBlock(const char* buffer)
         fseek(this->file, (data->blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
     fwrite(data->dataFile, 1, data->size, this->file);
     this->currentCursorBlock = data->blockNum + 1;
-    this->blocks[data->blockNum] = 1;
     this->user->sendData(200, &data->blockNum, sizeof(data->blockNum));
-}
-
-void FileTransfer::askForBlocksRange(uint32_t start, uint32_t end)
-{
-    for(; start < end; ++start)
-        askForBlock(start);
 }
 
 void FileTransfer::askForBlock(uint32_t blockNum)
@@ -120,5 +105,4 @@ void FileTransfer::askForBlock(uint32_t blockNum)
     MD5(buffer.data, buffer.size, buffer.md5);
     buffer.blockNum = blockNum;
     this->user->sendData(210, &buffer, 22 + buffer.size);
-    this->blocks[blockNum] = 1;
 }

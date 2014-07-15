@@ -8,7 +8,18 @@
 
 class User;
 
+/*
+ * the amount of threads running under the Thread Pool.
+ * When compiling the program to a server I suggest to try to change this number
+ * and see the performance. From what I see a low number works great on my testing
+ * machine.
+ */
 #define IO_THREADS_COUNT 2
+/*
+ * slots number in queue.
+ * as greater this number is, the more memory the object takes, but queue would run
+ * out of space more seldom.
+ */
 #define IO_DATA_SIZE 128
 
 typedef struct {
@@ -25,9 +36,9 @@ typedef struct {
 class IOThreadPool {
     private:
         enum DATA_STATE {
-            FREE = 0,
-            WAITING,
-            CONTROLED
+            FREE = 0, // current place's data can be overwrited
+            WAITING,  // waiting for a thread to take over and run
+            CONTROLED // is being run
         };
         std::thread threads[IO_THREADS_COUNT];
 

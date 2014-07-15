@@ -1,6 +1,12 @@
 #include "IOThreadPool.h"
 #include "User.h"
 
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 extern bool needExit;
 
 IOThreadPool::IOThreadPool()
@@ -95,7 +101,11 @@ void IOThreadPool::slaveThread()
         }
         if(!found)
         {
-            // TODO: sleep
+#ifdef WIN32
+            Sleep(1000); //mili-seconds
+#else
+            sleep(1);    // seconds
+#endif
         }
     }
 }
