@@ -171,7 +171,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
             }
             break;
         case 500: // info
-            sendMessage(&from, 400, (char*)"AFTP Server made by Arthur Zamarin, 2014", 41);
+            sendMessage(&from, 400, (char*)"AFTP Server v1.0 made by Arthur Zamarin, 2014", 46);
             break;
         case 510: // upload
             if(user->fileTransfer)
