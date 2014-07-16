@@ -1,8 +1,9 @@
-CC=g++
+CXX=g++
+LIBS=-lssl -lcrypto
+CFLAGS+=-std=c++0x -c -Wall
 SOURCES=IOThreadPool.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp_server
-LIBS=-lssl -lcrypto
 REMOVEFILECOMMAND=rm -f
 
 ifeq ($(OS),Windows_NT)
@@ -20,10 +21,16 @@ debug: $(SOURCES) $(EXECUTABLE)
 	
 	
 $(EXECUTABLE): $(OBJECTS) 
-	$(CC) -std=c++0x $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
+	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
 
 .cpp.o:
-	$(CC) -std=c++0x -c -Wall $(CFLAGS) $< -o $@
+	$(CXX) $(CFLAGS) $< -o $@
 
 clean:
 	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)*
+
+install: $(EXECUTABLE)
+	install -Dm 755 $(EXECUTABLE) "$(DESTDIR)/usr/bin/$(EXECUTABLE)"
+
+uninstall:
+	rm $(DESTDIR)/usr/bin/$(EXECUTABLE)
