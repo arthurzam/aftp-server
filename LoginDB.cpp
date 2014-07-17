@@ -22,11 +22,11 @@ void LoginDB::load(const char* filePath)
     FILE* src = fopen(filePath, "rb");
     Login* temp;
     Login* last = this->head;
+    if(!src)
+        return;
     if(last) // we need to put the last member in last
         while(last->next())
             last = last->next();
-    if(!src)
-        return;
     while(!feof(src))
     {
         temp = new Login(src);
@@ -143,7 +143,7 @@ void LoginDB::input()
 {
     char username[USERNAME_MAX_LENGTH];
     uint8_t md5R[MD5_DIGEST_LENGTH];
-    char str[FILENAME_MAX];
+    char str[REL_PATH_MAX];
     int i;
     Login::LOGIN_ACCESS state;
 
@@ -161,7 +161,7 @@ void LoginDB::input()
         printf("now you add the restricted folders [press only ENTER to finish]\n(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
         fgetc(stdin); // input empty \n from previous scanf - I don't know why, but we need!
         do {
-            fgets(str, FILENAME_MAX, stdin);
+            fgets(str, REL_PATH_MAX, stdin);
             str[strlen(str) - 1] = 0;
             if(str[0])
             {

@@ -20,7 +20,8 @@ Login::Login(FILE* srcFile)
 {
     if(srcFile)
     {
-        char folder[FILENAME_MAX + 1];
+        char folder[REL_PATH_MAX + 1];
+        char* P;
         uint8_t i;
         if(fread(this->username, 1, USERNAME_MAX_LENGTH, srcFile) < USERNAME_MAX_LENGTH ||
                 fread(this->password, 1, MD5_DIGEST_LENGTH, srcFile) < MD5_DIGEST_LENGTH ||
@@ -32,7 +33,8 @@ Login::Login(FILE* srcFile)
         this->restrictedFoldersCount = 0;
         for(; i; --i)
         {
-            fgets(folder, FILENAME_MAX + 1, srcFile);
+            if((P = strchr(fgets(folder, FILENAME_MAX + 1, srcFile), '\n')))
+                *P = 0;
             this->addRestrictedFolder(folder);
         }
         this->isInit = true;
@@ -74,13 +76,13 @@ void Login::addRestrictedFolder(const char* dir)
     folder* newOne = (folder*)malloc(sizeof(folder));
     folder* temp = this->restrictedFolders;
 
-    strncpy(newOne->folder, dir, FILENAME_MAX - 1);
+    strncpy(newOne->folder, dir, REL_PATH_MAX - 1);
     char* dirP = newOne->folder - 1;
     while((dirP = strchr(dirP + 1, PATH_SEPERATOR_BAD)))
         *dirP = PATH_SEPERATOR_GOOD;
 
-    newOne->folder[FILENAME_MAX - 1] = 0;
-    newOne->folder[FILENAME_MAX] = 0;
+    newOne->folder[REL_PATH_MAX - 1] = 0;
+    newOne->folder[REL_PATH_MAX] = 0;
     newOne->folderLen = strlen(dir);
     newOne->next = NULL;
     if(!temp)

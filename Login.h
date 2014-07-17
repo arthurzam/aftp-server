@@ -12,7 +12,7 @@
  */
 class Login {
     typedef struct _folder {
-        char folder[FILENAME_MAX + 1];
+        char folder[REL_PATH_MAX + 1];
         unsigned short folderLen;
         struct _folder* next;
     } folder;
