@@ -259,7 +259,6 @@ _errorExit:
     WSACleanup();
 #endif
     userControlThread.join();
-    canExit = true;
 }
 
 int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen)

@@ -22,7 +22,6 @@ void startServer(LoginDB* usersDB, UserList* listUsers);
 
 
 bool needExit;
-bool canExit;
 unsigned short port = DEFAULT_PORT;
 char* base_server_folder = (char*)DEFAULT_SERVER_BASE_FOLDER;
 
@@ -60,7 +59,6 @@ bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread& server
             return (false);
     }
     needExit = false;
-    canExit = false;
     serverThread = std::thread(startServer, userDB, listUsers);
     return (true);
 }
@@ -138,7 +136,7 @@ int main(int argc, char **argv)
             printf("1. stop server\n");
         else
             printf("1. start server\n");
-        printf("2. add new user\n3. load login database from file\n4. save login database to file\n5. print database\n6. print current connections\n7. clear screen\n8. server configurations\n  your choice: ");
+        printf("2. Login configurations\n3. print current connections\n4. clear screen\n5. server configurations\n  your choice: ");
         scanf("%d", &data.choice);
         switch(data.choice)
         {
@@ -162,39 +160,55 @@ int main(int argc, char **argv)
             }
             break;
         case 2:
-            userDB.input();
-            clearScreen();
-            printf("added\n");
+            printf("0. return\n1. load database from file\n2. save database to file\n3. add\n4. remove\n5. print\n  your choice: ");
+            scanf("%d", &data.choice);
+            switch(data.choice)
+            {
+            case 1:
+                printf("enter path to file: ");
+                scanf("%s", data.filePath);
+                userDB.load(data.filePath);
+                clearScreen();
+                printf("loaded\n");
+                break;
+            case 2:
+                printf("enter path to file: ");
+                scanf("%s", data.filePath);
+                userDB.save(data.filePath);
+                clearScreen();
+                printf("saved\n");
+                break;
+            case 3:
+                userDB.input();
+                clearScreen();
+                printf("added\n");
+                break;
+            case 4:
+                clearScreen();
+                userDB.print();
+                printf(" the number of login to remove: ");
+                scanf("%d", &data.choice);
+                userDB.remove(data.choice);
+                clearScreen();
+                printf("removed\n");
+                break;
+            case 5:
+                clearScreen();
+                userDB.print();
+                break;
+            }
             break;
         case 3:
-            printf("enter path to file: ");
-            scanf("%s", data.filePath);
-            userDB.load(data.filePath);
-            clearScreen();
-            printf("loaded\n");
-            break;
-        case 4:
-            printf("enter path to file: ");
-            scanf("%s", data.filePath);
-            userDB.save(data.filePath);
-            clearScreen();
-            printf("saved\n");
-            break;
-        case 5:
-            clearScreen();
-            userDB.print();
-            break;
-        case 6:
             clearScreen();
             if(listUsers.getUserCount() > 0)
                 listUsers.print();
             else
                 printf("empty\n");
             break;
-        case 7:
+        case 4:
             clearScreen();
             break;
-        case 8:
+        case 5:
             if(serverRunning)
             {
                 printf("the server is running, you can't configure it in this state!\n");
