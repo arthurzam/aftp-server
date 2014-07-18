@@ -33,7 +33,7 @@ Login::Login(FILE* srcFile)
         this->restrictedFoldersCount = 0;
         for(; i; --i)
         {
-            if((P = strchr(fgets(folder, FILENAME_MAX + 1, srcFile), '\n')))
+            if((P = strchr(fgets(folder, REL_PATH_MAX + 1, srcFile), '\n')))
                 *P = 0;
             this->addRestrictedFolder(folder);
         }

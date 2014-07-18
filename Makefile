@@ -29,8 +29,8 @@ $(EXECUTABLE): $(OBJECTS)
 clean:
 	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)*
 
-install: $(EXECUTABLE)
+install:
 	install -Dm 755 $(EXECUTABLE) "$(DESTDIR)/usr/bin/$(EXECUTABLE)"
 
 uninstall:
-	rm $(DESTDIR)/usr/bin/$(EXECUTABLE)
+	rm "$(DESTDIR)/usr/bin/$(EXECUTABLE)"

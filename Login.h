@@ -31,7 +31,6 @@ public:
         ALL
     };
     Login(const char* username, const uint8_t* password, LOGIN_ACCESS state);
-    Login(const Login& other);
     Login(FILE* srcFile);
     ~Login();
 
