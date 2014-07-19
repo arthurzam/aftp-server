@@ -2,11 +2,11 @@
 .\" Contact arthurzam@gmail.com to correct errors or typos.
 .TH man 1 "18 Jul 2014" "1.0" "aftp-server man page"
 .SH NAME
-aftp-server \- Very fast file transfering server
+aftp_server \- Very fast file transfering server
 .SH SYNOPSIS
-aftp-server (-p [port]) (-f [path]) (-db [path]) (-a)
+aftp_server (-p [port]) (-f [path]) (-db [path]) (-a)
 .TP
-aftp-server -h
+aftp_server -h
 .SH DESCRIPTION
 .B aftp-server
 is a very fast file transfering server, using UDP transport layer. This server is built with purpose for security and fast transfer. The protocol is stateful, meaning the server saves client's connection data until the connection is closed or timed-out.
@@ -34,7 +34,7 @@ Show basic help message.
 .B aftp_server
 All the configurations are the default once. The server doesn't auto start.
 .TP
-.B aftp_server -f ~ -p 666 -a
+.B aftp_server -f ~ -p 7666 -a
 The server would use user's home directory as it's base folder, will listen on port 666. When all the configurations are loaded the server starts listening. Please note that a user still can't perform actions because no one can login (login database is empty).
 .TP
 .B aftp_server -db /opt/aftp_server.db
