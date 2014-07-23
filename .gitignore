@@ -4,7 +4,7 @@
 *.o
 *.out
 *.exe
-aftp_server
+aftp-server
 
 # Compiled Dynamic libraries
 *.so

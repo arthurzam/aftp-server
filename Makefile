@@ -3,7 +3,7 @@ LIBS=-lssl -lcrypto
 CFLAGS+=-std=c++0x -c -Wall
 SOURCES=IOThreadPool.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=aftp_server
+EXECUTABLE=aftp-server
 REMOVEFILECOMMAND=rm -f
 
 ifeq ($(OS),Windows_NT)
