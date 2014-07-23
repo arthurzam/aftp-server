@@ -109,6 +109,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
         if (retval < 2) continue;
         Buffer[retval] = 0;
         memcpy(&msgCode, Buffer, sizeof(msgCode));
+        msgCode = ntohs(msgCode);
 
         if((user = listUsers->findUser(from)))
             user->resetTime();
@@ -176,7 +177,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
         case 510: // upload
             if(user->fileTransfer)
                 delete user->fileTransfer;
-            user->fileTransfer = new FileTransfer(Buffer + 6, user, *(uint32_t*)(Buffer + 2));
+            user->fileTransfer = new FileTransfer(Buffer + 6, user, ntohl(*(uint32_t*)(Buffer + 2)));
             if(user->fileTransfer->isLoaded())
                 sendMessage(&from, 200, NULL, 0);
             else
@@ -192,7 +193,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
             user->fileTransfer = new FileTransfer(Buffer + 2, user);
             if(user->fileTransfer->isLoaded())
             {
-                tempData.i = user->fileTransfer->getBlocksCount();
+                tempData.i = htonl(user->fileTransfer->getBlocksCount());
                 sendMessage(&from, 200, &tempData.i, 4);
             }
             else
@@ -266,6 +267,7 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
     static bool lockSend = false; // mini mutex
 
     char buffer[BUFFER_SERVER_SIZE + 5];
+    msgCode = htons(msgCode);
     memcpy(buffer, &msgCode, sizeof(msgCode));
     if(datalen > BUFFER_SERVER_SIZE)
         datalen = BUFFER_SERVER_SIZE;

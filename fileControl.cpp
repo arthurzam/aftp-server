@@ -160,6 +160,7 @@ void removeFile(fsData* data)
         data->user->sendData(200);
 }
 
+// TODO: fix for 64 bit endian
 void getFilesize(fsData* data)
 {
     uint64_t l = (uint64_t)-1;

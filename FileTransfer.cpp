@@ -62,6 +62,8 @@ void FileTransfer::recieveBlock(const char* buffer)
     };
     struct dat_t* data = (struct dat_t*)buffer;
     uint8_t md5R[16];
+    data->size = ntohs(data->size);
+    data->blockNum = htonl(data->blockNum);
     if(this->state != STATE_DOWNLOAD)
     {
         this->user->sendData(300);
@@ -104,5 +106,7 @@ void FileTransfer::askForBlock(uint32_t blockNum)
     this->currentCursorBlock = blockNum + 1;
     MD5(buffer.data, buffer.size, buffer.md5);
     buffer.blockNum = blockNum;
+    buffer.size = htons(buffer.size);
+    buffer.blockNum = htonl(buffer.blockNum);
     this->user->sendData(210, &buffer, 22 + buffer.size);
 }
