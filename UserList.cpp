@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <new>
 
 #include "UserList.h"
 #include "User.h"
@@ -57,12 +58,12 @@ bool UserList::removeUser(const User* user)
 User* UserList::addUser(const struct sockaddr_in& user)
 {
     ListNode* curr = this->head;
-    User* res = NULL;
+    User** res = NULL;
     this->isSearching = true;
     if(!curr)
     {
         this->head = createNewNode();
-        res = this->head->arr[0] = new User(user);
+        res = &this->head->arr[0];
         this->head->count = 1;
         ++this->nodesCount;
         ++this->userCount;
@@ -72,7 +73,7 @@ User* UserList::addUser(const struct sockaddr_in& user)
     {
         if(curr->count < USERS_IN_USERS_ARRAY)
         {
-            res = curr->arr[curr->count++] = new User(user);
+            res = &curr->arr[curr->count++];
             ++this->userCount;
             goto _exit;
         }
@@ -81,7 +82,7 @@ User* UserList::addUser(const struct sockaddr_in& user)
         {
             curr->next = createNewNode();
             curr = curr->next;
-            res = curr->arr[0] = new User(user);
+            res = &curr->arr[0];
             curr->count = 1;
             ++this->userCount;
             ++this->nodesCount;
@@ -90,8 +91,10 @@ User* UserList::addUser(const struct sockaddr_in& user)
         curr = curr->next;
     }
 _exit:
+    if(res)
+        *res = new (std::nothrow) User(user);
     this->isSearching = false;
-    return (res);
+    return (*res);
 }
 
 User* UserList::findUser(const struct sockaddr_in& user) const

@@ -1,6 +1,6 @@
 CXX=g++
 LIBS=-lssl -lcrypto
-CFLAGS+=-std=c++0x -c -Wall
+CFLAGS+=-std=c++0x -c -Wall -Wextra
 SOURCES=IOThreadPool.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp-server

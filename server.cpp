@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <new>
 #include <thread>
 #ifdef WIN32
 #include <winsock2.h>
@@ -177,8 +178,8 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
         case 510: // upload
             if(user->fileTransfer)
                 delete user->fileTransfer;
-            user->fileTransfer = new FileTransfer(Buffer + 6, user, ntohl(*(uint32_t*)(Buffer + 2)));
-            if(user->fileTransfer->isLoaded())
+            user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 6, user, ntohl(*(uint32_t*)(Buffer + 2)));
+            if(user->fileTransfer && user->fileTransfer->isLoaded())
                 sendMessage(&from, 200, NULL, 0);
             else
             {
@@ -190,8 +191,8 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
         case 511: // download
             if(user->fileTransfer)
                 delete user->fileTransfer;
-            user->fileTransfer = new FileTransfer(Buffer + 2, user);
-            if(user->fileTransfer->isLoaded())
+            user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 2, user);
+            if(user->fileTransfer && user->fileTransfer->isLoaded())
             {
                 tempData.i = htonl(user->fileTransfer->getBlocksCount());
                 sendMessage(&from, 200, &tempData.i, 4);

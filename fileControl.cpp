@@ -111,7 +111,8 @@ void createDirectory(fsData* data)
     else
         data->user->sendData(300);
 #else
-    struct stat st = {0};
+    struct stat st;
+    memset(&st, 0, sizeof(struct stat));
     if (stat(data->data.path, &st) == -1)
     {
         if(mkdir(data->data.path, 0700) == 0)

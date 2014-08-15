@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <new>
 #include <openssl/md5.h>
 
 #include "LoginDB.h"
@@ -29,8 +30,8 @@ void LoginDB::load(const char* filePath)
             last = last->next();
     while(!feof(src))
     {
-        temp = new Login(src);
-        if(!temp->isLoaded())
+        temp = new (std::nothrow) Login(src);
+        if(!temp || !temp->isLoaded())
         {
             delete temp;
             break;
@@ -48,6 +49,8 @@ void LoginDB::load(const char* filePath)
 void LoginDB::add(Login* next)
 {
     Login* curr = this->head;
+    if(!next)
+        return;
     if(!curr)
     {
         this->head = next;
@@ -65,7 +68,7 @@ void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCES
 {
     uint8_t md5Res[MD5_DIGEST_LENGTH];
     MD5((uint8_t*)password, strlen(password), md5Res);
-    this->add(new Login(username, md5Res, state));
+    this->add(new (std::nothrow) Login(username, md5Res, state));
 }
 
 bool LoginDB::remove(int number)
@@ -155,8 +158,8 @@ void LoginDB::input()
     printf("choose state:\n 0. admin\n 1. limited\n 2. all\nyour choice: ");
     scanf("%u", &i);
     state = (i < 3 ? (Login::LOGIN_ACCESS)i : Login::LOGIN_ACCESS::LIMITED);
-    Login* n = new Login(username, md5R, state);
-    if(state == Login::LOGIN_ACCESS::LIMITED)
+    Login* n = new (std::nothrow) Login(username, md5R, state);
+    if(n && state == Login::LOGIN_ACCESS::LIMITED)
     {
         printf("now you add the restricted folders [press only ENTER to finish]\n(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
         fgetc(stdin); // input empty \n from previous scanf - I don't know why, but we need!
