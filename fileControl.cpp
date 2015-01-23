@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #endif
 
@@ -211,15 +212,32 @@ void removeFolder(fsData* data)
 #ifdef WIN32
     char command[REL_PATH_MAX + BASE_FOLDER_MAX + 9] = "rd /q /s ";
     const int baseCommandLen = 9;
-#else
-    char command[REL_PATH_MAX + BASE_FOLDER_MAX + 9] = "rm -r -f ";
-    const int baseCommandLen = 9;
-#endif
+
     strcpy(command + baseCommandLen, data->data.path);
     if(system(command))
         data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
         data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
+#else
+    pid_t p;
+    int status;
+    switch((p = fork()))
+    {
+        case -1:
+            data->user->sendData(SERVER_MSG::SOURCE_BAD);
+            break;
+        case 0:
+            execlp("rm", "-rf", data->data.path, NULL);
+            break;
+        default:
+            waitpid(p, &status, 0);
+            if(WEXITSTATUS(status))
+                data->user->sendData(SERVER_MSG::SOURCE_BAD);
+            else
+                data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
+            break;
+    }
+#endif
 }
 
 void copyFolder(fsData* data)
@@ -227,10 +245,7 @@ void copyFolder(fsData* data)
 #ifdef WIN32
     char command[2 * (REL_PATH_MAX + BASE_FOLDER_MAX) + 20] = "xcopy /E /H /Y /i ";
     const int baseCommandLen = 18;
-#else
-    char command[2 * (REL_PATH_MAX + BASE_FOLDER_MAX) + 17] = "cp -r -f ";
-    const int baseCommandLen = 9;
-#endif
+
     char* cP = command + baseCommandLen;
     strcpy(cP, data->data.path2.src);
     *(cP += strlen(cP)) = ' ';
@@ -240,6 +255,26 @@ void copyFolder(fsData* data)
         data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
         data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
+#else
+    pid_t p;
+    int status;
+    switch((p = fork()))
+    {
+        case -1:
+            data->user->sendData(SERVER_MSG::SOURCE_BAD);
+            break;
+        case 0:
+            execlp("cp", "-rf", data->data.path2.src, data->data.path2.dst, NULL);
+            break;
+        default:
+            waitpid(p, &status, 0);
+            if(WEXITSTATUS(status))
+                data->user->sendData(SERVER_MSG::SOURCE_BAD);
+            else
+                data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
+            break;
+    }
+#endif
 }
 
 bool isFileExists(const char* path)
