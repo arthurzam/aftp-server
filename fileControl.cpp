@@ -19,9 +19,9 @@
 
 #include "fileControl.h"
 #include "User.h"
+#include "messages.h"
 
 extern char* base_server_folder;
-
 
 bool isDirectory(const char* directory)
 {
@@ -68,7 +68,7 @@ void getContentDirectory(fsData* data)
         fileNameLen = strlen(ent->d_name);
         if(resP - result + fileNameLen >= BUFFER_SERVER_SIZE - 10)
         {
-            data->user->sendData(201, result, resP - result);
+            data->user->sendData(SERVER_MSG::LS_DATA, result, resP - result);
             resP = result;
         }
         memcpy(dirP, ent->d_name, fileNameLen + 1);
@@ -83,9 +83,9 @@ void getContentDirectory(fsData* data)
     }
     closedir (dir);
     if(resP != result)
-        data->user->sendData(201, result, resP - result);
+        data->user->sendData(SERVER_MSG::LS_DATA, result, resP - result);
 _exit:
-    data->user->sendData(dir ? 200 : 300);
+    data->user->sendData(dir ? SERVER_MSG::ACTION_COMPLETED : SERVER_MSG::SOURCE_BAD);
 }
 
 #ifndef WIN32
@@ -97,9 +97,9 @@ void symbolicLink(fsData* data)
         memcpy(data->data.path2.src, srcT, FILENAME_MAX);
     memcpy(data->data.path2.src, srcT, FILENAME_MAX);
     if(symlink(data->data.path2.src, data->data.path2.dst))
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
-        data->user->sendData(200);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
 }
 #endif
 
@@ -107,9 +107,9 @@ void createDirectory(fsData* data)
 {
 #ifdef WIN32
     if(CreateDirectoryA(data->data.path, NULL))
-        data->user->sendData(200);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
     else
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
 #else
     struct stat st;
     memset(&st, 0, sizeof(struct stat));
@@ -117,19 +117,20 @@ void createDirectory(fsData* data)
     {
         if(mkdir(data->data.path, 0700) == 0)
         {
-            data->user->sendData(200);
+            data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
+            return;
         }
     }
-    data->user->sendData(300);
+    data->user->sendData(SERVER_MSG::SOURCE_BAD);
 #endif
 }
 
 void moveFile(fsData* data)
 {
     if(rename(data->data.path2.src, data->data.path2.dst))
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
-        data->user->sendData(200);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
 }
 
 void copyFile(fsData* data)
@@ -138,16 +139,16 @@ void copyFile(fsData* data)
     if(CopyFileA(data->data.path2.src, data->data.path2.dst, 0))
         data->user->sendData(200);
     else
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
 #else
     int src = open(data->data.path2.src, O_RDONLY, 0);
     int dst = open(data->data.path2.dst, O_WRONLY | O_CREAT, 0644);
     struct stat stat_source;
     fstat(src, &stat_source);
     if(sendfile(dst, src, 0, stat_source.st_size) == stat_source.st_size)
-        data->user->sendData(200);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
     else
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     close(dst);
     close(src);
 #endif
@@ -156,9 +157,9 @@ void copyFile(fsData* data)
 void removeFile(fsData* data)
 {
     if(remove(data->data.path))
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
-        data->user->sendData(200);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
 }
 
 // TODO: fix for 64 bit endian
@@ -178,9 +179,9 @@ void getFilesize(fsData* data)
         l = st.st_size;
 #endif
     if(l == (uint64_t)-1)
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
-        data->user->sendData(200, &l, sizeof(l));
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED, &l, sizeof(l));
 }
 
 void getMD5OfFile(fsData* data)
@@ -192,7 +193,7 @@ void getMD5OfFile(fsData* data)
     uint8_t buffer[512];
     if(!(f = fopen(data->data.path, "rb")))
     {
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     }
     else
     {
@@ -200,7 +201,7 @@ void getMD5OfFile(fsData* data)
         while((i = fread(buffer, 1, 512, f)))
             MD5_Update(&ctx, buffer, i);
         MD5_Final(result, &ctx);
-        data->user->sendData(200, result, MD5_DIGEST_LENGTH);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED, result, MD5_DIGEST_LENGTH);
         fclose(f);
     }
 }
@@ -216,9 +217,9 @@ void removeFolder(fsData* data)
 #endif
     strcpy(command + baseCommandLen, data->data.path);
     if(system(command))
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
-        data->user->sendData(200);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
 }
 
 void copyFolder(fsData* data)
@@ -236,9 +237,9 @@ void copyFolder(fsData* data)
     strcpy(cP + 1, data->data.path2.dst);
 
     if(system(command))
-        data->user->sendData(300);
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
     else
-        data->user->sendData(200);
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
 }
 
 bool isFileExists(const char* path)

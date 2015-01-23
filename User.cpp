@@ -2,6 +2,8 @@
 #include <cstring>
 
 #include "User.h"
+#include "fileControl.h"
+#include "messages.h"
 
 User::User()
 {
@@ -110,7 +112,7 @@ bool User::timeout()
         return (seconds > USER_TIME_REMOVE);
     else if (seconds > USER_TIME_MSG_SEND)
     {
-        this->sendData(900); // send timeout
+        this->sendData(SERVER_MSG::TIMEOUT); // send timeout
         this->_timeout = true;
     }
     return (false);

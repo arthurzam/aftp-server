@@ -4,12 +4,13 @@
 
 #include "FileTransfer.h"
 #include "User.h"
+#include "messages.h"
 
 FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
 {
     char fPath[FILENAME_MAX];
 
-    if(!user->getRealFile(relativePath, fPath) || !(this->file = fopen(fPath, "rb")))
+    if(!(user->getRealFile(relativePath, fPath) && (this->file = fopen(fPath, "rb"))))
     {
         this->state = STATE_ERROR;
         this->file = NULL;
@@ -32,7 +33,7 @@ FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int bl
 {
     char fPath[FILENAME_MAX];
 
-    if(!user->getRealFile(relativePath, fPath) || !(this->file = fopen(fPath, "w+b")))
+    if(!(user->getRealFile(relativePath, fPath) && (this->file = fopen(fPath, "w+b"))))
     {
         this->state = STATE_ERROR;
         this->file = NULL;
@@ -66,27 +67,27 @@ void FileTransfer::recieveBlock(const char* buffer)
     data->blockNum = htonl(data->blockNum);
     if(this->state != STATE_DOWNLOAD)
     {
-        this->user->sendData(300);
+        this->user->sendData(SERVER_MSG::SOURCE_BAD);
         return;
     }
     MD5(data->dataFile, data->size, md5R);
     if(memcmp(md5R, data->md5Res, 16)) // not equal
     {
-        this->user->sendData(310);
+        this->user->sendData(SERVER_MSG::FILE_BLOCK_MD5_MISMATCH);
         return;
     }
     if(this->currentCursorBlock != data->blockNum)
         fseek(this->file, (data->blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
     fwrite(data->dataFile, 1, data->size, this->file);
     this->currentCursorBlock = data->blockNum + 1;
-    this->user->sendData(200, &data->blockNum, sizeof(data->blockNum));
+    this->user->sendData(SERVER_MSG::ACTION_COMPLETED, &data->blockNum, sizeof(data->blockNum));
 }
 
 void FileTransfer::askForBlock(uint32_t blockNum)
 {
     if(blockNum > this->blocksCount)
     {
-        this->user->sendData(312, (char*)&(blockNum), sizeof(blockNum));
+        this->user->sendData(SERVER_MSG::BLOCK_NUM_OUTRANGE, &blockNum, sizeof(blockNum));
         return;
     }
     struct {
@@ -97,7 +98,7 @@ void FileTransfer::askForBlock(uint32_t blockNum)
     } buffer;
     if(this->state != STATE_UPLOAD)
     {
-        this->user->sendData(300);
+        this->user->sendData(SERVER_MSG::SOURCE_BAD);
         return;
     }
     if(this->currentCursorBlock != blockNum)
@@ -108,5 +109,5 @@ void FileTransfer::askForBlock(uint32_t blockNum)
     buffer.blockNum = blockNum;
     buffer.size = htons(buffer.size);
     buffer.blockNum = htonl(buffer.blockNum);
-    this->user->sendData(210, &buffer, 22 + buffer.size);
+    this->user->sendData(SERVER_MSG::DOWNLOAD_FILE_BLOCK, &buffer, 22 + buffer.size);
 }

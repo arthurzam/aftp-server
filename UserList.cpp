@@ -125,7 +125,7 @@ UserList::ListNode* UserList::createNewNode()
 
 void UserList::userControl()
 {
-    const int CLEAR_AFTER_COUNT = 128;
+    static const int CLEAR_AFTER_COUNT = 128;
     int i;
     ListNode* curr;
     if(this->userCount < CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users

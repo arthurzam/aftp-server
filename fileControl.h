@@ -4,7 +4,6 @@
 #include "defenitions.h"
 #include "IOThreadPool.h"
 
-class User;
 extern "C" {
     /*
      * returns the real folder of the given path, in the result array

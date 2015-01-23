@@ -3,6 +3,7 @@
 #include <cstring>
 #include <new>
 #include <thread>
+#include <mutex>
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -21,6 +22,9 @@
 #include "UserList.h"
 #include "User.h"
 #include "LoginDB.h"
+
+#include "messages.h"
+#include "server_lookup.h"
 
 SOCKET sock;
 
@@ -117,144 +121,124 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
         else
             user = listUsers->addUser(from);
 
-        if(msgCode != 100 && !user->isLoged())
+        if(msgCode != CLIENT_MSG::LOGIN && !user->isLoged())
         {
-            sendMessage(&from, 100, NULL, 0);
+            sendMessage(&from, SERVER_MSG::LOGIN_REQUIRED, NULL, 0);
             continue;
         }
-        switch(msgCode)
+        else if(msgCode > CLIENT_MSG_COUNT || msgCode < 0)
         {
-        case 100: // login
-            tempData.login.username = Buffer + 18;
-            tempData.login.md5Password = (uint8_t*)(Buffer + 2);
-            if((tempData.loginClass = usersDB->check(tempData.login.username, tempData.login.md5Password)))
-            {
-                user->logIn(tempData.loginClass);
-                sendMessage(&from, 101, NULL, 0);
-            }
-            else
-            {
-                sendMessage(&from, 110, NULL, 0);
-            }
-            break;
-        case 105: // logout
-            sendMessage(&from, 200, NULL, 0);
-            listUsers->removeUser(user);
-            break;
-        case 200:
-            sendMessage(&from, 200, NULL, 0);
-            break;
-        case 210: // block in File Upload
-            if(!user->fileTransfer)
-                sendMessage(&from, 300, NULL, 0);
-            else
-                user->fileTransfer->recieveBlock(Buffer + 2);
-            break;
-        case 211: // ask for block range
-            if(!user->fileTransfer)
-                sendMessage(&from, 300, NULL, 0);
-            else
-                user->fileTransfer->askForBlocksRange(*((uint32_t*)(Buffer + 2)), *((uint32_t*)(Buffer + 6)));
-            break;
-        case 212: // ask for block
-            if(!user->fileTransfer)
-                sendMessage(&from, 300, NULL, 0);
-            else
-                user->fileTransfer->askForBlock(*((uint32_t*)(Buffer + 2)));
-            break;
-        case 213: // finish file transfer
-            if(!user->fileTransfer)
-                sendMessage(&from, 300, NULL, 0);
-            else
-            {
-                delete user->fileTransfer;
-                user->fileTransfer = NULL;
-                sendMessage(&from, 200, NULL, 0);
-            }
-            break;
-        case 500: // info
-            sendMessage(&from, 400, (char*)"AFTP Server v1.0 made by Arthur Zamarin, 2014", 46);
-            break;
-        case 510: // upload
-            if(user->fileTransfer)
-                delete user->fileTransfer;
-            user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 6, user, ntohl(*(uint32_t*)(Buffer + 2)));
-            if(user->fileTransfer && user->fileTransfer->isLoaded())
-                sendMessage(&from, 200, NULL, 0);
-            else
-            {
-                sendMessage(&from, 300, NULL, 0);
-                delete user->fileTransfer;
-                user->fileTransfer = NULL;
-            }
-            break;
-        case 511: // download
-            if(user->fileTransfer)
-                delete user->fileTransfer;
-            user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 2, user);
-            if(user->fileTransfer && user->fileTransfer->isLoaded())
-            {
-                tempData.i = htonl(user->fileTransfer->getBlocksCount());
-                sendMessage(&from, 200, &tempData.i, 4);
-            }
-            else
-            {
-                sendMessage(&from, 300, NULL, 0);
-                delete user->fileTransfer;
-                user->fileTransfer = NULL;
-            }
-            break;
-        case 520: // move file
-            ioThreadPool.add2pathFunction(Buffer + 2, user, moveFile);
-            break;
-        case 521: // copy file
-            ioThreadPool.add2pathFunction(Buffer + 2, user, copyFile);
-            break;
-        case 522: // remove file
-            ioThreadPool.add1pathFunction(Buffer + 2, user, removeFile);
-            break;
-        case 523: // get file size
-            ioThreadPool.add1pathFunction(Buffer + 2, user, getFilesize);
-            break;
-        case 524: // get md5 of file
-            ioThreadPool.add1pathFunction(Buffer + 2, user, getMD5OfFile);
-            break;
-#ifndef WIN32
-        case 525: // symlink file
-            ioThreadPool.add2pathFunction(Buffer + 2, user, symbolicLink);
-            break;
-#endif
-        case 530: // cd
-            if(user->moveFolder(Buffer + 2))
-                sendMessage(&from, 200, NULL, 0);
-            else
-                sendMessage(&from, 300, NULL, 0);
-            break;
-        case 531: // create directory
-            ioThreadPool.add1pathFunction(Buffer + 2, user, createDirectory);
-            break;
-        case 532: // remove directory
-            ioThreadPool.add1pathFunction(Buffer + 2, user, removeFolder);
-            break;
-        case 533: // move directory
-            ioThreadPool.add2pathFunction(Buffer + 2, user, moveDirectory);
-            break;
-        case 534: // copy directory
-            ioThreadPool.add2pathFunction(Buffer + 2, user, copyFolder);
-            break;
-        case 535: // get contents of directory
-            ioThreadPool.add1pathFunction(Buffer + 2, user, getContentDirectory);
-            break;
-        case 536: // pwd
-            if(user->folderPath()[0])
-                sendMessage(&from, 200, user->folderPath(), strlen(user->folderPath()));
-            else
-                sendMessage(&from, 200, (char*)"/", 1);
-            break;
-        default:
-            sendMessage(&from, 391, (char*)"unknown command", 15);
-            break;
+            sendMessage(&from, SERVER_MSG::UNKNOWN_COMMAND, NULL, 0);
+            continue;
         }
+        switch(table_msgs[msgCode].num)
+        {
+            case 0:
+                switch(msgCode)
+                {
+                    case CLIENT_MSG::LOGIN: // login
+                        tempData.login.username = Buffer + 18;
+                        tempData.login.md5Password = (uint8_t*)(Buffer + 2);
+                        if((tempData.loginClass = usersDB->check(tempData.login.username, tempData.login.md5Password)))
+                        {
+                            user->logIn(tempData.loginClass);
+                            sendMessage(&from, SERVER_MSG::LOGIN_SUCCESS, NULL, 0);
+                        }
+                        else
+                        {
+                            sendMessage(&from, SERVER_MSG::LOGIN_BAD, NULL, 0);
+                        }
+                        break;
+                    case CLIENT_MSG::LOGOUT: // logout
+                        sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
+                        listUsers->removeUser(user);
+                        break;
+                    case CLIENT_MSG::EMPTY_MESSAGE:
+                        sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
+                        break;
+                    case CLIENT_MSG::FILE_BLOCK: // block in File Upload
+                        if(!user->fileTransfer)
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+                        else
+                            user->fileTransfer->recieveBlock(Buffer + 2);
+                        break;
+                    case CLIENT_MSG::ASK_BLOCK_RANGE: // ask for block range
+                        if(!user->fileTransfer)
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+                        else
+                            user->fileTransfer->askForBlocksRange(*((uint32_t*)(Buffer + 2)), *((uint32_t*)(Buffer + 6)));
+                        break;
+                    case CLIENT_MSG::ASK_BLOCK: // ask for block
+                        if(!user->fileTransfer)
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+                        else
+                            user->fileTransfer->askForBlock(*((uint32_t*)(Buffer + 2)));
+                        break;
+                    case CLIENT_MSG::END_FILE_TRANSFER: // finish file transfer
+                        if(!user->fileTransfer)
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+                        else
+                        {
+                            delete user->fileTransfer;
+                            user->fileTransfer = NULL;
+                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
+                        }
+                        break;
+                    case CLIENT_MSG::CLIENT_INFO:
+                    case CLIENT_MSG::SERVER_INFO: // info
+                        sendMessage(&from, SERVER_MSG::INFO_SERVER, (char*)"AFTP Server v1.0 made by Arthur Zamarin, 2014", 46);
+                        break;
+                    case CLIENT_MSG::FILE_UPLOAD: // upload
+                        if(user->fileTransfer)
+                            delete user->fileTransfer;
+                        user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 6, user, ntohl(*(uint32_t*)(Buffer + 2)));
+                        if(user->fileTransfer && user->fileTransfer->isLoaded())
+                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
+                        else
+                        {
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+                            delete user->fileTransfer;
+                            user->fileTransfer = NULL;
+                        }
+                        break;
+                    case CLIENT_MSG::FILE_DOWNLOAD: // download
+                        if(user->fileTransfer)
+                            delete user->fileTransfer;
+                        user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 2, user);
+                        if(user->fileTransfer && user->fileTransfer->isLoaded())
+                        {
+                            tempData.i = htonl(user->fileTransfer->getBlocksCount());
+                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, &tempData.i, 4);
+                        }
+                        else
+                        {
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+                            delete user->fileTransfer;
+                            user->fileTransfer = NULL;
+                        }
+                        break;
+                    case CLIENT_MSG::DIR_CD: // cd
+                        if(user->moveFolder(Buffer + 2))
+                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
+                        else
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+                        break;
+                    case CLIENT_MSG::DIR_PWD: // pwd
+                        if(user->folderPath()[0])
+                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, user->folderPath(), strlen(user->folderPath()));
+                        else
+                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, (char*)"/", 1);
+                        break;
+                }
+                break;
+            case 1:
+                ioThreadPool.add1pathFunction(Buffer + 2, user, table_msgs[msgCode].function);
+                break;
+            case 2:
+                ioThreadPool.add2pathFunction(Buffer + 2, user, table_msgs[msgCode].function);
+                break;
+        }
+
     }
 _errorExit:
 #ifdef WIN32
@@ -265,7 +249,7 @@ _errorExit:
 
 int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen)
 {
-    static bool lockSend = false; // mini mutex
+    static std::mutex lockSend;
 
     char buffer[BUFFER_SERVER_SIZE + 5];
     msgCode = htons(msgCode);
@@ -275,10 +259,9 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
     if(data && datalen > 0)
         memcpy(buffer + sizeof(msgCode), data, datalen);
 
-    while (lockSend) ;
-    lockSend = true;
+    lockSend.lock();
     int retVal = sendto(sock, buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
-    lockSend = false;
+    lockSend.unlock();
     return (retVal);
 }
 

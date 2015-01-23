@@ -1,5 +1,6 @@
 #include "IOThreadPool.h"
 #include "User.h"
+#include "messages.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -31,7 +32,7 @@ bool IOThreadPool::add1pathFunction(char* buffer, const User* user, void(*functi
 
     if (this->count == IO_DATA_SIZE)
     {
-        user->sendData(302);
+        user->sendData(SERVER_MSG::SERVER_BUSY);
         return (false);
     }
     for(; currAdd != this->data + IO_DATA_SIZE; ++currAdd)
@@ -41,7 +42,11 @@ bool IOThreadPool::add1pathFunction(char* buffer, const User* user, void(*functi
             currAdd->function = function;
             currAdd->data.user = user;
 
-            user->getRealFile(buffer, currAdd->data.data.path);
+            if(!user->getRealFile(buffer, currAdd->data.data.path))
+            {
+                user->sendData(SERVER_MSG::SOURCE_BAD);
+                return (false);
+            }
 
             currAdd->state = DATA_STATE::WAITING;
             ++this->count;
@@ -57,7 +62,7 @@ bool IOThreadPool::add2pathFunction(char* buffer, const User* user, void(*functi
 
     if (this->count == IO_DATA_SIZE)
     {
-        user->sendData(302);
+        user->sendData(SERVER_MSG::SERVER_BUSY);
         return (false);
     }
     for(; currAdd != this->data + IO_DATA_SIZE; ++currAdd)
@@ -67,7 +72,7 @@ bool IOThreadPool::add2pathFunction(char* buffer, const User* user, void(*functi
             if(!user->getRealFile(buffer + 1, currAdd->data.data.path2.src) ||
                !user->getRealFile(buffer + 4 + *(buffer), currAdd->data.data.path2.dst))
             {
-                user->sendData(300);
+                user->sendData(SERVER_MSG::SOURCE_BAD);
                 return (false);
             }
 
