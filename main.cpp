@@ -22,7 +22,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers);
 
 
 bool needExit;
-unsigned short port = DEFAULT_PORT;
+uint16_t port = DEFAULT_PORT;
 char* base_server_folder = (char*)DEFAULT_SERVER_BASE_FOLDER;
 
 void stopServer(std::thread& serverThread)

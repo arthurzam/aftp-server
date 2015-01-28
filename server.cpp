@@ -29,8 +29,7 @@
 SOCKET sock;
 
 extern bool needExit;
-extern bool canExit;
-extern unsigned short port;
+extern uint16_t port;
 
 void userControl(UserList* listUsers);
 
@@ -126,7 +125,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
             sendMessage(&from, SERVER_MSG::LOGIN_REQUIRED, NULL, 0);
             continue;
         }
-        else if(msgCode > CLIENT_MSG_COUNT || msgCode < 0)
+        else if(msgCode > CLIENT_MSG_COUNT)
         {
             sendMessage(&from, SERVER_MSG::UNKNOWN_COMMAND, NULL, 0);
             continue;
@@ -267,17 +266,17 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
 
 void userControl(UserList* listUsers)
 {
-#define WAIT_USER_CONTROL_SECONDS 50
+    constexpr unsigned WAIT_SECONDS = 50;
 	int i;
     while (!needExit)
     {
-        for(i = 0;!needExit && i < WAIT_USER_CONTROL_SECONDS; ++i)
+        for(i = WAIT_SECONDS; !needExit && i != 0; ++i)
 #ifdef WIN32
             Sleep(1000); //mili-seconds
 #else
             sleep(1);    // seconds
 #endif
-        if(needExit)
+        if(!needExit)
         	listUsers->userControl();
     }
 }
