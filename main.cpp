@@ -55,7 +55,7 @@ bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread& server
 #else
 		struct stat st;
         memset(&st, 0, sizeof(struct stat));
-        if (stat(base_server_folder, &st) == -1 && mkdir(base_server_folder, 0755))
+        if (stat(base_server_folder, &st) || mkdir(base_server_folder, 0755))
 #endif
             return (false);
     }

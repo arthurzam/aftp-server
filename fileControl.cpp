@@ -114,15 +114,10 @@ void createDirectory(fsData* data)
 #else
     struct stat st;
     memset(&st, 0, sizeof(struct stat));
-    if (stat(data->data.path, &st) == -1)
-    {
-        if(mkdir(data->data.path, 0700) == 0)
-        {
-            data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
-            return;
-        }
-    }
-    data->user->sendData(SERVER_MSG::SOURCE_BAD);
+    if (stat(base_server_folder, &st) || mkdir(base_server_folder, 0755))
+        data->user->sendData(SERVER_MSG::SOURCE_BAD);
+    else
+        data->user->sendData(SERVER_MSG::ACTION_COMPLETED);
 #endif
 }
 
@@ -279,9 +274,10 @@ void copyFolder(fsData* data)
 
 bool isFileExists(const char* path)
 {
-    FILE* file = fopen(path, "rb");
-    if(!file)
-        return (false);
-    fclose(file);
-    return (true);
+#ifdef WIN32
+    DWORD dwAttrib = GetFileAttributes(szPath);
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES);
+#else
+    return (access(path, F_OK) == 0);
+#endif
 }
