@@ -3,12 +3,11 @@
 
 #include "defenitions.h"
 
-#define USERS_IN_USERS_ARRAY 0x400 // =1024
-
 class User;
 
 class UserList {
 private:
+    static constexpr unsigned USERS_IN_USERS_ARRAY = 0x400; // =1024
     typedef struct _listNode {
         User* arr[USERS_IN_USERS_ARRAY];
         uint16_t count;

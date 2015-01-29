@@ -6,8 +6,6 @@
 
 using namespace std;
 
-#define USERNAME_MAX_LENGTH 32
-
 /*
  * a class for holding the login database.
  * the database is held in the HEAP memory.

@@ -246,7 +246,7 @@ _errorExit:
     userControlThread.join();
 }
 
-int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, int datalen)
+int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, size_t datalen)
 {
     static std::mutex lockSend;
 
@@ -266,8 +266,8 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
 
 void userControl(UserList* listUsers)
 {
-    constexpr unsigned WAIT_SECONDS = 50;
-	int i;
+    static constexpr unsigned WAIT_SECONDS = 50;
+    int i;
     while (!needExit)
     {
         for(i = WAIT_SECONDS; !needExit && i != 0; ++i)

@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     union {
         int choice;
         struct {
-            char username[USERNAME_MAX_LENGTH];
+            char username[Login::USERNAME_MAX_LENGTH];
             char password[0xFF];
         } user;
         char filePath[FILENAME_MAX];

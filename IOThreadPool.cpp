@@ -12,7 +12,7 @@ extern bool needExit;
 
 IOThreadPool::IOThreadPool()
 {
-    int i;
+    unsigned i;
     for(i = 0; i < IO_DATA_SIZE; ++i)
         this->data[i].state = DATA_STATE::FREE;
     this->count = 0;
@@ -22,7 +22,7 @@ IOThreadPool::IOThreadPool()
 
 IOThreadPool::~IOThreadPool()
 {
-    for(int i = 0; i < IO_THREADS_COUNT; ++i)
+    for(unsigned i = 0; i < IO_THREADS_COUNT; ++i)
         this->threads[i].join();
 }
 

@@ -144,7 +144,7 @@ void LoginDB::print() const
 
 void LoginDB::input()
 {
-    char username[USERNAME_MAX_LENGTH];
+    char username[Login::USERNAME_MAX_LENGTH];
     uint8_t md5R[MD5_DIGEST_LENGTH];
     char str[REL_PATH_MAX];
     int i;
