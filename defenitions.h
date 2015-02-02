@@ -36,4 +36,10 @@ typedef int socklen_t;
 #define CLEAR_SCREEN "clear"
 #endif
 
+#ifdef WIN32
+#define SLEEP(seconds) Sleep(seconds * 1000) // Milliseconds
+#else
+#define SLEEP(seconds) sleep(seconds);       // Seconds
+#endif
+
 #endif

@@ -11,8 +11,8 @@ User::User()
     this->_lastUse = 0;
     this->_timeout = false;
     this->_initialized = false;
-    this->fileTransfer = NULL;
-    this->_login = NULL;
+    this->fileTransfer = nullptr;
+    this->_login = nullptr;
 }
 
 User::User(const struct sockaddr_in& from)
@@ -22,21 +22,8 @@ User::User(const struct sockaddr_in& from)
     this->_lastUse = time(NULL);
     this->_timeout = false;
     this->_initialized = false;
-    this->fileTransfer = NULL;
-    this->_login = NULL;
-}
-
-User::~User()
-{
-    if(fileTransfer)
-        delete fileTransfer;
-    fileTransfer = NULL;
-}
-
-void User::resetTime()
-{
-    this->_lastUse = time(NULL);
-    this->_timeout = false;
+    this->fileTransfer = nullptr;
+    this->_login = nullptr;
 }
 
 bool User::equals(const struct sockaddr_in& other) const
@@ -104,8 +91,9 @@ _fin:
 
 bool User::timeout()
 {
-    const int USER_TIME_MSG_SEND = 50;
-    const int USER_TIME_REMOVE = 100;
+    static constexpr unsigned USER_TIME_MSG_SEND = 50;
+    static constexpr unsigned USER_TIME_REMOVE   = 100;
+
     time_t now = time(NULL);
     double seconds = difftime(now, this->_lastUse);
     if(this->_timeout)

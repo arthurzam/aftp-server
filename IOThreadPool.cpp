@@ -93,11 +93,7 @@ void IOThreadPool::slaveThread()
     {
         if(!found || this->count == 0)
         {
-#ifdef WIN32
-            Sleep(1000); //mili-seconds
-#else
-            sleep(1);    // seconds
-#endif
+            SLEEP(1);
         }
 
         found = false;

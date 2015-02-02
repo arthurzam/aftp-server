@@ -73,7 +73,12 @@ class FileTransfer {
          */
         void recieveBlock(const char* buffer);
 
-        ~FileTransfer();
+        ~FileTransfer()
+        {
+            if(this->file)
+                fclose(this->file);
+            this->file = nullptr;
+        }
 };
 
 #endif

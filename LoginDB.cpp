@@ -5,19 +5,6 @@
 
 #include "LoginDB.h"
 
-LoginDB::LoginDB()
-{
-    this->count = 0;
-    this->head = NULL;
-}
-
-LoginDB::LoginDB(const char* filePath)
-{
-    this->count = 0;
-    this->head = NULL;
-    load(filePath);
-}
-
 void LoginDB::load(const char* filePath)
 {
     FILE* src = fopen(filePath, "rb");
@@ -121,13 +108,6 @@ bool LoginDB::save(const char* path) const
     }
     fclose(dst);
     return (true);
-}
-
-LoginDB::~LoginDB()
-{
-    if(this->head)
-        delete (this->head);
-    this->head = NULL;
 }
 
 void LoginDB::print() const

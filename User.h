@@ -39,9 +39,12 @@ public:
     FileTransfer* fileTransfer;
     User();
     User(const struct sockaddr_in& from);
-    ~User();
 
-    void resetTime();
+    void resetTime()
+    {
+        this->_lastUse = time(NULL);
+        this->_timeout = false;
+    }
 
     /*
      * returns TRUE if user is to long not activated (timeout send + time moved).
@@ -87,6 +90,18 @@ public:
     inline int sendData(uint16_t msgCode) const
     {
         return (sendMessage(&this->_from, msgCode, NULL, 0));
+    }
+
+    inline void cleanFileTransfer(FileTransfer* ptr = nullptr)
+    {
+        if(this->fileTransfer)
+            delete this->fileTransfer;
+        this->fileTransfer = ptr;
+    }
+
+    ~User()
+    {
+        cleanFileTransfer();
     }
 };
 

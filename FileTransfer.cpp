@@ -46,13 +46,6 @@ FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int bl
     this->currentCursorBlock = 0;
 }
 
-FileTransfer::~FileTransfer()
-{
-    if(this->file)
-        fclose(this->file);
-    this->file = NULL;
-}
-
 void FileTransfer::recieveBlock(const char* buffer)
 {
     struct dat_t {

@@ -21,7 +21,14 @@ private:
 
     static ListNode* createNewNode();
 public:
-    UserList();
+    UserList()
+    {
+        this->head = nullptr;
+        this->userCount = 0;
+        this->nodesCount = 0;
+        this->isSearching = false;
+    }
+
     ~UserList();
 
     bool removeUser(const User* user);

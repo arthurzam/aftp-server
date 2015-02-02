@@ -6,14 +6,6 @@
 #include "UserList.h"
 #include "User.h"
 
-UserList::UserList()
-{
-    this->head = NULL;
-    this->userCount = 0;
-    this->nodesCount = 0;
-    this->isSearching = false;
-}
-
 UserList::~UserList()
 {
     this->isSearching = true;
@@ -30,7 +22,7 @@ UserList::~UserList()
         free(this->head);
         this->head = temp;
     }
-    this->head = NULL;
+    this->head = nullptr;
 }
 
 bool UserList::removeUser(const User* user)
@@ -58,7 +50,7 @@ bool UserList::removeUser(const User* user)
 User* UserList::addUser(const struct sockaddr_in& user)
 {
     ListNode* curr = this->head;
-    User** res = NULL;
+    User** res = nullptr;
     this->isSearching = true;
     if(!curr)
     {
@@ -113,7 +105,7 @@ User* UserList::findUser(const struct sockaddr_in& user) const
         curr = curr->next;
     }
     this->isSearching = false;
-    return (NULL);
+    return (nullptr);
 }
 
 UserList::ListNode* UserList::createNewNode()
@@ -148,8 +140,7 @@ void UserList::userControl()
 void UserList::print() const
 {
     int i;
-    ListNode* curr;
-    for(curr = this->head; curr; curr = curr->next)
+    for(ListNode* curr = this->head; curr; curr = curr->next)
         for (i = 0; i < curr->count; ++i)
             curr->arr[i]->print();
 }

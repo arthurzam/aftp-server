@@ -31,45 +31,16 @@ SOCKET sock;
 extern bool needExit;
 extern uint16_t port;
 
-static void userControl(UserList* listUsers);
-
-void startServer(LoginDB* usersDB, UserList* listUsers)
+static bool initServer()
 {
-    char Buffer[BUFFER_SERVER_SIZE];
-    int retval;
-    User* user;
     struct sockaddr_in server;
-    struct sockaddr_in from;
-    uint16_t msgCode;
-    socklen_t fromlen = sizeof(from);
-    std::thread userControlThread;
-    IOThreadPool ioThreadPool;
-
-    union {
-        struct {
-            char* src;
-            char* dst;
-            uint8_t src_len;
-            uint8_t dst_len;
-        } src_dst;
-        char* path;
-        const Login* loginClass;
-        int i;
-        uint64_t l;
-        uint8_t md5[MD5_DIGEST_LENGTH];
-        struct {
-            char* username;
-            uint8_t* md5Password;
-        } login;
-    } tempData;
-
 
 #ifdef WIN32
     WSADATA wsaData;
     if ((retval = WSAStartup(0x202, &wsaData)) != 0)
     {
         fprintf(stderr,"[Server: WSAStartup() failed with error %d]\n", retval);
-        goto _errorExit;
+        return (false);
     }
 #endif
 
@@ -82,13 +53,13 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
     if (sock == INVALID_SOCKET)
     {
         fprintf(stderr,"[Server: socket() failed with error %d]\n", WSAGetLastError());
-        goto _errorExit;
+        return (false);
     }
 #else
     if (sock < 0)
     {
         fprintf(stderr,"[Server: socket() failed]\n");
-        goto _errorExit;
+        return (false);
     }
 #endif
 
@@ -96,57 +67,101 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
     if (bind(sock, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
     {
         fprintf(stderr,"[Server: bind() failed with error %d]\n", WSAGetLastError());
-        goto _errorExit;
+        return (false);
     }
 #else
     if (bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0)
     {
         fprintf(stderr,"[Server: bind() failed]\n");
-        goto _errorExit;
+        return (false);
     }
 #endif
+    return true;
+}
 
-    userControlThread = std::thread(userControl, listUsers);
+static void userControl(UserList* listUsers);
+
+void startServer(LoginDB* usersDB, UserList* listUsers)
+{
+    struct __attribute__((packed)){
+        uint16_t msgCode;
+        union __attribute__((packed)){
+            char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
+            struct __attribute__((packed)){
+                uint8_t md5Password[MD5_DIGEST_LENGTH];
+                char username[sizeof(data) - MD5_DIGEST_LENGTH];
+            } login;
+            struct __attribute__((packed)){
+                uint32_t start;
+                uint32_t end;
+            } block_range;
+            uint32_t block;
+            struct __attribute__((packed)){
+                uint32_t blocksCount;
+                char path[sizeof(data) - sizeof(blocksCount)];
+            } upload;
+        } u;
+        char nullTerminate[8] = {0};
+    } Buffer;
+
+    static_assert(sizeof(Buffer) - sizeof(Buffer.nullTerminate) == BUFFER_SERVER_SIZE, "bad buffer size");
+
+    int retval;
+    User* user;
+    struct sockaddr_in from;
+    socklen_t fromlen = sizeof(from);
+
+    union {
+        const Login* loginClass;
+        int i;
+        uint64_t l;
+    } tempData;
+
+    if(!initServer())
+    {
+#ifdef WIN32
+        WSACleanup();
+#endif
+        return;
+    }
+
+    IOThreadPool ioThreadPool;
+    std::thread userControlThread(userControl, listUsers);
     while(!needExit)
     {
-        retval = recvfrom(sock, Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, &fromlen);
+        retval = recvfrom(sock, (char*)&Buffer, BUFFER_SERVER_SIZE, 0, (struct sockaddr *)&from, &fromlen);
         if (retval < 2) continue;
-        Buffer[retval] = 0;
-        memcpy(&msgCode, Buffer, sizeof(msgCode));
-        msgCode = ntohs(msgCode);
+        Buffer.u.data[retval - 2] = 0;
+        Buffer.msgCode = ntohs(Buffer.msgCode);
 
         if((user = listUsers->findUser(from)))
             user->resetTime();
         else
             user = listUsers->addUser(from);
 
-        if(msgCode != CLIENT_MSG::LOGIN && !user->isLoged())
+        if(Buffer.msgCode != CLIENT_MSG::LOGIN && !user->isLoged())
         {
             sendMessage(&from, SERVER_MSG::LOGIN_REQUIRED, NULL, 0);
             continue;
         }
-        else if(msgCode > CLIENT_MSG_COUNT)
+        else if(Buffer.msgCode > CLIENT_MSG_COUNT)
         {
             sendMessage(&from, SERVER_MSG::UNKNOWN_COMMAND, NULL, 0);
             continue;
         }
-        switch(table_msgs[msgCode].num)
+        switch(table_msgs[Buffer.msgCode].num)
         {
             case 0:
-                switch(msgCode)
+                switch(Buffer.msgCode)
                 {
                     case CLIENT_MSG::LOGIN: // login
-                        tempData.login.username = Buffer + 18;
-                        tempData.login.md5Password = (uint8_t*)(Buffer + 2);
-                        if((tempData.loginClass = usersDB->check(tempData.login.username, tempData.login.md5Password)))
+                        if(retval > 19 && (tempData.loginClass = usersDB->check(Buffer.u.login.username, Buffer.u.login.md5Password)))
                         {
                             user->logIn(tempData.loginClass);
                             sendMessage(&from, SERVER_MSG::LOGIN_SUCCESS, NULL, 0);
                         }
                         else
-                        {
                             sendMessage(&from, SERVER_MSG::LOGIN_BAD, NULL, 0);
-                        }
                         break;
                     case CLIENT_MSG::LOGOUT: // logout
                         sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
@@ -159,27 +174,26 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
-                            user->fileTransfer->recieveBlock(Buffer + 2);
+                            user->fileTransfer->recieveBlock(Buffer.u.data);
                         break;
                     case CLIENT_MSG::ASK_BLOCK_RANGE: // ask for block range
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
-                            user->fileTransfer->askForBlocksRange(*((uint32_t*)(Buffer + 2)), *((uint32_t*)(Buffer + 6)));
+                            user->fileTransfer->askForBlocksRange(Buffer.u.block_range.start, Buffer.u.block_range.end);
                         break;
                     case CLIENT_MSG::ASK_BLOCK: // ask for block
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
-                            user->fileTransfer->askForBlock(*((uint32_t*)(Buffer + 2)));
+                            user->fileTransfer->askForBlock(Buffer.u.block);
                         break;
                     case CLIENT_MSG::END_FILE_TRANSFER: // finish file transfer
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
                         {
-                            delete user->fileTransfer;
-                            user->fileTransfer = NULL;
+                            user->cleanFileTransfer();
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         }
                         break;
@@ -190,20 +204,17 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                     case CLIENT_MSG::FILE_UPLOAD: // upload
                         if(user->fileTransfer)
                             delete user->fileTransfer;
-                        user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 6, user, ntohl(*(uint32_t*)(Buffer + 2)));
+                        user->fileTransfer = new (std::nothrow) FileTransfer(Buffer.u.upload.path, user, ntohl(Buffer.u.upload.blocksCount));
                         if(user->fileTransfer && user->fileTransfer->isLoaded())
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         else
                         {
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                            delete user->fileTransfer;
-                            user->fileTransfer = NULL;
+                            user->cleanFileTransfer();
                         }
                         break;
                     case CLIENT_MSG::FILE_DOWNLOAD: // download
-                        if(user->fileTransfer)
-                            delete user->fileTransfer;
-                        user->fileTransfer = new (std::nothrow) FileTransfer(Buffer + 2, user);
+                        user->cleanFileTransfer(new (std::nothrow) FileTransfer(Buffer.u.data, user));
                         if(user->fileTransfer && user->fileTransfer->isLoaded())
                         {
                             tempData.i = htonl(user->fileTransfer->getBlocksCount());
@@ -212,12 +223,11 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                         else
                         {
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                            delete user->fileTransfer;
-                            user->fileTransfer = NULL;
+                            user->cleanFileTransfer();
                         }
                         break;
                     case CLIENT_MSG::DIR_CD: // cd
-                        if(user->moveFolder(Buffer + 2))
+                        if(user->moveFolder(Buffer.u.data))
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         else
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
@@ -231,15 +241,13 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                 }
                 break;
             case 1:
-                ioThreadPool.add1pathFunction(Buffer + 2, user, table_msgs[msgCode].function);
+                ioThreadPool.add1pathFunction(Buffer.u.data, user, table_msgs[Buffer.msgCode].function);
                 break;
             case 2:
-                ioThreadPool.add2pathFunction(Buffer + 2, user, table_msgs[msgCode].function);
+                ioThreadPool.add2pathFunction(Buffer.u.data, user, table_msgs[Buffer.msgCode].function);
                 break;
         }
-
     }
-_errorExit:
 #ifdef WIN32
     WSACleanup();
 #endif
@@ -250,16 +258,21 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
 {
     static std::mutex lockSend;
 
-    char buffer[BUFFER_SERVER_SIZE + 5];
-    msgCode = htons(msgCode);
-    memcpy(buffer, &msgCode, sizeof(msgCode));
+    struct __attribute__((packed)){
+        uint16_t msgCode;
+        char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
+        char nullTerminate[8] = {0};
+    } buffer;
+
+
+    buffer.msgCode = htons(msgCode);
     if(datalen > BUFFER_SERVER_SIZE)
         datalen = BUFFER_SERVER_SIZE;
     if(data && datalen > 0)
-        memcpy(buffer + sizeof(msgCode), data, datalen);
+        memcpy(buffer.data, data, datalen);
 
     lockSend.lock();
-    int retVal = sendto(sock, buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
+    int retVal = sendto(sock, &buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
     lockSend.unlock();
     return (retVal);
 }
@@ -270,12 +283,8 @@ void userControl(UserList* listUsers)
     int i;
     while (!needExit)
     {
-        for(i = WAIT_SECONDS; !needExit && i != 0; ++i)
-#ifdef WIN32
-            Sleep(1000); //mili-seconds
-#else
-            sleep(1);    // seconds
-#endif
+        for(i = WAIT_SECONDS; !needExit && i != 0; --i)
+            SLEEP(1);
         if(!needExit)
         	listUsers->userControl();
     }

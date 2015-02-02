@@ -25,7 +25,7 @@ bool needExit;
 uint16_t port = DEFAULT_PORT;
 char* base_server_folder = (char*)DEFAULT_SERVER_BASE_FOLDER;
 
-void stopServer(std::thread& serverThread)
+static void stopServer(std::thread& serverThread)
 {
     printf("the server is stopping!\n");
     needExit = true;
@@ -33,7 +33,7 @@ void stopServer(std::thread& serverThread)
     printf("the server stopped\n");
 }
 
-bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread& serverThread)
+static bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread& serverThread)
 {
     // replace all bad separators into good one
     char* pathP = base_server_folder - 1;

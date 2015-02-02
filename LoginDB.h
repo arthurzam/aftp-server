@@ -20,12 +20,22 @@ public:
     /*
      * create empty list
      */
-    LoginDB();
+    LoginDB()
+    {
+        this->count = 0;
+        this->head = NULL;
+    }
+
     /*
      * Load the list from the given file.
      * If error occurs on loading, the count variable will be empty.
      */
-    LoginDB(const char* filePath);
+    LoginDB(const char* filePath)
+    {
+        this->count = 0;
+        this->head = NULL;
+        load(filePath);
+    }
 
     void add(const char* username, const char* password, Login::LOGIN_ACCESS state);
     /*
@@ -44,7 +54,12 @@ public:
      * removed the Login in place number (starts with 1)
      */
     bool remove(int number);
-    ~LoginDB();
+    ~LoginDB()
+    {
+        if(this->head)
+            delete (this->head);
+        this->head = nullptr;
+    }
 };
 
 #endif /* LOGINDB_H_ */
