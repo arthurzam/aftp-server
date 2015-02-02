@@ -12,10 +12,9 @@ extern "C" {
     bool isDirectory(const char* directory);
     bool isFileExists(const char* path);
 
-#ifndef WIN32
-    /*
-     * only for Unix based OS
-     */
+#ifdef WIN32
+#define symbolicLink copyFile
+#else
     void symbolicLink(fsData* data);
 #endif
 

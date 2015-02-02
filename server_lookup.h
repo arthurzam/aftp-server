@@ -37,11 +37,7 @@ static const struct table_msg_t table_msgs[] = {
     {1, removeFile},
     {1, getFilesize},
     {1, getMD5OfFile},
-#ifdef WIN32
-    {2, copyFile},
-#else
     {2, symbolicLink},
-#endif
 
     {0, NULL},
     {1, createDirectory},

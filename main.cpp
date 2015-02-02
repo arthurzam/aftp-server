@@ -69,7 +69,7 @@ inline void clearScreen()
 #ifdef WIN32
     system("cls");
 #else
-    system("clear");
+    system("reset");
 #endif
 }
 
@@ -114,13 +114,13 @@ int main(int argc, char **argv)
             }
             else if(!strcmp(argv[i], "-h"))
             {
-                printf("This is the AFTP server\n");
-                printf("  usage:\n");
-                printf("    -db (path)   load the Login database from this file\n");
-                printf("    -p  (port)   the port on which the server should listen\n");
-                printf("    -f  (path)   the base folder path for the server root folder\n");
-                printf("    -h           show this text\n");
-                printf("    -a           auto start server\n");
+                printf("This is the AFTP server\n"
+                       "  usage:\n"
+                       "    -db (path)   load the Login database from this file\n"
+                       "    -p  (port)   the port on which the server should listen\n"
+                       "    -f  (path)   the base folder path for the server root folder\n"
+                       "    -h           show this text\n"
+                       "    -a           auto start server\n");
                 return (0);
             }
             else if(!strcmp(argv[i], "-a"))

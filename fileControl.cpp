@@ -275,7 +275,7 @@ void copyFolder(fsData* data)
 bool isFileExists(const char* path)
 {
 #ifdef WIN32
-    DWORD dwAttrib = GetFileAttributes(szPath);
+    DWORD dwAttrib = GetFileAttributes(path);
     return (dwAttrib != INVALID_FILE_ATTRIBUTES);
 #else
     return (access(path, F_OK) == 0);

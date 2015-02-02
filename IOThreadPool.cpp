@@ -28,74 +28,82 @@ IOThreadPool::~IOThreadPool()
 
 bool IOThreadPool::add1pathFunction(char* buffer, const User* user, void(*function)(fsData*))
 {
-    fsThreadData* currAdd = this->data;
+    const fsThreadData* end = this->data + IO_DATA_SIZE;
 
-    if (this->count == IO_DATA_SIZE)
+    if (this->count != IO_DATA_SIZE)
     {
-        user->sendData(SERVER_MSG::SERVER_BUSY);
-        return (false);
-    }
-    for(; currAdd != this->data + IO_DATA_SIZE; ++currAdd)
-    {
-        if(currAdd->state == DATA_STATE::FREE)
+        for(fsThreadData* currAdd = this->data; currAdd != end; ++currAdd)
         {
-            currAdd->function = function;
-            currAdd->data.user = user;
-
-            if(!user->getRealFile(buffer, currAdd->data.data.path))
+            if(currAdd->state == DATA_STATE::FREE)
             {
-                user->sendData(SERVER_MSG::SOURCE_BAD);
-                return (false);
-            }
+                currAdd->function = function;
+                currAdd->data.user = user;
 
-            currAdd->state = DATA_STATE::WAITING;
-            ++this->count;
-            return (true);
+                if(!user->getRealFile(buffer, currAdd->data.data.path))
+                {
+                    user->sendData(SERVER_MSG::SOURCE_BAD);
+                    return (false);
+                }
+
+                currAdd->state = DATA_STATE::WAITING;
+                ++this->count;
+                return (true);
+            }
         }
     }
+    user->sendData(SERVER_MSG::SERVER_BUSY);
     return (false);
 }
 
 bool IOThreadPool::add2pathFunction(char* buffer, const User* user, void(*function)(fsData*))
 {
-    fsThreadData* currAdd = this->data;
-
-    if (this->count == IO_DATA_SIZE)
+    const fsThreadData* end = this->data + IO_DATA_SIZE;
+    if (this->count != IO_DATA_SIZE)
     {
-        user->sendData(SERVER_MSG::SERVER_BUSY);
-        return (false);
-    }
-    for(; currAdd != this->data + IO_DATA_SIZE; ++currAdd)
-    {
-        if(currAdd->state == DATA_STATE::FREE)
+        for(fsThreadData* currAdd = this->data; currAdd != end; ++currAdd)
         {
-            if(!user->getRealFile(buffer + 1, currAdd->data.data.path2.src) ||
-               !user->getRealFile(buffer + 4 + *(buffer), currAdd->data.data.path2.dst))
+            if(currAdd->state == DATA_STATE::FREE)
             {
-                user->sendData(SERVER_MSG::SOURCE_BAD);
-                return (false);
+                if(!user->getRealFile(buffer + 1, currAdd->data.data.path2.src) ||
+                   !user->getRealFile(buffer + 4 + *(buffer), currAdd->data.data.path2.dst))
+                {
+                    user->sendData(SERVER_MSG::SOURCE_BAD);
+                    return (false);
+                }
+
+                currAdd->function = function;
+                currAdd->data.user = user;
+
+                currAdd->state = DATA_STATE::WAITING;
+                ++this->count;
+                return (true);
             }
-
-            currAdd->function = function;
-            currAdd->data.user = user;
-
-            currAdd->state = DATA_STATE::WAITING;
-            ++this->count;
-            return (true);
         }
     }
+    user->sendData(SERVER_MSG::SERVER_BUSY);
     return (false);
 }
 
 void IOThreadPool::slaveThread()
 {
-    bool found;
+    bool found = true;
+    DATA_STATE t;
+    const fsThreadData* end = this->data + IO_DATA_SIZE;
     while (!needExit)
     {
-        found = false;
-        for(fsThreadData* currManaged = this->data; currManaged != this->data + IO_DATA_SIZE; ++currManaged)
+        if(!found || this->count == 0)
         {
-            DATA_STATE t = DATA_STATE::WAITING;
+#ifdef WIN32
+            Sleep(1000); //mili-seconds
+#else
+            sleep(1);    // seconds
+#endif
+        }
+
+        found = false;
+        for(fsThreadData* currManaged = this->data; currManaged != end; ++currManaged)
+        {
+            t = DATA_STATE::WAITING;
             if(std::atomic_compare_exchange_strong(&currManaged->state, &t, DATA_STATE::CONTROLED))
             {
                 currManaged->function(&currManaged->data);
@@ -103,14 +111,6 @@ void IOThreadPool::slaveThread()
                 --this->count;
                 found = true;
             }
-        }
-        if(!found)
-        {
-#ifdef WIN32
-            Sleep(1000); //mili-seconds
-#else
-            sleep(1);    // seconds
-#endif
         }
     }
 }

@@ -147,6 +147,7 @@ void LoginDB::input()
     char username[Login::USERNAME_MAX_LENGTH];
     uint8_t md5R[MD5_DIGEST_LENGTH];
     char str[REL_PATH_MAX];
+    str[REL_PATH_MAX - 1] = '\0';
     int i;
     Login::LOGIN_ACCESS state;
 
@@ -164,7 +165,7 @@ void LoginDB::input()
         printf("now you add the restricted folders [press only ENTER to finish]\n(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
         fgetc(stdin); // input empty \n from previous scanf - I don't know why, but we need!
         do {
-            fgets(str, REL_PATH_MAX, stdin);
+            fgets(str, REL_PATH_MAX - 1, stdin);
             str[strlen(str) - 1] = 0;
             if(str[0])
             {

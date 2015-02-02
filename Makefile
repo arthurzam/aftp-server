@@ -1,7 +1,7 @@
 CXX=g++
 LIBS=-lssl -lcrypto
-CXXFLAGS+=-std=c++0x -c -Wall -Wextra -flto
-LDFLAGS+=-flto
+CXXFLAGS+=-std=c++0x -c -Wall -Wextra -flto -fno-exceptions -fno-rtti
+LDFLAGS+=-flto -fno-exceptions -fno-rtti
 SOURCES=IOThreadPool.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp-server

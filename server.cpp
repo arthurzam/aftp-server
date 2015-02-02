@@ -31,7 +31,7 @@ SOCKET sock;
 extern bool needExit;
 extern uint16_t port;
 
-void userControl(UserList* listUsers);
+static void userControl(UserList* listUsers);
 
 void startServer(LoginDB* usersDB, UserList* listUsers)
 {
