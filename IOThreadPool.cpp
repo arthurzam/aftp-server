@@ -26,7 +26,7 @@ IOThreadPool::~IOThreadPool()
         this->threads[i].join();
 }
 
-bool IOThreadPool::add1pathFunction(char* buffer, const User* user, void(*function)(fsData*))
+bool IOThreadPool::addPathFunction(int type, char* buffer, const User* user, bool(*function)(fsData*))
 {
     const fsThreadData* end = this->data + IO_DATA_SIZE;
 
@@ -39,40 +39,23 @@ bool IOThreadPool::add1pathFunction(char* buffer, const User* user, void(*functi
                 currAdd->function = function;
                 currAdd->data.user = user;
 
-                if(!user->getRealFile(buffer, currAdd->data.data.path))
+                if(type == 1) // only 1 path
                 {
-                    user->sendData(SERVER_MSG::SOURCE_BAD);
-                    return (false);
+                    if(!user->getRealFile(buffer, currAdd->data.data.path))
+                    {
+                        user->sendData(SERVER_MSG::SOURCE_BAD);
+                        return (false);
+                    }
                 }
-
-                currAdd->state = DATA_STATE::WAITING;
-                ++this->count;
-                return (true);
-            }
-        }
-    }
-    user->sendData(SERVER_MSG::SERVER_BUSY);
-    return (false);
-}
-
-bool IOThreadPool::add2pathFunction(char* buffer, const User* user, void(*function)(fsData*))
-{
-    const fsThreadData* end = this->data + IO_DATA_SIZE;
-    if (this->count != IO_DATA_SIZE)
-    {
-        for(fsThreadData* currAdd = this->data; currAdd != end; ++currAdd)
-        {
-            if(currAdd->state == DATA_STATE::FREE)
-            {
-                if(!user->getRealFile(buffer + 1, currAdd->data.data.path2.src) ||
-                   !user->getRealFile(buffer + 4 + *(buffer), currAdd->data.data.path2.dst))
+                else // 2 path
                 {
-                    user->sendData(SERVER_MSG::SOURCE_BAD);
-                    return (false);
+                    if(!user->getRealFile(buffer + 1, currAdd->data.data.path2.src) ||
+                       !user->getRealFile(buffer + 4 + *(buffer), currAdd->data.data.path2.dst))
+                    {
+                        user->sendData(SERVER_MSG::SOURCE_BAD);
+                        return (false);
+                    }
                 }
-
-                currAdd->function = function;
-                currAdd->data.user = user;
 
                 currAdd->state = DATA_STATE::WAITING;
                 ++this->count;
@@ -102,7 +85,9 @@ void IOThreadPool::slaveThread()
             t = DATA_STATE::WAITING;
             if(std::atomic_compare_exchange_strong(&currManaged->state, &t, DATA_STATE::CONTROLED))
             {
-                currManaged->function(&currManaged->data);
+                currManaged->data.user->sendData(currManaged->function(&currManaged->data)
+                                                ? SERVER_MSG::ACTION_COMPLETED
+                                                : SERVER_MSG::SOURCE_BAD);
                 currManaged->state = DATA_STATE::FREE;
                 --this->count;
                 found = true;

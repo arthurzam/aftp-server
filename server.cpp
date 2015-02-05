@@ -37,6 +37,7 @@ static bool initServer()
 
 #ifdef WIN32
     WSADATA wsaData;
+    int retval;
     if ((retval = WSAStartup(0x202, &wsaData)) != 0)
     {
         fprintf(stderr,"[Server: WSAStartup() failed with error %d]\n", retval);
@@ -139,12 +140,17 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
         else
             user = listUsers->addUser(from);
 
+        if(table_msgs[Buffer.msgCode].min_ret > retval)
+        {
+            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+            continue;
+        }
         if(Buffer.msgCode != CLIENT_MSG::LOGIN && !user->isLoged())
         {
             sendMessage(&from, SERVER_MSG::LOGIN_REQUIRED, NULL, 0);
             continue;
         }
-        else if(Buffer.msgCode > CLIENT_MSG_COUNT)
+        if(Buffer.msgCode > CLIENT_MSG_COUNT)
         {
             sendMessage(&from, SERVER_MSG::UNKNOWN_COMMAND, NULL, 0);
             continue;
@@ -155,7 +161,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                 switch(Buffer.msgCode)
                 {
                     case CLIENT_MSG::LOGIN: // login
-                        if(retval > 19 && (tempData.loginClass = usersDB->check(Buffer.u.login.username, Buffer.u.login.md5Password)))
+                        if((tempData.loginClass = usersDB->check(Buffer.u.login.username, Buffer.u.login.md5Password)))
                         {
                             user->logIn(tempData.loginClass);
                             sendMessage(&from, SERVER_MSG::LOGIN_SUCCESS, NULL, 0);
@@ -209,8 +215,8 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         else
                         {
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                             user->cleanFileTransfer();
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         }
                         break;
                     case CLIENT_MSG::FILE_DOWNLOAD: // download
@@ -222,8 +228,8 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                         }
                         else
                         {
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                             user->cleanFileTransfer();
+                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         }
                         break;
                     case CLIENT_MSG::DIR_CD: // cd
@@ -240,11 +246,8 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                         break;
                 }
                 break;
-            case 1:
-                ioThreadPool.add1pathFunction(Buffer.u.data, user, table_msgs[Buffer.msgCode].function);
-                break;
-            case 2:
-                ioThreadPool.add2pathFunction(Buffer.u.data, user, table_msgs[Buffer.msgCode].function);
+            default:
+                ioThreadPool.addPathFunction(table_msgs[Buffer.msgCode].num, Buffer.u.data, user, table_msgs[Buffer.msgCode].function);
                 break;
         }
     }
@@ -272,7 +275,7 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
         memcpy(buffer.data, data, datalen);
 
     lockSend.lock();
-    int retVal = sendto(sock, &buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
+    int retVal = sendto(sock, (char*)&buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
     lockSend.unlock();
     return (retVal);
 }

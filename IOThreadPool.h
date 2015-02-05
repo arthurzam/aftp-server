@@ -45,7 +45,7 @@ class IOThreadPool {
 
         typedef struct {
             fsData data;
-            void(*function)(fsData*);
+            bool(*function)(fsData*);
             std::atomic<enum DATA_STATE> state;
         } fsThreadData;
 
@@ -57,8 +57,7 @@ class IOThreadPool {
     public:
         IOThreadPool();
         ~IOThreadPool();
-        bool add1pathFunction(char* buffer, const User* user, void(*function)(fsData*));
-        bool add2pathFunction(char* buffer, const User* user, void(*function)(fsData*));
+        bool addPathFunction(int type, char* buffer, const User* user, bool(*function)(fsData*));
 };
 
 #endif /* IOTHREADPOOL_H_ */

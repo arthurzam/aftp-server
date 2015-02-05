@@ -15,19 +15,19 @@ extern "C" {
 #ifdef WIN32
 #define symbolicLink copyFile
 #else
-    void symbolicLink(fsData* data);
+    bool symbolicLink(fsData* data);
 #endif
 
-    void getContentDirectory(fsData* data);
-    void createDirectory(fsData* data);
+    bool getContentDirectory(fsData* data);
+    bool createDirectory(fsData* data);
 #define moveDirectory moveFile
-    void removeFolder(fsData* data);
-    void copyFolder(fsData* data);
+    bool removeFolder(fsData* data);
+    bool copyFolder(fsData* data);
 
-    void moveFile(fsData* data);
-    void copyFile(fsData* data);
-    void removeFile(fsData* data);
-    void getFilesize(fsData* data);
-    void getMD5OfFile(fsData* data);
+    bool moveFile(fsData* data);
+    bool copyFile(fsData* data);
+    bool removeFile(fsData* data);
+    bool getFilesize(fsData* data);
+    bool getMD5OfFile(fsData* data);
 }
 #endif
