@@ -2,12 +2,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
+
 #ifdef WIN32
 #include <windows.h>
 #include <process.h>
 #else
-#include <pthread.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #endif
@@ -19,7 +18,6 @@
 
 // Implemented in server.cpp
 void startServer(LoginDB* usersDB, UserList* listUsers);
-
 
 bool needExit;
 uint16_t port = DEFAULT_PORT;
@@ -55,7 +53,7 @@ static bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread&
 #else
 		struct stat st;
         memset(&st, 0, sizeof(struct stat));
-        if (stat(base_server_folder, &st) || mkdir(base_server_folder, 0755))
+        if (stat(base_server_folder, &st) && mkdir(base_server_folder, 0755))
 #endif
             return (false);
     }
@@ -132,109 +130,119 @@ int main(int argc, char **argv)
     if(serverRunning)
         serverRunning = startServerThread(&userDB, &listUsers, serverThread);
     do {
-        printf("0. exit\n");
-        if(serverRunning)
-            printf("1. stop server\n");
-        else
-            printf("1. start server\n");
-        printf("2. Login configurations\n3. print current connections\n4. clear screen\n5. server configurations\n  your choice: ");
+        printf("0. exit\n"
+               "1. %s server\n"
+               "2. Login configurations\n"
+               "3. print current connections\n"
+               "4. clear screen\n"
+               "5. server configurations\n"
+               "  your choice: ", (serverRunning ? "stop" : "start"));
         scanf("%d", &data.choice);
         switch(data.choice)
         {
-        case 0:
-            exit = true;
-            if(serverRunning)
-            {
-                stopServer(serverThread);
-                serverRunning = false;
-            }
-            break;
-        case 1:
-            if(serverRunning)
-            {
-                stopServer(serverThread);
-                serverRunning = false;
-            }
-            else
-            {
-                serverRunning = startServerThread(&userDB, &listUsers, serverThread);
-            }
-            break;
-        case 2:
-            printf("0. return\n1. load database from file\n2. save database to file\n3. add\n4. remove\n5. print\n  your choice: ");
-            scanf("%d", &data.choice);
-            switch(data.choice)
-            {
+            case 0:
+                exit = true;
+                if(serverRunning)
+                {
+                    stopServer(serverThread);
+                    serverRunning = false;
+                }
+                break;
             case 1:
-                printf("enter path to file: ");
-                scanf("%s", data.filePath);
-                userDB.load(data.filePath);
-                clearScreen();
-                printf("loaded\n");
+                if(serverRunning)
+                {
+                    stopServer(serverThread);
+                    serverRunning = false;
+                }
+                else
+                {
+                    serverRunning = startServerThread(&userDB, &listUsers, serverThread);
+                }
                 break;
             case 2:
-                printf("enter path to file: ");
-                scanf("%s", data.filePath);
-                userDB.save(data.filePath);
-                clearScreen();
-                printf("saved\n");
-                break;
-            case 3:
-                userDB.input();
-                clearScreen();
-                printf("added\n");
-                break;
-            case 4:
-                clearScreen();
-                userDB.print();
-                printf(" the number of login to remove: ");
-                scanf("%d", &data.choice);
-                userDB.remove(data.choice);
-                clearScreen();
-                printf("removed\n");
-                break;
-            case 5:
-                clearScreen();
-                userDB.print();
-                break;
-            }
-            break;
-        case 3:
-            clearScreen();
-            if(listUsers.getUserCount() > 0)
-                listUsers.print();
-            else
-                printf("empty\n");
-            break;
-        case 4:
-            clearScreen();
-            break;
-        case 5:
-            if(serverRunning)
-            {
-                printf("the server is running, you can't configure it in this state!\n");
-            }
-            else
-            {
-                printf("0. return\n1. change port (%d)\n2. change server's base folder (%s)\n  your choice: ", port, base_server_folder);
+                printf("0. return\n"
+                       "1. load database from file\n"
+                       "2. save database to file\n"
+                       "3. add\n"
+                       "4. remove\n"
+                       "5. print\n"
+                       "  your choice: ");
                 scanf("%d", &data.choice);
                 switch(data.choice)
                 {
-                case 1:
-                    printf("enter new port: ");
-                    scanf("%d", &data.choice);
-                    if(data.choice > 0xFFFF)
-                        fprintf(stderr, "Bad port specified!\n");
-                    else
-                        port = (short)data.choice;
-                    break;
-                case 2:
-                    printf("enter new base folder: ");
-                    scanf("%s", basePath);
-                    base_server_folder = basePath;
+                    case 1:
+                        printf("enter path to file: ");
+                        scanf("%s", data.filePath);
+                        userDB.load(data.filePath);
+                        clearScreen();
+                        printf("loaded\n");
+                        break;
+                    case 2:
+                        printf("enter path to file: ");
+                        scanf("%s", data.filePath);
+                        userDB.save(data.filePath);
+                        clearScreen();
+                        printf("saved\n");
+                        break;
+                    case 3:
+                        userDB.input();
+                        clearScreen();
+                        printf("added\n");
+                        break;
+                    case 4:
+                        clearScreen();
+                        userDB.print();
+                        printf(" the number of login to remove: ");
+                        scanf("%d", &data.choice);
+                        userDB.remove(data.choice);
+                        clearScreen();
+                        printf("removed\n");
+                        break;
+                    case 5:
+                        clearScreen();
+                        userDB.print();
+                        break;
                 }
+                break;
+            case 3:
+                clearScreen();
+                if(listUsers.getUserCount() > 0)
+                    listUsers.print();
+                else
+                    printf("empty\n");
+                break;
+            case 4:
+                clearScreen();
+                break;
+            case 5:
+                if(serverRunning)
+                {
+                    printf("the server is running, you can't configure it in this state!\n");
+                }
+                else
+                {
+                    printf("0. return\n"
+                           "1. change port (%d)\n"
+                           "2. change server's base folder (%s)\n"
+                           "  your choice: ", port, base_server_folder);
+                    scanf("%d", &data.choice);
+                    switch(data.choice)
+                    {
+                        case 1:
+                            printf("enter new port: ");
+                            scanf("%d", &data.choice);
+                            if(data.choice > 0xFFFF)
+                                fprintf(stderr, "Bad port specified!\n");
+                            else
+                                port = (short)data.choice;
+                            break;
+                        case 2:
+                            printf("enter new base folder: ");
+                            scanf("%s", basePath);
+                            base_server_folder = basePath;
+                    }
+                }
+                break;
             }
-            break;
-        }
     } while(!exit);
 }

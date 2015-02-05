@@ -35,7 +35,7 @@ class FileTransfer {
         /*
          * Constructor for Upload situation.
          */
-        FileTransfer(char* relativePath, const User* user, unsigned int blocksCount);
+        FileTransfer(char* relativePath, const User* user, uint32_t blocksCount);
 
         /*
          * returns true if the initialize succeeded, otherwise false.

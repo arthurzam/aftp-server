@@ -1,7 +1,7 @@
 CXX=g++
-LIBS=-lssl -lcrypto
-CXXFLAGS+=-std=c++0x -c -Wall -Wextra -flto -fno-exceptions -fno-rtti
-LDFLAGS+=-flto -fno-exceptions -fno-rtti
+LIBS=-lcrypto
+CXXFLAGS+=-std=c++0x -Wall -Wextra -flto -fno-exceptions -fno-rtti
+LDFLAGS+=-flto -fno-exceptions -fno-rtti -Wl,--no-as-needed
 SOURCES=IOThreadPool.cpp fileControl.cpp FileTransfer.cpp LoginDB.cpp Login.cpp User.cpp UserList.cpp server.cpp main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=aftp-server
@@ -22,10 +22,10 @@ debug: $(SOURCES) $(EXECUTABLE)
 	
 	
 $(EXECUTABLE): $(OBJECTS) 
-	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@ $(LIBS)
+	$(CXX) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
 .cpp.o:
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	$(REMOVEFILECOMMAND) *.o $(EXECUTABLE)*

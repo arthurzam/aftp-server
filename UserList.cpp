@@ -19,7 +19,7 @@ UserList::~UserList()
             delete this->head->arr[i];
             --this->userCount;
         }
-        free(this->head);
+        delete this->head;
         this->head = temp;
     }
     this->head = nullptr;
@@ -92,7 +92,7 @@ _exit:
 User* UserList::findUser(const struct sockaddr_in& user) const
 {
     int i;
-    ListNode* curr = this->head;
+    const ListNode* curr = this->head;
     this->isSearching = true;
     while(curr)
     {
@@ -108,17 +108,10 @@ User* UserList::findUser(const struct sockaddr_in& user) const
     return (nullptr);
 }
 
-UserList::ListNode* UserList::createNewNode()
-{
-    ListNode* result = (ListNode*)malloc(sizeof(ListNode));
-    memset(result, 0, sizeof(ListNode));
-    return (result);
-}
-
 void UserList::userControl()
 {
-    static const int CLEAR_AFTER_COUNT = 128;
-    int i;
+    static constexpr unsigned CLEAR_AFTER_COUNT = 128;
+    unsigned i;
     ListNode* curr;
     if(this->userCount < CLEAR_AFTER_COUNT) // check if we need to check because there is no matter to check when there is less that a little number of users
         return;
@@ -140,7 +133,7 @@ void UserList::userControl()
 void UserList::print() const
 {
     int i;
-    for(ListNode* curr = this->head; curr; curr = curr->next)
+    for(const ListNode* curr = this->head; curr; curr = curr->next)
         for (i = 0; i < curr->count; ++i)
             curr->arr[i]->print();
 }

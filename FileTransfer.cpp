@@ -29,7 +29,7 @@ FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
     fseek(this->file, 0, SEEK_SET);
 }
 
-FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int blocksCount) // Upload
+FileTransfer::FileTransfer(char* relativePath, const User* user, uint32_t blocksCount) // Upload
 {
     char fPath[FILENAME_MAX];
 
@@ -48,7 +48,7 @@ FileTransfer::FileTransfer(char* relativePath, const User* user, unsigned int bl
 
 void FileTransfer::recieveBlock(const char* buffer)
 {
-    struct dat_t {
+    struct __attribute__((packed)) dat_t {
         uint32_t blockNum;
         uint16_t size;
         uint8_t md5Res[16];
@@ -83,7 +83,7 @@ void FileTransfer::askForBlock(uint32_t blockNum)
         this->user->sendData(SERVER_MSG::BLOCK_NUM_OUTRANGE, &blockNum, sizeof(blockNum));
         return;
     }
-    struct {
+    struct __attribute__((packed)){
         uint32_t blockNum;
         uint16_t size;
         uint8_t md5[16];
@@ -99,8 +99,7 @@ void FileTransfer::askForBlock(uint32_t blockNum)
     buffer.size = fread(buffer.data, 1, FILE_BLOCK_SIZE, this->file);
     this->currentCursorBlock = blockNum + 1;
     MD5(buffer.data, buffer.size, buffer.md5);
-    buffer.blockNum = blockNum;
+    buffer.blockNum = htonl(blockNum);
     buffer.size = htons(buffer.size);
-    buffer.blockNum = htonl(buffer.blockNum);
     this->user->sendData(SERVER_MSG::DOWNLOAD_FILE_BLOCK, &buffer, 22 + buffer.size);
 }

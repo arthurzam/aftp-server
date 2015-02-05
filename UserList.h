@@ -6,41 +6,38 @@
 class User;
 
 class UserList {
-private:
-    static constexpr unsigned USERS_IN_USERS_ARRAY = 0x400; // =1024
-    typedef struct _listNode {
-        User* arr[USERS_IN_USERS_ARRAY];
-        uint16_t count;
-        struct _listNode* next;
-    } ListNode;
+    private:
+        static constexpr unsigned USERS_IN_USERS_ARRAY = 0x400; // =1024
+        typedef struct _listNode {
+            User* arr[USERS_IN_USERS_ARRAY] = {nullptr};
+            uint16_t count = 0;
+            struct _listNode* next = nullptr;
+        } ListNode;
 
-    int userCount;
-    int nodesCount;
-    ListNode* head;
-    mutable bool isSearching;
+        unsigned userCount = 0;
+        unsigned nodesCount = 0;
+        ListNode* head = nullptr;
+        mutable bool isSearching = false;
 
-    static ListNode* createNewNode();
-public:
-    UserList()
-    {
-        this->head = nullptr;
-        this->userCount = 0;
-        this->nodesCount = 0;
-        this->isSearching = false;
-    }
+        static ListNode* createNewNode()
+        {
+            return new ListNode;
+        }
+    public:
+        UserList() {}
 
-    ~UserList();
+        ~UserList();
 
-    bool removeUser(const User* user);
-    User* addUser(const struct sockaddr_in& user);
-    User* findUser(const struct sockaddr_in& user) const;
+        bool removeUser(const User* user);
+        User* addUser(const struct sockaddr_in& user);
+        User* findUser(const struct sockaddr_in& user) const;
 
-    inline int getUserCount() const
-    {
-        return (this->userCount);
-    }
+        inline int getUserCount() const
+        {
+            return (this->userCount);
+        }
 
-    void userControl();
-    void print() const;
+        void userControl();
+        void print() const;
 };
 #endif
