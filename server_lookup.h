@@ -8,10 +8,10 @@
 struct table_msg_t {
     uint_fast8_t num;
     bool(*function)(fsData*);
-    uint_fast8_t min_ret;
+    uint_fast16_t min_ret;
 };
 
-#define CLIENT_MSG_COUNT 28
+constexpr unsigned CLIENT_MSG_COUNT = 28;
 
 static const struct table_msg_t table_msgs[] = {
     {0, NULL, 19},

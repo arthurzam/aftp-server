@@ -11,7 +11,6 @@ User::User()
     this->_lastUse = 0;
     this->_timeout = false;
     this->_initialized = false;
-    this->fileTransfer = nullptr;
     this->_login = nullptr;
 }
 
@@ -22,7 +21,6 @@ User::User(const struct sockaddr_in& from)
     this->_lastUse = time(NULL);
     this->_timeout = false;
     this->_initialized = false;
-    this->fileTransfer = nullptr;
     this->_login = nullptr;
 }
 

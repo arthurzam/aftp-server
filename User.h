@@ -15,7 +15,6 @@
 #include "Login.h"
 
 class Login;
-class FileTransfer;
 
 class User {
 private:
@@ -36,7 +35,7 @@ private:
      */
     static bool parseChangeDir(char* cdPath, char* destination);
 public:
-    FileTransfer* fileTransfer;
+    FileTransfer fileTransfer;
     User();
     User(const struct sockaddr_in& from);
 
@@ -92,17 +91,7 @@ public:
         return (sendMessage(&this->_from, msgCode, NULL, 0));
     }
 
-    inline void cleanFileTransfer(FileTransfer* ptr = nullptr)
-    {
-        if(this->fileTransfer)
-            delete this->fileTransfer;
-        this->fileTransfer = ptr;
-    }
-
-    ~User()
-    {
-        cleanFileTransfer();
-    }
+    ~User() {}
 };
 
 #endif

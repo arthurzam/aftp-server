@@ -17,25 +17,27 @@ class FileTransfer {
             STATE_DOWNLOAD
         } STATE;
 
-        STATE state; // the current state of transfer
-        uint32_t blocksCount; // the amount of blocks in the transfered file
-        uint32_t currentCursorBlock; // the block where the FILE's cursor is located
-        FILE* file; // the file itself
-        const User* user; // just a pointer to the user controlling the current transfer
+        STATE state = STATE::STATE_ERROR; // the current state of transfer
+        uint32_t blocksCount = 0; // the amount of blocks in the transfered file
+        uint32_t currentCursorBlock = 0; // the block where the FILE's cursor is located
+        FILE* file = nullptr; // the file itself
+        const User* user = nullptr; // just a pointer to the user controlling the current transfer
     public:
         /*
          * the size of a block of a file
          */
         static constexpr unsigned FILE_BLOCK_SIZE = 0x200; //=512
 
+        FileTransfer() {};
+
         /*
-         * Constructor for Download situation.
+         * set for Download situation.
          */
-        FileTransfer(char* relativePath, const User* user);
+        bool reset(char* relativePath, const User* user);
         /*
-         * Constructor for Upload situation.
+         * set for Upload situation.
          */
-        FileTransfer(char* relativePath, const User* user, uint32_t blocksCount);
+        bool reset(char* relativePath, const User* user, uint32_t blocksCount);
 
         /*
          * returns true if the initialize succeeded, otherwise false.
@@ -44,6 +46,12 @@ class FileTransfer {
         {
             return (this->state);
         }
+
+        inline operator bool() const
+        {
+            return isLoaded();
+        }
+
         /*
          * returns the count of blocks in the file
          */
@@ -73,11 +81,17 @@ class FileTransfer {
          */
         void recieveBlock(const char* buffer);
 
-        ~FileTransfer()
+        void close()
         {
             if(this->file)
                 fclose(this->file);
             this->file = nullptr;
+            this->state = STATE::STATE_ERROR;
+        }
+
+        ~FileTransfer()
+        {
+            close();
         }
 };
 

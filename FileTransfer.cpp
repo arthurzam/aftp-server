@@ -6,15 +6,16 @@
 #include "User.h"
 #include "messages.h"
 
-FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
+bool FileTransfer::reset(char* relativePath, const User* user) // Download
 {
     char fPath[FILENAME_MAX];
+
+    close();
 
     if(!(user->getRealFile(relativePath, fPath) && (this->file = fopen(fPath, "rb"))))
     {
         this->state = STATE_ERROR;
-        this->file = NULL;
-        return;
+        return false;
     }
 
     this->state = STATE_DOWNLOAD;
@@ -27,23 +28,26 @@ FileTransfer::FileTransfer(char* relativePath, const User* user) // Download
     if((temp & (FILE_BLOCK_SIZE - 1)) != 0) // works only if FILE_BLOCK_SIZE is 2^x; check that there is a partial block
         this->blocksCount++;
     fseek(this->file, 0, SEEK_SET);
+    return true;
 }
 
-FileTransfer::FileTransfer(char* relativePath, const User* user, uint32_t blocksCount) // Upload
+bool FileTransfer::reset(char* relativePath, const User* user, uint32_t blocksCount) // Upload
 {
     char fPath[FILENAME_MAX];
+
+    close();
 
     if(!(user->getRealFile(relativePath, fPath) && (this->file = fopen(fPath, "w+b"))))
     {
         this->state = STATE_ERROR;
-        this->file = NULL;
-        return;
+        return false;
     }
 
     this->state = STATE_UPLOAD;
     this->user = user;
     this->blocksCount = blocksCount;
     this->currentCursorBlock = 0;
+    return true;
 }
 
 void FileTransfer::recieveBlock(const char* buffer)

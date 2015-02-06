@@ -10,11 +10,9 @@
 #include <process.h>
 #else
 #include <arpa/inet.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <netdb.h>
 #endif
 
 #include "server.h"
@@ -30,6 +28,9 @@ SOCKET sock;
 
 extern bool needExit;
 extern uint16_t port;
+
+constexpr char* INFO_STRING = (char*)"AFTP Server v2.1 made by Arthur Zamarin, 2015";
+constexpr size_t INFO_STRING_LEN = strlen(INFO_STRING);
 
 static bool initServer()
 {
@@ -107,7 +108,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
 
     static_assert(sizeof(Buffer) - sizeof(Buffer.nullTerminate) == BUFFER_SERVER_SIZE, "bad buffer size");
 
-    int retval;
+    unsigned retval;
     User* user;
     struct sockaddr_in from;
     socklen_t fromlen = sizeof(from);
@@ -160,7 +161,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
             case 0:
                 switch(Buffer.msgCode)
                 {
-                    case CLIENT_MSG::LOGIN: // login
+                    case CLIENT_MSG::LOGIN:
                         if((tempData.loginClass = usersDB->check(Buffer.u.login.username, Buffer.u.login.md5Password)))
                         {
                             user->logIn(tempData.loginClass);
@@ -169,76 +170,68 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
                         else
                             sendMessage(&from, SERVER_MSG::LOGIN_BAD, NULL, 0);
                         break;
-                    case CLIENT_MSG::LOGOUT: // logout
+                    case CLIENT_MSG::LOGOUT:
                         sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         listUsers->removeUser(user);
                         break;
                     case CLIENT_MSG::EMPTY_MESSAGE:
                         sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         break;
-                    case CLIENT_MSG::FILE_BLOCK: // block in File Upload
+                    case CLIENT_MSG::FILE_BLOCK:
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
-                            user->fileTransfer->recieveBlock(Buffer.u.data);
+                            user->fileTransfer.recieveBlock(Buffer.u.data);
                         break;
-                    case CLIENT_MSG::ASK_BLOCK_RANGE: // ask for block range
+                    case CLIENT_MSG::ASK_BLOCK_RANGE:
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
-                            user->fileTransfer->askForBlocksRange(Buffer.u.block_range.start, Buffer.u.block_range.end);
+                            user->fileTransfer.askForBlocksRange(Buffer.u.block_range.start, Buffer.u.block_range.end);
                         break;
-                    case CLIENT_MSG::ASK_BLOCK: // ask for block
+                    case CLIENT_MSG::ASK_BLOCK:
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
-                            user->fileTransfer->askForBlock(Buffer.u.block);
+                            user->fileTransfer.askForBlock(Buffer.u.block);
                         break;
-                    case CLIENT_MSG::END_FILE_TRANSFER: // finish file transfer
+                    case CLIENT_MSG::END_FILE_TRANSFER:
                         if(!user->fileTransfer)
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         else
                         {
-                            user->cleanFileTransfer();
+                            user->fileTransfer.close();
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         }
                         break;
                     case CLIENT_MSG::CLIENT_INFO:
-                    case CLIENT_MSG::SERVER_INFO: // info
-                        sendMessage(&from, SERVER_MSG::INFO_SERVER, (char*)"AFTP Server v1.0 made by Arthur Zamarin, 2014", 46);
+                    case CLIENT_MSG::SERVER_INFO:
+                        sendMessage(&from, SERVER_MSG::INFO_SERVER, INFO_STRING, INFO_STRING_LEN);
                         break;
-                    case CLIENT_MSG::FILE_UPLOAD: // upload
-                        if(user->fileTransfer)
-                            delete user->fileTransfer;
-                        user->fileTransfer = new (std::nothrow) FileTransfer(Buffer.u.upload.path, user, ntohl(Buffer.u.upload.blocksCount));
-                        if(user->fileTransfer && user->fileTransfer->isLoaded())
+                    case CLIENT_MSG::FILE_UPLOAD:
+                        if(user->fileTransfer.reset(Buffer.u.upload.path, user, ntohl(Buffer.u.upload.blocksCount)))
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         else
-                        {
-                            user->cleanFileTransfer();
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        }
                         break;
-                    case CLIENT_MSG::FILE_DOWNLOAD: // download
-                        user->cleanFileTransfer(new (std::nothrow) FileTransfer(Buffer.u.data, user));
-                        if(user->fileTransfer && user->fileTransfer->isLoaded())
+                    case CLIENT_MSG::FILE_DOWNLOAD:
+                        if(user->fileTransfer.reset(Buffer.u.data, user))
                         {
-                            tempData.i = htonl(user->fileTransfer->getBlocksCount());
+                            tempData.i = htonl(user->fileTransfer.getBlocksCount());
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, &tempData.i, 4);
                         }
                         else
                         {
-                            user->cleanFileTransfer();
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         }
                         break;
-                    case CLIENT_MSG::DIR_CD: // cd
+                    case CLIENT_MSG::DIR_CD:
                         if(user->moveFolder(Buffer.u.data))
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
                         else
                             sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
                         break;
-                    case CLIENT_MSG::DIR_PWD: // pwd
+                    case CLIENT_MSG::DIR_PWD:
                         if(user->folderPath()[0])
                             sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, user->folderPath(), strlen(user->folderPath()));
                         else
@@ -264,13 +257,12 @@ int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data
     struct __attribute__((packed)){
         uint16_t msgCode;
         char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
-        char nullTerminate[8] = {0};
+        char nullTerminate[8];
     } buffer;
 
-
     buffer.msgCode = htons(msgCode);
-    if(datalen > BUFFER_SERVER_SIZE)
-        datalen = BUFFER_SERVER_SIZE;
+    if(datalen > sizeof(buffer.data))
+        datalen = sizeof(buffer.data);
     if(data && datalen > 0)
         memcpy(buffer.data, data, datalen);
 
