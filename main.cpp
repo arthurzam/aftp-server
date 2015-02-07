@@ -35,8 +35,7 @@ static bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread&
 {
     // replace all bad separators into good one
     char* pathP = base_server_folder - 1;
-    while((pathP = strchr(pathP + 1, PATH_SEPERATOR_BAD)))
-        *pathP = PATH_SEPERATOR_GOOD;
+    replaceSeperator(pathP);
 
     // check for last char is PATH_SEPERATOR_GOOD => if not set it
     if(*((pathP = base_server_folder + strlen(base_server_folder)) - 1) != PATH_SEPERATOR_GOOD)

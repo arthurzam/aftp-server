@@ -5,6 +5,12 @@
 #include "IOThreadPool.h"
 
 extern "C" {
+    inline void replaceSeperator(char* path)
+    {
+        while((path = strchr(path + 1, PATH_SEPERATOR_BAD)))
+            *path = PATH_SEPERATOR_GOOD;
+    }
+
     /*
      * returns the real folder of the given path, in the result array
      */

@@ -1,27 +1,14 @@
-#include <cstdio>
 #include <cstring>
 
 #include "User.h"
 #include "fileControl.h"
 #include "messages.h"
 
-User::User()
-{
-    this->_folderPath[0] = 0;
-    this->_lastUse = 0;
-    this->_timeout = false;
-    this->_initialized = false;
-    this->_login = nullptr;
-}
-
 User::User(const struct sockaddr_in& from)
 {
-    this->_folderPath[0] = 0;
     memcpy(&(this->_from), &from, sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
-    this->_timeout = false;
-    this->_initialized = false;
-    this->_login = nullptr;
+    this->_initialized = true;
 }
 
 bool User::equals(const struct sockaddr_in& other) const
@@ -37,49 +24,59 @@ bool User::equals(const struct sockaddr_in& other) const
 
 bool User::parseChangeDir(char* path, char* dst)
 {
-    if(*path == 0)
+    if(*path == '\0')
         return (true);
     int i;
     char* temp = path - 1;
     char newStr[FILENAME_MAX];
-    newStr[0] = 0;
-    while((temp = strchr(temp + 1, PATH_SEPERATOR_BAD))) // replace every PATH_SEPERATOR_BAD into PATH_SEPERATOR_GOOD
-        *temp = PATH_SEPERATOR_GOOD;
+    newStr[0] = '\0';
+    replaceSeperator(temp);
     if(path[i = strlen(path) - 1] == PATH_SEPERATOR_GOOD) // we can use i-1 because path[i] after the for is the '/0' ending
-        path[i] = 0; // if the path finishes in divider, remove it
+        path[i] = '\0'; // if the path finishes in divider, remove it
 
     if(*path == PATH_SEPERATOR_GOOD) // for example /path/folder => remove previous
         path++;
     else if(dst[0]) // we have previous path
-        strcpy(newStr, dst);
+        strncpy(newStr, dst, sizeof(newStr) - 1);
 
 _check_path:
     if(!*path) // path has ended
         goto _fin;
-    if(*path == '.' && path[1] == '.')
+    if(*path == '.')
     {
-        if(newStr[1] == 0)
-            return (false); // trying to move back when we are already on root
-        temp = strrchr(newStr, PATH_SEPERATOR_GOOD); // find the last occurrence of '/' and set it as '\0'
-        if(!temp)
+        if((path[1] == '.') & (((path[2] == PATH_SEPERATOR_GOOD) | (path[2] == '\0')))) // ../
         {
-            newStr[0] = 0;
-            goto _fin;
+            if(newStr[1] != '\0') // if root -> do nothing
+            {
+                // find the last occurrence of '/' and set it as '\0'
+                if(!(temp = strrchr(newStr, PATH_SEPERATOR_GOOD)))
+                {
+                    *newStr = '\0';
+                    goto _fin;
+                }
+                *temp = '\0';
+            }
+            if(path[2] == '\0')
+                goto _fin;
+            path += 3;
+            goto _check_path;
         }
-        *temp = 0;
-        if(path[2] == 0)
-            goto _fin;
-        path += 3;
-        goto _check_path;
+        else if((path[1] == PATH_SEPERATOR_GOOD) | (path[1] == '\0')) // just . -> current dir
+        {
+            if(path[1] == '\0')
+                goto _fin;
+            path += 2;
+            goto _check_path;
+        }
     }
     i = (((temp = strchr(path, PATH_SEPERATOR_GOOD))) ? temp - path : strlen(path)); // find the first occurrence of '/', or whole length if no '/'
     if(i != 0)
     {
         *(temp = newStr + strlen(newStr)) = PATH_SEPERATOR_GOOD;
-        *((char *)memcpy(temp + 1, path, i) + i) = 0;
+        *((char *)memcpy(temp + 1, path, i) + i) = '\0';
     }
     path += i + 1;
-    if(path[-1])
+    if(path[-1] != '\0')
         goto _check_path;
 
 _fin:
@@ -106,7 +103,7 @@ bool User::timeout()
 
 bool User::getRealFile(char* relativeFile, char* result) const
 {
-    char dst[FILENAME_MAX];
+    char dst[FILENAME_MAX + 8];
     strcpy(dst, this->_folderPath);
     char* tempPtr;
     if(User::parseChangeDir(relativeFile, dst))

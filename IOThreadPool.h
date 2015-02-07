@@ -51,7 +51,7 @@ class IOThreadPool {
 
         fsThreadData data[IO_DATA_SIZE];
 
-        int count;
+        int count = 0;
 
         void slaveThread();
     public:

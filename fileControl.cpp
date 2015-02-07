@@ -37,19 +37,17 @@ bool getRealDirectory(char* realativDirectory, char* result)
 {
     strcpy(result, base_server_folder);
     char* relDirP = realativDirectory - 1;
-    while((relDirP = strchr(relDirP + 1, PATH_SEPERATOR_BAD)))
-        *relDirP = PATH_SEPERATOR_GOOD;
+    replaceSeperator(relDirP);
     strcat(result, (realativDirectory[0] == PATH_SEPERATOR_GOOD ? realativDirectory + 1 : realativDirectory));
     return (true);
 }
 
 bool getContentDirectory(fsData* data)
 {
-    char* base = data->data.path;
-
+    // data->data.path is used for storing the continue of path -> and it changes
     char *dirP, *resP;
     DIR* dir = NULL;
-    dirP = base + strlen(base);
+    dirP = data->data.path + strlen(data->data.path);
     if(*(dirP - 1) != PATH_SEPERATOR_GOOD)
         *(dirP++) = PATH_SEPERATOR_GOOD;
 
@@ -57,7 +55,7 @@ bool getContentDirectory(fsData* data)
     resP = result; // a pointer to the last character
 
     struct dirent *ent;
-    dir = opendir (base);
+    dir = opendir (data->data.path);
     if(!dir)
         return false;
     int fileNameLen;
@@ -73,7 +71,7 @@ bool getContentDirectory(fsData* data)
             resP = result;
         }
         memcpy(dirP, ent->d_name, fileNameLen + 1);
-        flag = isDirectory(base);
+        flag = isDirectory(data->data.path);
         if(flag)
             *(resP++) = '[';
         memcpy(resP, ent->d_name, fileNameLen);
@@ -91,7 +89,6 @@ bool getContentDirectory(fsData* data)
 #ifndef WIN32
 bool symbolicLink(fsData* data)
 {
-
     char srcT[FILENAME_MAX];
     while(readlink(data->data.path2.src, srcT, FILENAME_MAX - 1) <= 0)
         memcpy(data->data.path2.src, srcT, FILENAME_MAX);

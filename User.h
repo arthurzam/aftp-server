@@ -9,34 +9,31 @@
 #endif
 
 #include "defenitions.h"
-#include "fileControl.h"
 #include "server.h"
 #include "FileTransfer.h"
 #include "Login.h"
 
-class Login;
-
 class User {
 private:
-    struct sockaddr_in _from;
-    char _folderPath[FILENAME_MAX];
-    time_t _lastUse;
-    bool _timeout;
-    bool _initialized;
-    const Login* _login;
+    time_t _lastUse = 0;
+    const Login* _login = nullptr;
+    bool _timeout = false;
+    bool _initialized = false;
+    struct sockaddr_in _from = {0, 0, {0}, {0}};
+    char _folderPath[FILENAME_MAX] = {0};
 
-    /*
-     * changes the folder path using the given path (cdPath).
-     * the starting position should be in destination, and the result would be there.
-     * moves through every path between slash.
-     * possible bad parts of path:
-     *    move back (..) when already on root
-     * return (TRUE) if everything is OK, and (FALSE) if error.
+    /**
+     * @brief changes the folder path using the given path
+     *
+     * @param cdPath move path to be parsed and affected onto @c destination
+     * @param destination starting point path and output path
+     * @return returns true if seceded, otherwise false.
      */
     static bool parseChangeDir(char* cdPath, char* destination);
 public:
     FileTransfer fileTransfer;
-    User();
+
+    User() {}
     User(const struct sockaddr_in& from);
 
     void resetTime()

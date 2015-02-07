@@ -9,7 +9,7 @@
 UserList::~UserList()
 {
     this->isSearching = true;
-    ListNode* temp = NULL;
+    ListNode* temp;
     int i;
     while(this->head)
     {
@@ -132,7 +132,7 @@ void UserList::userControl()
 
 void UserList::print() const
 {
-    int i;
+    unsigned i;
     for(const ListNode* curr = this->head; curr; curr = curr->next)
         for (i = 0; i < curr->count; ++i)
             curr->arr[i]->print();

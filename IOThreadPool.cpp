@@ -15,7 +15,6 @@ IOThreadPool::IOThreadPool()
     unsigned i;
     for(i = 0; i < IO_DATA_SIZE; ++i)
         this->data[i].state = DATA_STATE::FREE;
-    this->count = 0;
     for(i = 0; i < IO_THREADS_COUNT; ++i)
         this->threads[i] = std::thread(&IOThreadPool::slaveThread, this);
 }
