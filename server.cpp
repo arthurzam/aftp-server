@@ -15,7 +15,6 @@
 #include <unistd.h>
 #endif
 
-#include "server.h"
 #include "fileControl.h"
 #include "UserList.h"
 #include "User.h"
@@ -28,6 +27,33 @@ SOCKET sock;
 
 extern bool needExit;
 extern uint16_t port;
+
+struct __attribute__((packed)) client_msg_plain_t{
+    msgCode_t msgCode;
+    union __attribute__((packed)){
+        char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
+        struct __attribute__((packed)){
+            uint8_t md5Password[MD5_DIGEST_LENGTH];
+            char username[sizeof(data) - MD5_DIGEST_LENGTH];
+        } login;
+        struct __attribute__((packed)){
+            uint32_t start;
+            uint32_t end;
+        } block_range;
+        uint32_t block;
+        struct __attribute__((packed)){
+            uint32_t blocksCount;
+            char path[sizeof(data) - sizeof(blocksCount)];
+        } upload;
+    } u;
+    char nullTerminate[8] = {0};
+};
+
+enum EXIT_STATUS {
+    DONT_MANAGE = 0,
+    BAD,
+    GOOD,
+};
 
 constexpr char* INFO_STRING = (char*)"AFTP Server v2.1 made by Arthur Zamarin, 2015";
 constexpr size_t INFO_STRING_LEN = strlen(INFO_STRING);
@@ -81,32 +107,62 @@ static bool initServer()
     return true;
 }
 
-static void userControl(UserList* listUsers);
+static void userControl(UserList* listUsers)
+{
+    static constexpr unsigned WAIT_SECONDS = 50;
+    int i;
+    while (!needExit)
+    {
+        for(i = WAIT_SECONDS; !needExit && i != 0; --i)
+            SLEEP(1);
+        if(!needExit)
+            listUsers->userControl();
+    }
+}
 
-void startServer(LoginDB* usersDB, UserList* listUsers)
+static int decryptAES(const AES_KEY* decryptKey, const void* src, size_t src_len, void* dst)
+{
+    uint8_t iv[16] = {0};
+    uint8_t lastBlockLen = *((uint8_t*)src);
+    uint8_t* dPtr = (uint8_t*)dst;
+    const uint8_t* sPtr = (const uint8_t*)src + 1;
+
+    --src_len;
+
+    while(src_len >= 256)
+    {
+        AES_cbc_encrypt(sPtr, dPtr, 256, decryptKey, iv, AES_DECRYPT);
+        sPtr += 256;
+        dPtr += 256;
+        src_len -= 256;
+    }
+    if(src_len != 0)
+    {
+        AES_cbc_encrypt(sPtr, dPtr, src_len, decryptKey, iv, AES_DECRYPT);
+        dPtr += lastBlockLen;
+    }
+    return (dPtr - (uint8_t*)dst);
+}
+
+static bool decryptAESkeyRSA(const RSA* rsa, const void* src, int src_len, uint8_t dst[AES_KEY_LENGTH / 8])
+{
+    return (RSA_private_decrypt(src_len, (uint8_t*)src, (uint8_t*)dst, const_cast<RSA*>(rsa), RSA_PKCS1_OAEP_PADDING) != -1);
+}
+
+extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_control_t& rsaControl)
 {
     struct __attribute__((packed)){
         uint16_t msgCode;
-        union __attribute__((packed)){
-            char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
-            struct __attribute__((packed)){
-                uint8_t md5Password[MD5_DIGEST_LENGTH];
-                char username[sizeof(data) - MD5_DIGEST_LENGTH];
-            } login;
-            struct __attribute__((packed)){
-                uint32_t start;
-                uint32_t end;
-            } block_range;
-            uint32_t block;
-            struct __attribute__((packed)){
-                uint32_t blocksCount;
-                char path[sizeof(data) - sizeof(blocksCount)];
-            } upload;
-        } u;
-        char nullTerminate[8] = {0};
-    } Buffer;
+        uint8_t padLength;
+        char data[BUFFER_SERVER_SIZE - sizeof(msgCode) - sizeof(padLength)];
+    } encrypted_msg;
+    client_msg_plain_t decryptedBuffer;
 
-    static_assert(sizeof(Buffer) - sizeof(Buffer.nullTerminate) == BUFFER_SERVER_SIZE, "bad buffer size");
+    const uint16_t exit_msg_table[] = {0, SERVER_MSG::ERROR_OCCURED, SERVER_MSG::ACTION_COMPLETED};
+
+    register client_msg_plain_t* Buffer;
+
+    static_assert(sizeof(decryptedBuffer) - sizeof(Buffer->nullTerminate) == BUFFER_SERVER_SIZE, "bad buffer size");
 
     unsigned retval;
     User* user;
@@ -117,6 +173,7 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
         const Login* loginClass;
         int i;
         uint64_t l;
+        uint8_t aes_key[AES_KEY_LENGTH / 8];
     } tempData;
 
     if(!initServer())
@@ -131,117 +188,141 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
     std::thread userControlThread(userControl, listUsers);
     while(!needExit)
     {
-        retval = recvfrom(sock, (char*)&Buffer, BUFFER_SERVER_SIZE, 0, (struct sockaddr *)&from, &fromlen);
-        if (retval < 2) continue;
-        Buffer.u.data[retval - 2] = 0;
-        Buffer.msgCode = ntohs(Buffer.msgCode);
+        EXIT_STATUS status = EXIT_STATUS::DONT_MANAGE;
+        retval = recvfrom(sock, (char*)&encrypted_msg, BUFFER_SERVER_SIZE, 0, (struct sockaddr *)&from, &fromlen);
+        if (retval < sizeof(msgCode_t)) continue;
+        ((char*)&encrypted_msg)[retval] = '\0';
+        encrypted_msg.msgCode = ntohs(encrypted_msg.msgCode);
 
         if((user = listUsers->findUser(from)))
             user->resetTime();
         else
             user = listUsers->addUser(from);
 
-        if(table_msgs[Buffer.msgCode].min_ret > retval)
+        if(user->isEncryption())
         {
-            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
+            retval = sizeof(msgCode_t) + decryptAES(user->getDecryptKey(), &encrypted_msg, retval - 2, decryptedBuffer.u.data); //FIXME: check
+            Buffer = &decryptedBuffer;
+            decryptedBuffer.msgCode = encrypted_msg.msgCode;
+        }
+        else
+        {
+            Buffer = (client_msg_plain_t*)&encrypted_msg;
+        }
+
+        if(table_msgs[Buffer->msgCode].min_ret > retval) // too short data
+        {
+            user->sendData(SERVER_MSG::ERROR_OCCURED);
             continue;
         }
-        if(Buffer.msgCode != CLIENT_MSG::LOGIN && !user->isLoged())
+        if(Buffer->msgCode == CLIENT_MSG::SET_AES) // set aes encryption
         {
-            sendMessage(&from, SERVER_MSG::LOGIN_REQUIRED, NULL, 0);
+            if(decryptAESkeyRSA(rsaControl.privateKey, Buffer->u.data, retval - sizeof(msgCode_t), tempData.aes_key))
+            {
+                user->setAesKey(tempData.aes_key);
+                status = EXIT_STATUS::GOOD;
+            }
+            else
+            {
+                status = EXIT_STATUS::BAD;
+            }
             continue;
         }
-        if(Buffer.msgCode > CLIENT_MSG_COUNT)
+        if(Buffer->msgCode != CLIENT_MSG::LOGIN && !user->isLoged()) // not logged in
         {
-            sendMessage(&from, SERVER_MSG::UNKNOWN_COMMAND, NULL, 0);
+            user->sendData(SERVER_MSG::LOGIN_REQUIRED);
             continue;
         }
-        switch(table_msgs[Buffer.msgCode].num)
+        if(Buffer->msgCode > CLIENT_MSG_COUNT) // bad msgCode
         {
-            case 0:
-                switch(Buffer.msgCode)
+            user->sendData(SERVER_MSG::UNKNOWN_COMMAND);
+            continue;
+        }
+        if(table_msgs[Buffer->msgCode].num != 0) // IO path function
+        {
+            ioThreadPool.addPathFunction(table_msgs[Buffer->msgCode].num, Buffer->u.data, user, table_msgs[Buffer->msgCode].function);
+            continue;
+        }
+        switch(Buffer->msgCode)
+        {
+            case CLIENT_MSG::LOGIN:
+                if((tempData.loginClass = usersDB->check(Buffer->u.login.username, Buffer->u.login.md5Password)))
                 {
-                    case CLIENT_MSG::LOGIN:
-                        if((tempData.loginClass = usersDB->check(Buffer.u.login.username, Buffer.u.login.md5Password)))
-                        {
-                            user->logIn(tempData.loginClass);
-                            sendMessage(&from, SERVER_MSG::LOGIN_SUCCESS, NULL, 0);
-                        }
-                        else
-                            sendMessage(&from, SERVER_MSG::LOGIN_BAD, NULL, 0);
-                        break;
-                    case CLIENT_MSG::LOGOUT:
-                        sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
-                        listUsers->removeUser(user);
-                        break;
-                    case CLIENT_MSG::EMPTY_MESSAGE:
-                        sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
-                        break;
-                    case CLIENT_MSG::FILE_BLOCK:
-                        if(!user->fileTransfer)
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        else
-                            user->fileTransfer.recieveBlock(Buffer.u.data);
-                        break;
-                    case CLIENT_MSG::ASK_BLOCK_RANGE:
-                        if(!user->fileTransfer)
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        else
-                            user->fileTransfer.askForBlocksRange(Buffer.u.block_range.start, Buffer.u.block_range.end);
-                        break;
-                    case CLIENT_MSG::ASK_BLOCK:
-                        if(!user->fileTransfer)
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        else
-                            user->fileTransfer.askForBlock(Buffer.u.block);
-                        break;
-                    case CLIENT_MSG::END_FILE_TRANSFER:
-                        if(!user->fileTransfer)
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        else
-                        {
-                            user->fileTransfer.close();
-                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
-                        }
-                        break;
-                    case CLIENT_MSG::CLIENT_INFO:
-                    case CLIENT_MSG::SERVER_INFO:
-                        sendMessage(&from, SERVER_MSG::INFO_SERVER, INFO_STRING, INFO_STRING_LEN);
-                        break;
-                    case CLIENT_MSG::FILE_UPLOAD:
-                        if(user->fileTransfer.reset(Buffer.u.upload.path, user, ntohl(Buffer.u.upload.blocksCount)))
-                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
-                        else
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        break;
-                    case CLIENT_MSG::FILE_DOWNLOAD:
-                        if(user->fileTransfer.reset(Buffer.u.data, user))
-                        {
-                            tempData.i = htonl(user->fileTransfer.getBlocksCount());
-                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, &tempData.i, 4);
-                        }
-                        else
-                        {
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        }
-                        break;
-                    case CLIENT_MSG::DIR_CD:
-                        if(user->moveFolder(Buffer.u.data))
-                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, NULL, 0);
-                        else
-                            sendMessage(&from, SERVER_MSG::SOURCE_BAD, NULL, 0);
-                        break;
-                    case CLIENT_MSG::DIR_PWD:
-                        if(user->folderPath()[0])
-                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, user->folderPath(), strlen(user->folderPath()));
-                        else
-                            sendMessage(&from, SERVER_MSG::ACTION_COMPLETED, (char*)"/", 1);
-                        break;
+                    user->logIn(tempData.loginClass);
+                    status = EXIT_STATUS::GOOD;
+                }
+                else
+                    user->sendData(SERVER_MSG::LOGIN_BAD);
+                break;
+            case CLIENT_MSG::LOGOUT:
+                listUsers->removeUser(user);
+                status = EXIT_STATUS::GOOD;
+                break;
+            case CLIENT_MSG::EMPTY_MESSAGE:
+                status = EXIT_STATUS::GOOD;
+                break;
+            case CLIENT_MSG::FILE_BLOCK:
+                if(!user->fileTransfer)
+                    status = EXIT_STATUS::BAD;
+                else
+                    user->fileTransfer.recieveBlock(Buffer->u.data, retval - sizeof(msgCode_t));
+                break;
+            case CLIENT_MSG::ASK_BLOCK_RANGE:
+                if(!user->fileTransfer)
+                    status = EXIT_STATUS::BAD;
+                else
+                    user->fileTransfer.askForBlocksRange(ntohl(Buffer->u.block_range.start), ntohl(Buffer->u.block_range.end));
+                break;
+            case CLIENT_MSG::ASK_BLOCK:
+                if(!user->fileTransfer)
+                    status = EXIT_STATUS::BAD;
+                else
+                    user->fileTransfer.askForBlock(ntohl(Buffer->u.block));
+                break;
+            case CLIENT_MSG::END_FILE_TRANSFER:
+                if(!user->fileTransfer)
+                    status = EXIT_STATUS::BAD;
+                else
+                {
+                    user->fileTransfer.close();
+                    status = EXIT_STATUS::GOOD;
                 }
                 break;
-            default:
-                ioThreadPool.addPathFunction(table_msgs[Buffer.msgCode].num, Buffer.u.data, user, table_msgs[Buffer.msgCode].function);
+            case CLIENT_MSG::CLIENT_INFO:
+            case CLIENT_MSG::SERVER_INFO:
+                user->sendData(SERVER_MSG::INFO_SERVER, INFO_STRING, INFO_STRING_LEN);
                 break;
+            case CLIENT_MSG::FILE_UPLOAD:
+                status = (EXIT_STATUS)(1 + user->fileTransfer.reset(Buffer->u.upload.path, user, ntohl(Buffer->u.upload.blocksCount)));
+                break;
+            case CLIENT_MSG::FILE_DOWNLOAD:
+                if(user->fileTransfer.reset(Buffer->u.data, user))
+                {
+                    tempData.i = htonl(user->fileTransfer.getBlocksCount());
+                    user->sendData(SERVER_MSG::ACTION_COMPLETED, &tempData.i, 4);
+                }
+                else
+                    status = EXIT_STATUS::BAD;
+                break;
+            case CLIENT_MSG::DIR_CD:
+                status = (EXIT_STATUS)(1 + user->moveFolder(Buffer->u.data));
+                break;
+            case CLIENT_MSG::DIR_PWD:
+                if(user->folderPath()[0])
+                    user->sendData(SERVER_MSG::ACTION_COMPLETED, user->folderPath(), strlen(user->folderPath()));
+                else
+                    user->sendData(SERVER_MSG::ACTION_COMPLETED, (char*)"/", 1);
+                break;
+            case CLIENT_MSG::ASK_RSA:
+                user->sendData(SERVER_MSG::SERVER_RSA_KEY, rsaControl.publicKey, rsaControl.publicKeyLength);
+                break;
+            case CLIENT_MSG::STOP_ENCRYPTION:
+                user->stopEncryption();
+                status = EXIT_STATUS::GOOD;
+        }
+        if(status != EXIT_STATUS::DONT_MANAGE)
+        {
+            user->sendData(exit_msg_table[status]);
         }
     }
 #ifdef WIN32
@@ -250,37 +331,55 @@ void startServer(LoginDB* usersDB, UserList* listUsers)
     userControlThread.join();
 }
 
-int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, size_t datalen)
+static int encryptAES(const AES_KEY* encryptKey, const void* src, size_t src_len, void* dst)
+{
+    uint8_t iv[16] = {0};
+    uint8_t* dstLen = (uint8_t*)dst;
+    uint8_t* dPtr = (uint8_t*)dst + 1;
+    const uint8_t* sPtr = (const uint8_t*)src;
+
+    while(src_len >= 256)
+    {
+        AES_cbc_encrypt(sPtr, dPtr, 256, encryptKey, iv, AES_ENCRYPT);
+        sPtr += 256;
+        dPtr += 256;
+        src_len -= 256;
+    }
+    if(src_len != 0)
+    {
+        AES_cbc_encrypt(sPtr, dPtr, src_len, encryptKey, iv, AES_ENCRYPT);
+        dPtr += ((src_len & 0xFFFFFFF0) + ((src_len & 0x0F) ? 16 : 0)); // calculates the pad size
+    }
+    *dstLen = (uint8_t)src_len;
+    return (dPtr - (uint8_t*)dst);
+}
+
+extern "C" int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, size_t datalen, const AES_KEY* encryptKey)
 {
     static std::mutex lockSend;
 
     struct __attribute__((packed)){
-        uint16_t msgCode;
+        msgCode_t msgCode;
         char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
         char nullTerminate[8];
     } buffer;
 
     buffer.msgCode = htons(msgCode);
-    if(datalen > sizeof(buffer.data))
-        datalen = sizeof(buffer.data);
-    if(data && datalen > 0)
-        memcpy(buffer.data, data, datalen);
+    if((data != nullptr) & (datalen != 0))
+    {
+        if(datalen > sizeof(buffer.data))
+            datalen = sizeof(buffer.data);
+
+        if(encryptKey)
+            datalen = encryptAES(encryptKey, data, datalen, buffer.data);
+        else
+            memcpy(buffer.data, data, datalen);
+    }
+    else
+        datalen = 0;
 
     lockSend.lock();
     int retVal = sendto(sock, (char*)&buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
     lockSend.unlock();
     return (retVal);
-}
-
-void userControl(UserList* listUsers)
-{
-    static constexpr unsigned WAIT_SECONDS = 50;
-    int i;
-    while (!needExit)
-    {
-        for(i = WAIT_SECONDS; !needExit && i != 0; --i)
-            SLEEP(1);
-        if(!needExit)
-        	listUsers->userControl();
-    }
 }

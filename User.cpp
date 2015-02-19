@@ -109,10 +109,10 @@ bool User::getRealFile(char* relativeFile, char* result) const
     if(User::parseChangeDir(relativeFile, dst))
     {
         *(tempPtr = dst + strlen(dst)) = PATH_SEPERATOR_GOOD; // we add just in case the / at end for isRestricted()
-        *(tempPtr + 1) = 0;
+        *(tempPtr + 1) = '\0';
         if (this->_login->isRestrictedFolder(dst))
             return (false);
-        *tempPtr = 0;
+        *tempPtr = '\0';
         return (getRealDirectory(dst, result));
     }
     return (true);

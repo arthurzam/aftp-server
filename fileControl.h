@@ -33,7 +33,7 @@ extern "C" {
     bool moveFile(fsData* data);
     bool copyFile(fsData* data);
     bool removeFile(fsData* data);
-    bool getFilesize(fsData* data);
+    bool getFileSize(fsData* data);
     bool getMD5OfFile(fsData* data);
 }
 #endif

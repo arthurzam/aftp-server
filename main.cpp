@@ -11,13 +11,14 @@
 #include <sys/types.h>
 #endif
 
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
 #include "LoginDB.h"
 #include "UserList.h"
 #include "defenitions.h"
 #include "fileControl.h"
-
-// Implemented in server.cpp
-void startServer(LoginDB* usersDB, UserList* listUsers);
+#include "server.h"
 
 bool needExit;
 uint16_t port = DEFAULT_PORT;
@@ -31,7 +32,7 @@ static void stopServer(std::thread& serverThread)
     printf("the server stopped\n");
 }
 
-static bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread& serverThread)
+static bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread& serverThread, const rsa_control_t& rsaControl)
 {
     // replace all bad separators into good one
     char* pathP = base_server_folder - 1;
@@ -57,7 +58,7 @@ static bool startServerThread(LoginDB* userDB, UserList* listUsers, std::thread&
             return (false);
     }
     needExit = false;
-    serverThread = std::thread(startServer, userDB, listUsers);
+    serverThread = std::thread(startServer, userDB, listUsers, rsaControl);
     return (true);
 }
 
@@ -70,6 +71,26 @@ inline void clearScreen()
 #endif
 }
 
+static void generateRSAKey(const char* path)
+{
+    RSA* keypair = RSA_generate_key(RSA_NSIZE, 3, NULL, NULL);
+    FILE* f = fopen(path, "wb");
+    PEM_write_RSAPublicKey(f, keypair);
+    PEM_write_RSAPrivateKey(f, keypair, NULL, NULL, 0, 0, NULL);
+    fclose(f);
+    RSA_free(keypair);
+}
+
+static RSA* readRSAKey(const char* path)
+{
+    RSA* keypair = RSA_new();
+    FILE* f = fopen(path, "rb");
+    PEM_read_RSAPublicKey(f, &keypair, NULL, NULL);
+    PEM_read_RSAPrivateKey(f, &keypair, NULL, NULL);
+    fclose(f);
+    return keypair;
+}
+
 int main(int argc, char **argv)
 {
     bool exit = false;
@@ -77,6 +98,7 @@ int main(int argc, char **argv)
     LoginDB userDB;
     UserList listUsers;
     std::thread serverThread;
+    rsa_control_t rsaControl; //TODO: set this object
     union {
         int choice;
         struct {
@@ -124,10 +146,16 @@ int main(int argc, char **argv)
             {
                 serverRunning = true;
             }
+            else if(!strcmp(argv[i], "-g") && i + 1 < argc)
+            {
+                generateRSAKey(argv[++i]);
+                readRSAKey(argv[++i]); // FIXME: remove
+                return (0);
+            }
         }
     }
     if(serverRunning)
-        serverRunning = startServerThread(&userDB, &listUsers, serverThread);
+        serverRunning = startServerThread(&userDB, &listUsers, serverThread, rsaControl);
     do {
         printf("0. exit\n"
                "1. %s server\n"
@@ -155,7 +183,7 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    serverRunning = startServerThread(&userDB, &listUsers, serverThread);
+                    serverRunning = startServerThread(&userDB, &listUsers, serverThread, rsaControl);
                 }
                 break;
             case 2:

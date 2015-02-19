@@ -17,10 +17,14 @@ class User {
 private:
     time_t _lastUse = 0;
     const Login* _login = nullptr;
+    struct sockaddr_in _from;
     bool _timeout = false;
     bool _initialized = false;
-    struct sockaddr_in _from = {0, 0, {0}, {0}};
-    char _folderPath[FILENAME_MAX] = {0};
+    bool _isEncrypted = false;
+    char _folderPath[REL_PATH_MAX] = {0};
+    AES_KEY aesKeyDecrypt;
+    AES_KEY aesKeyEncrypt;
+
 
     /**
      * @brief changes the folder path using the given path
@@ -33,8 +37,9 @@ private:
 public:
     FileTransfer fileTransfer;
 
-    User() {}
+    User() = delete;
     User(const struct sockaddr_in& from);
+    ~User() {}
 
     void resetTime()
     {
@@ -80,15 +85,34 @@ public:
 
     inline int sendData(uint16_t msgCode, const void* data, int datalen) const
     {
-        return (sendMessage(&this->_from, msgCode, data, datalen));
+        //void* n = (-this->_isEncrypted) & (&this->aesKeyEncrypt);
+        return (sendMessage(&this->_from, msgCode, data, datalen,
+                (this->_isEncrypted ? &this->aesKeyEncrypt : nullptr)));
     }
 
     inline int sendData(uint16_t msgCode) const
     {
-        return (sendMessage(&this->_from, msgCode, NULL, 0));
+        return (this->sendData(msgCode, nullptr, 0));
     }
 
-    ~User() {}
+    inline void setAesKey(const uint8_t key[AES_KEY_LENGTH / 8])
+    {
+        AES_set_encrypt_key(key, AES_KEY_LENGTH, &this->aesKeyEncrypt);
+        AES_set_decrypt_key(key, AES_KEY_LENGTH, &this->aesKeyDecrypt);
+        this->_isEncrypted = true;
+    }
+    inline bool isEncryption() const
+    {
+        return this->_isEncrypted;
+    }
+    inline void stopEncryption()
+    {
+        this->_isEncrypted = false;
+    }
+    const AES_KEY* getDecryptKey() const
+    {
+        return &this->aesKeyDecrypt;
+    }
 };
 
 #endif

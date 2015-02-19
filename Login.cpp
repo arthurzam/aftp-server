@@ -130,23 +130,17 @@ bool Login::save(FILE* dstFile) const
 
 void Login::print() const
 {
+    static const char* state_msg[] = {
+        "admin",
+        "limited",
+        "all",
+    };
     int i;
     folder* temp;
     printf("{%s, ", this->username);
     for(i = 0; i < MD5_DIGEST_LENGTH; ++i)
         printf("%02x", this->password[i]);
-    switch(this->state)
-    {
-    case LOGIN_ACCESS::ADMIN:
-        printf(", admin");
-        break;
-    case LOGIN_ACCESS::ALL:
-        printf(", all");
-        break;
-    case LOGIN_ACCESS::LIMITED:
-        printf(", limited");
-        break;
-    }
+    printf(", %s", state_msg[this->state]);
     if(this->restrictedFolders)
     {
         printf(", [");

@@ -25,7 +25,9 @@ bool FileTransfer::reset(char* relativePath, const User* user) // Download
     fseek(this->file, 0, SEEK_END);
     uint64_t temp = ftell(this->file);
     this->blocksCount = temp / FILE_BLOCK_SIZE;
-    if((temp & (FILE_BLOCK_SIZE - 1)) != 0) // works only if FILE_BLOCK_SIZE is 2^x; check that there is a partial block
+
+    static_assert(((FILE_BLOCK_SIZE - 1) & FILE_BLOCK_SIZE) == 0, "FILE_BLOCK_SIZE is not 2^x");
+    if((temp & (FILE_BLOCK_SIZE - 1)) != 0) // check that there is a partial block
         this->blocksCount++;
     fseek(this->file, 0, SEEK_SET);
     return true;
@@ -50,60 +52,65 @@ bool FileTransfer::reset(char* relativePath, const User* user, uint32_t blocksCo
     return true;
 }
 
-void FileTransfer::recieveBlock(const char* buffer)
+struct __attribute__((packed)) buffer_t {
+    uint32_t blockNum;
+    uint16_t size;
+    uint8_t md5Res[MD5_DIGEST_LENGTH];
+    uint8_t dataFile[FileTransfer::FILE_BLOCK_SIZE];
+};
+
+constexpr unsigned FILE_BLOCK_HEADER_SIZE = sizeof(buffer_t) - FileTransfer::FILE_BLOCK_SIZE;
+
+static_assert(sizeof(buffer_t) + sizeof(msgCode_t) < BUFFER_SERVER_SIZE, "FILE_BLOCK_SIZE is too big");
+
+void FileTransfer::recieveBlock(const char* buffer, size_t len)
 {
-    struct __attribute__((packed)) dat_t {
-        uint32_t blockNum;
-        uint16_t size;
-        uint8_t md5Res[16];
-        uint8_t dataFile[FILE_BLOCK_SIZE];
-    };
-    struct dat_t* data = (struct dat_t*)buffer;
-    uint8_t md5R[16];
+    struct buffer_t* data = (struct buffer_t*)buffer;
+    uint8_t md5R[MD5_DIGEST_LENGTH];
     data->size = ntohs(data->size);
-    data->blockNum = htonl(data->blockNum);
-    if(this->state != STATE_DOWNLOAD)
+    uint32_t blockNum = htonl(data->blockNum);
+    msgCode_t msgCodeRes = SERVER_MSG::ACTION_COMPLETED;
+    if((this->state != STATE_UPLOAD) | (len - FILE_BLOCK_HEADER_SIZE != data->size) | (blockNum >= this->blocksCount))
     {
-        this->user->sendData(SERVER_MSG::SOURCE_BAD);
-        return;
+        msgCodeRes = SERVER_MSG::ERROR_OCCURED;
     }
-    MD5(data->dataFile, data->size, md5R);
-    if(memcmp(md5R, data->md5Res, 16)) // not equal
+    else
     {
-        this->user->sendData(SERVER_MSG::FILE_BLOCK_MD5_MISMATCH);
-        return;
+        MD5(data->dataFile, data->size, md5R);
+        if(memcmp(md5R, data->md5Res, MD5_DIGEST_LENGTH)) // not equal
+        {
+            msgCodeRes = SERVER_MSG::FILE_BLOCK_MD5_MISMATCH;
+        }
+        else
+        {
+            if(this->currentCursorBlock != blockNum)
+                fseek(this->file, (blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
+            fwrite(data->dataFile, 1, data->size, this->file);
+            this->currentCursorBlock = blockNum + 1;
+        }
     }
-    if(this->currentCursorBlock != data->blockNum)
-        fseek(this->file, (data->blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
-    fwrite(data->dataFile, 1, data->size, this->file);
-    this->currentCursorBlock = data->blockNum + 1;
-    this->user->sendData(SERVER_MSG::ACTION_COMPLETED, &data->blockNum, sizeof(data->blockNum));
+    this->user->sendData(msgCodeRes, &data->blockNum, sizeof(data->blockNum));
 }
 
 void FileTransfer::askForBlock(uint32_t blockNum)
 {
+    struct buffer_t buffer;
+    buffer.blockNum = htonl(blockNum);
     if(blockNum > this->blocksCount)
     {
-        this->user->sendData(SERVER_MSG::BLOCK_NUM_OUTRANGE, &blockNum, sizeof(blockNum));
+        this->user->sendData(SERVER_MSG::BLOCK_NUM_OUTRANGE, &buffer.blockNum, sizeof(buffer.blockNum));
         return;
     }
-    struct __attribute__((packed)){
-        uint32_t blockNum;
-        uint16_t size;
-        uint8_t md5[16];
-        uint8_t data[FILE_BLOCK_SIZE];
-    } buffer;
-    if(this->state != STATE_UPLOAD)
+    if(this->state != STATE_DOWNLOAD)
     {
-        this->user->sendData(SERVER_MSG::SOURCE_BAD);
+        this->user->sendData(SERVER_MSG::ERROR_OCCURED);
         return;
     }
     if(this->currentCursorBlock != blockNum)
         fseek(this->file, (blockNum - this->currentCursorBlock) * FILE_BLOCK_SIZE, SEEK_CUR);
-    buffer.size = fread(buffer.data, 1, FILE_BLOCK_SIZE, this->file);
+    size_t readBytes = fread(buffer.dataFile, 1, FILE_BLOCK_SIZE, this->file);
     this->currentCursorBlock = blockNum + 1;
-    MD5(buffer.data, buffer.size, buffer.md5);
-    buffer.blockNum = htonl(blockNum);
-    buffer.size = htons(buffer.size);
-    this->user->sendData(SERVER_MSG::DOWNLOAD_FILE_BLOCK, &buffer, 22 + buffer.size);
+    MD5(buffer.dataFile, readBytes, buffer.md5Res);
+    buffer.size = htons((uint16_t)readBytes);
+    this->user->sendData(SERVER_MSG::DOWNLOAD_FILE_BLOCK, &buffer, readBytes + FILE_BLOCK_HEADER_SIZE);
 }

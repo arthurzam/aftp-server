@@ -17,6 +17,7 @@ IOThreadPool::IOThreadPool()
         this->data[i].state = DATA_STATE::FREE;
     for(i = 0; i < IO_THREADS_COUNT; ++i)
         this->threads[i] = std::thread(&IOThreadPool::slaveThread, this);
+    this->count = 0;
 }
 
 IOThreadPool::~IOThreadPool()
@@ -42,7 +43,7 @@ bool IOThreadPool::addPathFunction(int type, char* buffer, const User* user, boo
                 {
                     if(!user->getRealFile(buffer, currAdd->data.data.path))
                     {
-                        user->sendData(SERVER_MSG::SOURCE_BAD);
+                        user->sendData(SERVER_MSG::ERROR_OCCURED);
                         return (false);
                     }
                 }
@@ -51,7 +52,7 @@ bool IOThreadPool::addPathFunction(int type, char* buffer, const User* user, boo
                     if(!user->getRealFile(buffer + 1, currAdd->data.data.path2.src) ||
                        !user->getRealFile(buffer + 4 + *(buffer), currAdd->data.data.path2.dst))
                     {
-                        user->sendData(SERVER_MSG::SOURCE_BAD);
+                        user->sendData(SERVER_MSG::ERROR_OCCURED);
                         return (false);
                     }
                 }
@@ -73,7 +74,7 @@ void IOThreadPool::slaveThread()
     const fsThreadData* end = this->data + IO_DATA_SIZE;
     while (!needExit)
     {
-        if(!found || this->count == 0)
+        if((!found) | (this->count == 0))
         {
             SLEEP(1);
         }
@@ -86,7 +87,7 @@ void IOThreadPool::slaveThread()
             {
                 currManaged->data.user->sendData(currManaged->function(&currManaged->data)
                                                 ? SERVER_MSG::ACTION_COMPLETED
-                                                : SERVER_MSG::SOURCE_BAD);
+                                                : SERVER_MSG::ERROR_OCCURED);
                 currManaged->state = DATA_STATE::FREE;
                 --this->count;
                 found = true;

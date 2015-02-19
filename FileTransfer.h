@@ -28,7 +28,7 @@ class FileTransfer {
          */
         static constexpr unsigned FILE_BLOCK_SIZE = 0x200; //=512
 
-        FileTransfer() {};
+        FileTransfer() = default;
 
         /*
          * set for Download situation.
@@ -79,7 +79,7 @@ class FileTransfer {
          * a function that manages when the user sends a block.
          * the function would read the block using the appropriate format, and send OK/FAILURE.
          */
-        void recieveBlock(const char* buffer);
+        void recieveBlock(const char* buffer, size_t len);
 
         void close()
         {

@@ -51,7 +51,7 @@ class IOThreadPool {
 
         fsThreadData data[IO_DATA_SIZE];
 
-        int count = 0;
+        std::atomic<int> count;
 
         void slaveThread();
     public:

@@ -10,6 +10,7 @@
 #else
 #include <errno.h>
 #include <fcntl.h>
+#include <ftw.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -89,11 +90,11 @@ bool getContentDirectory(fsData* data)
 #ifndef WIN32
 bool symbolicLink(fsData* data)
 {
-    char srcT[FILENAME_MAX];
-    while(readlink(data->data.path2.src, srcT, FILENAME_MAX - 1) <= 0)
-        memcpy(data->data.path2.src, srcT, FILENAME_MAX);
-    memcpy(data->data.path2.src, srcT, FILENAME_MAX);
-    return !symlink(data->data.path2.src, data->data.path2.dst);
+    char srcT[FILENAME_MAX], srcR[FILENAME_MAX];
+    strncpy(srcR, data->data.path2.src, FILENAME_MAX - 1);
+    while(readlink(srcR, srcT, FILENAME_MAX - 1) > 0)
+        strncpy(srcR, srcT, FILENAME_MAX - 1);
+    return !symlink(srcR, data->data.path2.dst);
 }
 #endif
 
@@ -134,9 +135,13 @@ bool removeFile(fsData* data)
     return !(remove(data->data.path));
 }
 
-// TODO: fix for 64 bit endian
-bool getFilesize(fsData* data)
+bool getFileSize(fsData* data)
 {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define bswap64(y) (((uint64_t)ntohl(y)) << 32 | ntohl(y>>32))
+#else
+#define bswap64(y) (y)
+#endif
     uint64_t l = (uint64_t)-1;
 #ifdef WIN32
     HANDLE MF = CreateFile(data->data.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
@@ -151,8 +156,12 @@ bool getFilesize(fsData* data)
         l = st.st_size;
 #endif
     if(l != (uint64_t)-1)
+    {
+        l = bswap64(l);
         data->user->sendData(SERVER_MSG::ACTION_COMPLETED, &l, sizeof(l));
+    }
     return (l != (uint64_t)-1);
+#undef bswap64
 }
 
 bool getMD5OfFile(fsData* data)
@@ -178,6 +187,13 @@ bool getMD5OfFile(fsData* data)
     return true;
 }
 
+#ifndef WIN32
+static int _remove_file(const char *fpath, const struct stat*, int, struct FTW*)
+{
+    return remove(fpath);
+}
+#endif
+
 bool removeFolder(fsData* data)
 {
 #ifdef WIN32
@@ -187,24 +203,7 @@ bool removeFolder(fsData* data)
     strcpy(command + baseCommandLen, data->data.path);
     return !(system(command));
 #else
-    pid_t p;
-    int status;
-    switch((p = fork()))
-    {
-        case -1:
-            data->user->sendData(SERVER_MSG::SOURCE_BAD);
-            break;
-        case 0:
-            close(STDOUT_FILENO);
-            close(STDERR_FILENO);
-            execlp("rm", "-rf", data->data.path, NULL);
-            break;
-        default:
-            waitpid(p, &status, 0);
-            return !(WEXITSTATUS(status));
-            break;
-    }
-    return false;
+    return !nftw(data->data.path, _remove_file, 64, FTW_DEPTH | FTW_PHYS);
 #endif
 }
 
@@ -226,8 +225,7 @@ bool copyFolder(fsData* data)
     switch((p = fork()))
     {
         case -1:
-            data->user->sendData(SERVER_MSG::SOURCE_BAD);
-            break;
+            return false;
         case 0:
             close(STDOUT_FILENO);
             close(STDERR_FILENO);

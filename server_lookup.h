@@ -11,7 +11,7 @@ struct table_msg_t {
     uint_fast16_t min_ret;
 };
 
-constexpr unsigned CLIENT_MSG_COUNT = 28;
+constexpr unsigned CLIENT_MSG_COUNT = 27;
 
 static const struct table_msg_t table_msgs[] = {
     {0, NULL, 19},
@@ -25,18 +25,13 @@ static const struct table_msg_t table_msgs[] = {
 
     {0, NULL, 0},
     {0, NULL, 0},
-    {0, NULL, 0},
-    {0, NULL, 0},
-
-    {0, NULL, 0},
-    {0, NULL, 0},
 
     {0, NULL, 7},
     {0, NULL, 3},
     {2, moveFile, 8},
     {2, copyFile, 8},
     {1, removeFile, 3},
-    {1, getFilesize, 3},
+    {1, getFileSize, 3},
     {1, getMD5OfFile, 3},
     {2, symbolicLink, 8},
 
@@ -46,7 +41,11 @@ static const struct table_msg_t table_msgs[] = {
     {2, moveDirectory, 8},
     {2, copyFolder, 8},
     {1, getContentDirectory, 3},
-    {0, NULL, 3},
+    {0, NULL, 0},
+
+    {0, NULL, 0},
+    {0, NULL, 0},
+    {0, NULL, 0},
 };
 
 static_assert(sizeof(table_msgs) / sizeof(table_msg_t) == CLIENT_MSG_COUNT, "lookup table for messages isn't complete");
