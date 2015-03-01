@@ -85,7 +85,6 @@ public:
 
     inline int sendData(uint16_t msgCode, const void* data, int datalen) const
     {
-        //void* n = (-this->_isEncrypted) & (&this->aesKeyEncrypt);
         return (sendMessage(&this->_from, msgCode, data, datalen,
                 (this->_isEncrypted ? &this->aesKeyEncrypt : nullptr)));
     }

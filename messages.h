@@ -4,6 +4,11 @@
 enum CLIENT_MSG{
     LOGIN = 0,
     LOGOUT,
+    ASK_SERVER_INFO,
+
+    ASK_RSA,
+    SET_AES,
+    STOP_ENCRYPTION,
 
     EMPTY_MESSAGE,
     FILE_BLOCK,
@@ -11,8 +16,8 @@ enum CLIENT_MSG{
     ASK_BLOCK,
     END_FILE_TRANSFER,
 
-    CLIENT_INFO,
-    SERVER_INFO,
+    DIR_CD,
+    DIR_PWD,
 
     FILE_UPLOAD,
     FILE_DOWNLOAD,
@@ -23,17 +28,13 @@ enum CLIENT_MSG{
     FILE_MD5,
     FILE_SYMLINK,
 
-    DIR_CD,
     DIR_CREATE,
     DIR_REMOVE,
     DIR_MOVE,
     DIR_COPY,
     DIR_LS,
-    DIR_PWD,
 
-    ASK_RSA,
-    SET_AES,
-    STOP_ENCRYPTION,
+    CLIENT_MSG_LAST, // EMPTY for getting last one
 };
 
 enum SERVER_MSG {

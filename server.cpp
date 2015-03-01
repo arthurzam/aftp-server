@@ -111,12 +111,15 @@ static void userControl(UserList* listUsers)
 {
     static constexpr unsigned WAIT_SECONDS = 50;
     int i;
-    while (!needExit)
+    while (true)
     {
-        for(i = WAIT_SECONDS; !needExit && i != 0; --i)
+        for(i = WAIT_SECONDS; i != 0; --i)
+        {
             SLEEP(1);
-        if(!needExit)
-            listUsers->userControl();
+            if(!needExit)
+                return;
+        }
+        listUsers->userControl();
     }
 }
 
@@ -157,8 +160,6 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
         char data[BUFFER_SERVER_SIZE - sizeof(msgCode) - sizeof(padLength)];
     } encrypted_msg;
     client_msg_plain_t decryptedBuffer;
-
-    const uint16_t exit_msg_table[] = {0, SERVER_MSG::ERROR_OCCURED, SERVER_MSG::ACTION_COMPLETED};
 
     register client_msg_plain_t* Buffer;
 
@@ -220,11 +221,11 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
             if(decryptAESkeyRSA(rsaControl.privateKey, Buffer->u.data, retval - sizeof(msgCode_t), tempData.aes_key))
             {
                 user->setAesKey(tempData.aes_key);
-                status = EXIT_STATUS::GOOD;
+                user->sendData(SERVER_MSG::ACTION_COMPLETED);
             }
             else
             {
-                status = EXIT_STATUS::BAD;
+                user->sendData(SERVER_MSG::ERROR_OCCURED);
             }
             continue;
         }
@@ -249,7 +250,7 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
                 if((tempData.loginClass = usersDB->check(Buffer->u.login.username, Buffer->u.login.md5Password)))
                 {
                     user->logIn(tempData.loginClass);
-                    status = EXIT_STATUS::GOOD;
+                    user->sendData(SERVER_MSG::LOGIN_SUCCESS);
                 }
                 else
                     user->sendData(SERVER_MSG::LOGIN_BAD);
@@ -288,8 +289,7 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
                     status = EXIT_STATUS::GOOD;
                 }
                 break;
-            case CLIENT_MSG::CLIENT_INFO:
-            case CLIENT_MSG::SERVER_INFO:
+            case CLIENT_MSG::ASK_SERVER_INFO:
                 user->sendData(SERVER_MSG::INFO_SERVER, INFO_STRING, INFO_STRING_LEN);
                 break;
             case CLIENT_MSG::FILE_UPLOAD:
@@ -319,10 +319,13 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
             case CLIENT_MSG::STOP_ENCRYPTION:
                 user->stopEncryption();
                 status = EXIT_STATUS::GOOD;
+                break;
         }
         if(status != EXIT_STATUS::DONT_MANAGE)
         {
-            user->sendData(exit_msg_table[status]);
+            user->sendData(status == EXIT_STATUS::GOOD
+                           ? SERVER_MSG::ACTION_COMPLETED
+                           : SERVER_MSG::ERROR_OCCURED);
         }
     }
 #ifdef WIN32
@@ -354,7 +357,7 @@ static int encryptAES(const AES_KEY* encryptKey, const void* src, size_t src_len
     return (dPtr - (uint8_t*)dst);
 }
 
-extern "C" int sendMessage(const struct sockaddr_in* to, uint16_t msgCode, const void* data, size_t datalen, const AES_KEY* encryptKey)
+extern "C" int sendMessage(const struct sockaddr_in* to, msgCode_t msgCode, const void* data, size_t datalen, const AES_KEY* encryptKey)
 {
     static std::mutex lockSend;
 
