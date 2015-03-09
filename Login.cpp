@@ -3,53 +3,37 @@
 #include <cstdlib>
 
 #include "Login.h"
+#include "fileControl.h"
 
 Login::Login(const char* username, const uint8_t* password, LOGIN_ACCESS state)
 {
-    strncpy(this->username, username, USERNAME_MAX_LENGTH - 1);
-    this->username[USERNAME_MAX_LENGTH - 1] = 0;
-    memcpy(this->password, password, MD5_DIGEST_LENGTH);
+    strncpy(this->username, username, sizeof(this->username) - 1);
+    this->username[sizeof(this->username) - 1] = 0;
+    memcpy(this->password, password, sizeof(this->password));
     this->state = (uint8_t)state;
-    this->restrictedFolders = NULL;
-    this->restrictedFoldersCount = 0;
     this->isInit = true;
-    this->_next = NULL;
 }
 
 Login::Login(FILE* srcFile)
 {
-    if(srcFile)
-    {
-        char folder[REL_PATH_MAX + 1];
-        char* P;
-        uint8_t i;
-        if(fread(this->username, 1, USERNAME_MAX_LENGTH, srcFile) < USERNAME_MAX_LENGTH ||
-                fread(this->password, 1, MD5_DIGEST_LENGTH, srcFile) < MD5_DIGEST_LENGTH ||
-                fread(&this->state, 1, sizeof(this->state), srcFile) < sizeof(this->state) ||
-                fread(&i, 1, sizeof(i), srcFile) < sizeof(i))
-            goto _bad;
+    if(!srcFile)
+        return;
+    char folder[REL_PATH_MAX + 1];
+    char* P;
+    uint8_t i;
+    if(fread(this->username, 1, sizeof(this->username), srcFile) < sizeof(this->username) ||
+       fread(this->password, 1, sizeof(this->password), srcFile) < sizeof(this->password) ||
+       fread(&this->state, 1, sizeof(this->state), srcFile) < sizeof(this->state) ||
+       fread(&i, 1, sizeof(i), srcFile) < sizeof(i))
+        return;
 
-        this->restrictedFolders = NULL;
-        this->restrictedFoldersCount = 0;
-        for(; i; --i)
-        {
-            if((P = strchr(fgets(folder, REL_PATH_MAX + 1, srcFile), '\n')))
-                *P = 0;
-            this->addRestrictedFolder(folder);
-        }
-        this->isInit = true;
-    }
-    else
+    for(; i; --i)
     {
-_bad:
-        this->password[0] = 0;
-        this->restrictedFolders = NULL;
-        this->state = LOGIN_ACCESS::LIMITED;
-        this->username[0] = 0;
-        this->restrictedFoldersCount = 0;
-        this->isInit = false;
+        if((P = strchr(fgets(folder, REL_PATH_MAX + 1, srcFile), '\n')))
+            *P = '\0';
+        this->addRestrictedFolder(folder);
     }
-    this->_next = NULL;
+    this->isInit = true;
 }
 
 Login::~Login()
@@ -78,8 +62,7 @@ void Login::addRestrictedFolder(const char* dir)
 
     strncpy(newOne->folder, dir, REL_PATH_MAX - 1);
     char* dirP = newOne->folder - 1;
-    while((dirP = strchr(dirP + 1, PATH_SEPERATOR_BAD)))
-        *dirP = PATH_SEPERATOR_GOOD;
+    replaceSeperator(dirP);
 
     newOne->folder[REL_PATH_MAX - 1] = 0;
     newOne->folder[REL_PATH_MAX] = 0;
@@ -102,12 +85,9 @@ bool Login::isRestrictedFolder(const char* path) const
 {
     if(this->state != LOGIN_ACCESS::LIMITED)
         return (false);
-    folder* temp;
-    for(temp = this->restrictedFolders; temp; temp = temp->next)
-    {
+    for(folder* temp = this->restrictedFolders; temp; temp = temp->next)
         if(!strncmp(path, temp->folder, temp->folderLen))
             return (true);
-    }
     return (false);
 }
 
@@ -115,12 +95,11 @@ bool Login::save(FILE* dstFile) const
 {
     if(!dstFile)
         return (false);
-    fwrite(this->username, 1, USERNAME_MAX_LENGTH, dstFile);
-    fwrite(this->password, 1, MD5_DIGEST_LENGTH, dstFile);
+    fwrite(this->username, 1, sizeof(this->username), dstFile);
+    fwrite(this->password, 1, sizeof(this->password), dstFile);
     fwrite(&this->state, 1, sizeof(this->state), dstFile);
     fwrite(&this->restrictedFoldersCount, 1, sizeof(this->restrictedFoldersCount), dstFile);
-    folder* temp;
-    for(temp = this->restrictedFolders; temp; temp = temp->next)
+    for(folder* temp = this->restrictedFolders; temp; temp = temp->next)
     {
         fputs(temp->folder, dstFile);
         fputc('\n', dstFile);
@@ -143,12 +122,13 @@ void Login::print() const
     printf(", %s", state_msg[this->state]);
     if(this->restrictedFolders)
     {
-        printf(", [");
+        puts(", [");
         for(temp = this->restrictedFolders; temp; temp = temp->next)
         {
-            printf("%s, ", temp->folder);
+            puts(temp->folder);
+            puts(", ");
         }
-        printf("\b\b]"); // remove last ", "
+        puts("\b\b]"); // remove last ", "
     }
-    printf("}\n");
+    puts("}\n");
 }

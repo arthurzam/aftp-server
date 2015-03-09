@@ -11,26 +11,26 @@
 class Login {
     public:
         static constexpr unsigned USERNAME_MAX_LENGTH = 32;
-    private:
-        typedef struct _folder {
-            char folder[REL_PATH_MAX + 1];
-            unsigned short folderLen;
-            struct _folder* next;
-        } folder;
-
-        char username[USERNAME_MAX_LENGTH];
-        uint8_t password[MD5_DIGEST_LENGTH];
-        uint8_t state;
-        folder* restrictedFolders;
-        uint8_t restrictedFoldersCount;
-        bool isInit;
-        Login* _next;
-    public:
         enum LOGIN_ACCESS {
             ADMIN = 0,
             LIMITED,
             ALL
         };
+    private:
+        typedef struct _folder {
+            struct _folder* next;
+            unsigned short folderLen;
+            char folder[REL_PATH_MAX + 1];
+        } folder;
+
+        Login* _next = nullptr;
+        folder* restrictedFolders = nullptr;
+        bool isInit = false;
+        uint8_t state = (uint8_t)LOGIN_ACCESS::LIMITED;
+        uint8_t restrictedFoldersCount = 0;
+        char username[USERNAME_MAX_LENGTH] = {'\0', };
+        uint8_t password[MD5_DIGEST_LENGTH];
+    public:
         Login(const char* username, const uint8_t* password, LOGIN_ACCESS state);
         Login(FILE* srcFile);
         ~Login();
