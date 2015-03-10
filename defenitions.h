@@ -6,22 +6,20 @@
 #include <cstddef>
 
 constexpr unsigned BASE_FOLDER_MAX = 32;
-#ifdef FILENAME_MAX
-    #if FILENAME_MAX > (128 + BASE_FOLDER_MAX)
-        constexpr unsigned REL_PATH_MAX = 128;
-    #else
-        constexpr unsigned REL_PATH_MAX = (FILENAME_MAX - BASE_FOLDER_MAX);
-        static_assert(REL_PATH_MAX > 16, "FILENAME_MAX is too small");
-    #endif
-#else
+#ifndef FILENAME_MAX
     constexpr unsigned REL_PATH_MAX = 128;
+#elif FILENAME_MAX > (128 + BASE_FOLDER_MAX)
+    constexpr unsigned REL_PATH_MAX = 128;
+#else
+    constexpr unsigned REL_PATH_MAX = (FILENAME_MAX - BASE_FOLDER_MAX);
+    static_assert(REL_PATH_MAX > 16, "FILENAME_MAX is too small");
 #endif
 
 constexpr uint16_t DEFAULT_PORT = 7777;
 
 #ifndef WIN32
 typedef int SOCKET;
-#define SOCKET_ERROR (-1)
+constexpr int SOCKET_ERROR = -1;
 #endif
 
 #ifdef WIN32
@@ -42,7 +40,7 @@ constexpr char PATH_SEPERATOR_GOOD ='/';
 #endif
 
 constexpr unsigned AES_KEY_LENGTH = 128;
-constexpr unsigned BUFFER_SERVER_SIZE = 0x400;
+constexpr unsigned SERVER_BUFFER_SIZE = 0x400;
 constexpr unsigned RSA_NSIZE = 2048;
 
 typedef uint16_t msgCode_t;

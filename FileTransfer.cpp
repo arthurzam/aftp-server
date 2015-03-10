@@ -61,7 +61,7 @@ struct __attribute__((packed)) buffer_t {
 
 constexpr unsigned FILE_BLOCK_HEADER_SIZE = sizeof(buffer_t) - FileTransfer::FILE_BLOCK_SIZE;
 
-static_assert(sizeof(buffer_t) + sizeof(msgCode_t) < BUFFER_SERVER_SIZE, "FILE_BLOCK_SIZE is too big");
+static_assert(sizeof(buffer_t) + sizeof(msgCode_t) < SERVER_BUFFER_SIZE, "FILE_BLOCK_SIZE is too big");
 
 void FileTransfer::recieveBlock(const char* buffer, size_t len)
 {

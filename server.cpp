@@ -31,7 +31,7 @@ extern uint16_t port;
 struct __attribute__((packed)) client_msg_plain_t{
     msgCode_t msgCode;
     union __attribute__((packed)){
-        char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
+        char data[SERVER_BUFFER_SIZE - sizeof(msgCode)];
         struct __attribute__((packed)){
             uint8_t md5Password[MD5_DIGEST_LENGTH];
             char username[sizeof(data) - MD5_DIGEST_LENGTH];
@@ -60,47 +60,49 @@ constexpr size_t INFO_STRING_LEN = strlen(INFO_STRING);
 
 static bool initServer()
 {
-    struct sockaddr_in server;
+    int retval;
 
 #ifdef WIN32
     WSADATA wsaData;
-    int retval;
     if ((retval = WSAStartup(0x202, &wsaData)) != 0)
     {
-        fprintf(stderr,"[Server: WSAStartup() failed with error %d]\n", retval);
+        fprintf(stderr, "[Server: WSAStartup() failed with error %d]\n", retval);
         return (false);
     }
 #endif
 
+    struct sockaddr_in server;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(port);
+
     sock = socket(AF_INET, SOCK_DGRAM, 0);
 
 #ifdef WIN32
     if (sock == INVALID_SOCKET)
     {
-        fprintf(stderr,"[Server: socket() failed with error %d]\n", WSAGetLastError());
+        fprintf(stderr, "[Server: socket() failed with error %d]\n", WSAGetLastError());
         return (false);
     }
 #else
     if (sock < 0)
     {
-        fprintf(stderr,"[Server: socket() failed]\n");
+        fputs("[Server: socket() failed]\n", stderr);
         return (false);
     }
 #endif
 
+    retval = bind(sock, (struct sockaddr*)&server, sizeof(server));
 #ifdef WIN32
-    if (bind(sock, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
+    if (retval == SOCKET_ERROR)
     {
-        fprintf(stderr,"[Server: bind() failed with error %d]\n", WSAGetLastError());
+        fprintf(stderr, "[Server: bind() failed with error %d]\n", WSAGetLastError());
         return (false);
     }
 #else
-    if (bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0)
+    if (retval < 0)
     {
-        fprintf(stderr,"[Server: bind() failed]\n");
+        fputs("[Server: bind() failed]\n", stderr);
         return (false);
     }
 #endif
@@ -157,13 +159,13 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
     struct __attribute__((packed)){
         uint16_t msgCode;
         uint8_t padLength;
-        char data[BUFFER_SERVER_SIZE - sizeof(msgCode) - sizeof(padLength)];
+        char data[SERVER_BUFFER_SIZE - sizeof(msgCode) - sizeof(padLength)];
     } encrypted_msg;
     client_msg_plain_t decryptedBuffer;
 
     register client_msg_plain_t* Buffer;
 
-    static_assert(sizeof(decryptedBuffer) - sizeof(Buffer->nullTerminate) == BUFFER_SERVER_SIZE, "bad buffer size");
+    static_assert(sizeof(decryptedBuffer) - sizeof(Buffer->nullTerminate) == SERVER_BUFFER_SIZE, "bad buffer size");
 
     unsigned retval;
     User* user;
@@ -190,7 +192,7 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
     while(!needExit)
     {
         EXIT_STATUS status = EXIT_STATUS::DONT_MANAGE;
-        retval = recvfrom(sock, (char*)&encrypted_msg, BUFFER_SERVER_SIZE, 0, (struct sockaddr *)&from, &fromlen);
+        retval = recvfrom(sock, (char*)&encrypted_msg, SERVER_BUFFER_SIZE, 0, (struct sockaddr *)&from, &fromlen);
         if (retval < sizeof(msgCode_t)) continue;
         ((char*)&encrypted_msg)[retval] = '\0';
         encrypted_msg.msgCode = ntohs(encrypted_msg.msgCode);
@@ -363,7 +365,7 @@ extern "C" int sendMessage(const struct sockaddr_in* to, msgCode_t msgCode, cons
 
     struct __attribute__((packed)){
         msgCode_t msgCode;
-        char data[BUFFER_SERVER_SIZE - sizeof(msgCode)];
+        char data[SERVER_BUFFER_SIZE - sizeof(msgCode)];
         char nullTerminate[8];
     } buffer;
 

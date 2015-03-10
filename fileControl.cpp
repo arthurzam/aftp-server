@@ -52,7 +52,7 @@ bool getContentDirectory(fsData* data)
     if(*(dirP - 1) != PATH_SEPERATOR_GOOD)
         *(dirP++) = PATH_SEPERATOR_GOOD;
 
-    char result[BUFFER_SERVER_SIZE + 5];
+    char result[SERVER_BUFFER_SIZE + 5];
     resP = result; // a pointer to the last character
 
     struct dirent *ent;
@@ -66,7 +66,7 @@ bool getContentDirectory(fsData* data)
         if(ent->d_name[0] == '.' && (ent->d_name[1] == 0 || (ent->d_name[1] == '.' && ent->d_name[2] == 0))) // the path is not "." or ".."
             continue;
         fileNameLen = strlen(ent->d_name);
-        if(resP - result + fileNameLen >= BUFFER_SERVER_SIZE - 10)
+        if(resP - result + fileNameLen >= SERVER_BUFFER_SIZE - 10)
         {
             data->user->sendData(SERVER_MSG::LS_DATA, result, resP - result);
             resP = result;
@@ -243,8 +243,7 @@ bool copyFolder(fsData* data)
 bool isFileExists(const char* path)
 {
 #ifdef WIN32
-    DWORD dwAttrib = GetFileAttributes(path);
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES);
+    return (GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES);
 #else
     return (access(path, F_OK) == 0);
 #endif
