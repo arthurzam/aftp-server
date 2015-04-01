@@ -24,62 +24,60 @@ bool User::equals(const struct sockaddr_in& other) const
 
 bool User::parseChangeDir(char* path, char* dst)
 {
-    if(*path == '\0')
+    if(path[0] == '\0')
         return (true);
     int i;
     char* temp = path - 1;
-    char newStr[FILENAME_MAX];
-    newStr[0] = '\0';
+    char newStr[BASE_FOLDER_MAX + REL_PATH_MAX] = {'\0', };
     replaceSeperator(temp);
     if(path[i = strlen(path) - 1] == PATH_SEPERATOR_GOOD) // we can use i-1 because path[i] after the for is the '/0' ending
         path[i] = '\0'; // if the path finishes in divider, remove it
 
-    if(*path == PATH_SEPERATOR_GOOD) // for example /path/folder => remove previous
+    if(path[0] == PATH_SEPERATOR_GOOD) // for example /path/folder => remove previous
         path++;
     else if(dst[0]) // we have previous path
         strncpy(newStr, dst, sizeof(newStr) - 1);
 
-_check_path:
-    if(!*path) // path has ended
-        goto _fin;
-    if(*path == '.')
+    while(path[0] != '\0')
     {
-        if((path[1] == '.') & (((path[2] == PATH_SEPERATOR_GOOD) | (path[2] == '\0')))) // ../
+        if(path[0] == '.')
         {
-            if(newStr[1] != '\0') // if root -> do nothing
+            if((path[1] == '.') & ((path[2] == PATH_SEPERATOR_GOOD) | (path[2] == '\0'))) // ../
             {
-                // find the last occurrence of '/' and set it as '\0'
-                if(!(temp = strrchr(newStr, PATH_SEPERATOR_GOOD)))
+                if(newStr[1] != '\0') // if root -> do nothing
                 {
-                    *newStr = '\0';
-                    goto _fin;
+                    // find the last occurrence of '/' and set it as '\0'
+                    if(!(temp = strrchr(newStr, PATH_SEPERATOR_GOOD)))
+                    {
+                        newStr[0] = '\0';
+                        break;
+                    }
+                    temp[0] = '\0';
                 }
-                *temp = '\0';
+                if(path[2] == '\0')
+                    break;
+                path += 3;
+                continue;
             }
-            if(path[2] == '\0')
-                goto _fin;
-            path += 3;
-            goto _check_path;
+            else if((path[1] == PATH_SEPERATOR_GOOD) | (path[1] == '\0')) // just . -> current dir
+            {
+                if(path[1] == '\0')
+                    break;
+                path += 2;
+                continue;
+            }
         }
-        else if((path[1] == PATH_SEPERATOR_GOOD) | (path[1] == '\0')) // just . -> current dir
+        i = (((temp = strchr(path, PATH_SEPERATOR_GOOD))) ? temp - path : strlen(path)); // find the first occurrence of '/', or whole length if no '/'
+        if(i != 0)
         {
-            if(path[1] == '\0')
-                goto _fin;
-            path += 2;
-            goto _check_path;
+            *(temp = newStr + strlen(newStr)) = PATH_SEPERATOR_GOOD;
+            *((char*)memcpy(temp + 1, path, i) + i) = '\0';
         }
+        path += i + 1;
+        if(path[-1] == '\0')
+            break;
     }
-    i = (((temp = strchr(path, PATH_SEPERATOR_GOOD))) ? temp - path : strlen(path)); // find the first occurrence of '/', or whole length if no '/'
-    if(i != 0)
-    {
-        *(temp = newStr + strlen(newStr)) = PATH_SEPERATOR_GOOD;
-        *((char *)memcpy(temp + 1, path, i) + i) = '\0';
-    }
-    path += i + 1;
-    if(path[-1] != '\0')
-        goto _check_path;
 
-_fin:
     strcpy(dst, newStr);
     return (true);
 }

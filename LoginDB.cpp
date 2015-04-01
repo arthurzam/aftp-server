@@ -8,47 +8,27 @@
 void LoginDB::load(const char* filePath)
 {
     FILE* src = fopen(filePath, "rb");
-    Login* temp;
-    Login* last = this->head;
     if(!src)
         return;
-    if(last) // we need to put the last member in last
-        while(last->next())
-            last = last->next();
+    Login* temp;
     while(!feof(src))
     {
         temp = new (std::nothrow) Login(src);
-        if(!temp || !temp->isLoaded())
+        if(!((temp != nullptr) & temp->isLoaded()))
         {
             delete temp;
             break;
         }
-        if(!this->head)
-            this->head = temp;
-        else
-            last->next() = temp;
-        last = temp;
-        this->count++;
+        this->add(temp);
     }
     fclose(src);
 }
 
 void LoginDB::add(Login* next)
 {
-    Login* curr = this->head;
-    if(!next)
-        return;
-    if(!curr)
-    {
-        this->head = next;
-    }
-    else
-    {
-        while(curr->next())
-            curr = curr->next();
-        curr->next() = next;
-    }
-    this->count++;
+    next->next() = this->head;
+    this->head = next;
+    ++this->count;
 }
 
 void LoginDB::add(const char* username, const char* password, Login::LOGIN_ACCESS state)
@@ -90,7 +70,7 @@ const Login* LoginDB::check(const char* username, const uint8_t* passwordMD5) co
             return (curr);
         curr = curr->next();
     }
-    return (NULL);
+    return (nullptr);
 }
 
 bool LoginDB::save(const char* path) const
@@ -136,13 +116,18 @@ void LoginDB::input()
     printf("enter password: ");
     scanf("%s", str);
     MD5((uint8_t*)str, strlen(str), md5R);
-    printf("choose state:\n 0. admin\n 1. limited\n 2. all\nyour choice: ");
+    printf("choose state:\n"""
+           " 0. admin\n"
+           " 1. limited\n"
+           " 2. all\n"
+           "your choice: ");
     scanf("%u", &i);
     state = (i < 3 ? (Login::LOGIN_ACCESS)i : Login::LOGIN_ACCESS::LIMITED);
     Login* n = new (std::nothrow) Login(username, md5R, state);
-    if(n && state == Login::LOGIN_ACCESS::LIMITED)
+    if((n != nullptr) & (state == Login::LOGIN_ACCESS::LIMITED))
     {
-        printf("now you add the restricted folders [press only ENTER to finish]\n(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
+        printf("now you add the restricted folders [press only ENTER to finish]\n"
+               "(the folder should start with / and end with / - otherwise unknown behavior might happen)\n");
         fgetc(stdin); // input empty \n from previous scanf - I don't know why, but we need!
         do {
             fgets(str, REL_PATH_MAX - 1, stdin);

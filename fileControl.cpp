@@ -142,6 +142,7 @@ bool getFileSize(fsData* data)
 #else
 #define bswap64(y) (y)
 #endif
+
     uint64_t l = (uint64_t)-1;
 #ifdef WIN32
     HANDLE MF = CreateFile(data->data.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
@@ -155,6 +156,7 @@ bool getFileSize(fsData* data)
     if(stat(data->data.path, &st) >= 0)
         l = st.st_size;
 #endif
+
     if(l != (uint64_t)-1)
     {
         l = bswap64(l);
@@ -166,24 +168,26 @@ bool getFileSize(fsData* data)
 
 bool getMD5OfFile(fsData* data)
 {
-    MD5_CTX ctx;
-    uint8_t result[MD5_DIGEST_LENGTH];
+    static constexpr unsigned READ_BUFFER = 512;
+
     int i;
     FILE* f;
-    uint8_t buffer[512];
+    MD5_CTX ctx;
+    uint8_t buffer[READ_BUFFER];
+    uint8_t result[MD5_DIGEST_LENGTH];
+
     if(!(f = fopen(data->data.path, "rb")))
     {
         return false;
     }
-    else
-    {
-        MD5_Init(&ctx);
-        while((i = fread(buffer, 1, 512, f)))
-            MD5_Update(&ctx, buffer, i);
-        MD5_Final(result, &ctx);
-        data->user->sendData(SERVER_MSG::ACTION_COMPLETED, result, MD5_DIGEST_LENGTH);
-        fclose(f);
-    }
+
+    MD5_Init(&ctx);
+    while((i = fread(buffer, 1, 512, f)))
+        MD5_Update(&ctx, buffer, i);
+    MD5_Final(result, &ctx);
+
+    data->user->sendData(SERVER_MSG::ACTION_COMPLETED, result, MD5_DIGEST_LENGTH);
+    fclose(f);
     return true;
 }
 

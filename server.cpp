@@ -28,7 +28,7 @@ SOCKET sock;
 extern bool needExit;
 extern uint16_t port;
 
-struct __attribute__((packed)) client_msg_plain_t{
+struct __attribute__((packed)) client_msg_plain_t {
     msgCode_t msgCode;
     union __attribute__((packed)){
         char data[SERVER_BUFFER_SIZE - sizeof(msgCode)];
@@ -156,16 +156,13 @@ static bool decryptAESkeyRSA(const RSA* rsa, const void* src, int src_len, uint8
 
 extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_control_t& rsaControl)
 {
-    struct __attribute__((packed)){
-        uint16_t msgCode;
-        uint8_t padLength;
-        char data[SERVER_BUFFER_SIZE - sizeof(msgCode) - sizeof(padLength)];
-    } encrypted_msg;
-    client_msg_plain_t decryptedBuffer;
-
-    register client_msg_plain_t* Buffer;
-
-    static_assert(sizeof(decryptedBuffer) - sizeof(Buffer->nullTerminate) == SERVER_BUFFER_SIZE, "bad buffer size");
+    if(!initServer())
+    {
+#ifdef WIN32
+        WSACleanup();
+#endif
+        return;
+    }
 
     unsigned retval;
     User* user;
@@ -179,16 +176,19 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
         uint8_t aes_key[AES_KEY_LENGTH / 8];
     } tempData;
 
-    if(!initServer())
-    {
-#ifdef WIN32
-        WSACleanup();
-#endif
-        return;
-    }
+    struct __attribute__((packed)){
+        uint16_t msgCode;
+        uint8_t padLength;
+        char data[SERVER_BUFFER_SIZE - sizeof(msgCode) - sizeof(padLength)];
+    } encrypted_msg;
+    client_msg_plain_t decryptedBuffer;
+    register client_msg_plain_t* Buffer;
+
+    static_assert(sizeof(decryptedBuffer) - sizeof(Buffer->nullTerminate) == SERVER_BUFFER_SIZE, "bad buffer size");
 
     IOThreadPool ioThreadPool;
     std::thread userControlThread(userControl, listUsers);
+
     while(!needExit)
     {
         EXIT_STATUS status = EXIT_STATUS::DONT_MANAGE;

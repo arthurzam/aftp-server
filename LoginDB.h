@@ -12,19 +12,12 @@ using namespace std;
  */
 class LoginDB {
 private:
-    Login* head;
-    unsigned short count;
+    Login* head = nullptr;
+    unsigned short count = 0;
 
     void add(Login* next);
 public:
-    /*
-     * create empty list
-     */
-    LoginDB()
-    {
-        this->count = 0;
-        this->head = NULL;
-    }
+    LoginDB() = default;
 
     /*
      * Load the list from the given file.
@@ -32,8 +25,6 @@ public:
      */
     LoginDB(const char* filePath)
     {
-        this->count = 0;
-        this->head = NULL;
         load(filePath);
     }
 
