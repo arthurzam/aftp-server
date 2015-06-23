@@ -24,7 +24,7 @@ class UserList {
             return new ListNode;
         }
     public:
-        UserList() {}
+        constexpr UserList() = default;
 
         ~UserList();
 

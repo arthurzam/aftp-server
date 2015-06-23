@@ -8,7 +8,7 @@ User::User(const struct sockaddr_in& from)
 {
     memcpy(&(this->_from), &from, sizeof(struct sockaddr_in));
     this->_lastUse = time(NULL);
-    this->_initialized = true;
+    flags |= INITIALIZED;
 }
 
 bool User::equals(const struct sockaddr_in& other) const
@@ -89,12 +89,12 @@ bool User::timeout()
 
     time_t now = time(NULL);
     double seconds = difftime(now, this->_lastUse);
-    if(this->_timeout)
+    if(flags & TIMEOUT)
         return (seconds > USER_TIME_REMOVE);
     else if (seconds > USER_TIME_MSG_SEND)
     {
         this->sendData(SERVER_MSG::TIMEOUT); // send timeout
-        this->_timeout = true;
+        flags |= TIMEOUT;
     }
     return (false);
 }
@@ -118,7 +118,7 @@ bool User::getRealFile(char* relativeFile, char* result) const
 
 void User::print() const
 {
-    if(this->_initialized)
+    if(flags & INITIALIZED)
     {
         printf("{<%s:%d>, %s}\n", inet_ntoa(this->_from.sin_addr), this->_from.sin_port, (this->_folderPath[0] ? this->_folderPath : "/"));
     }

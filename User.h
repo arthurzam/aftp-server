@@ -15,12 +15,15 @@
 
 class User {
     private:
+        enum FLAGS {
+            TIMEOUT = 1,
+            INITIALIZED = 2,
+            ENCRYPTED = 4
+        };
         time_t _lastUse = 0;
         const Login* _login = nullptr;
         struct sockaddr_in _from;
-        bool _timeout = false;
-        bool _initialized = false;
-        bool _isEncrypted = false;
+        uint8_t flags = 0;
         char _folderPath[REL_PATH_MAX] = { 0, };
         AES_KEY aesKeyDecrypt;
         AES_KEY aesKeyEncrypt;
@@ -36,14 +39,14 @@ class User {
     public:
         FileTransfer fileTransfer;
 
-        User() = delete;
+        constexpr User() = delete;
         User(const struct sockaddr_in& from);
         ~User() {}
 
         void resetTime()
         {
             this->_lastUse = time(NULL);
-            this->_timeout = false;
+            flags = flags & ~TIMEOUT;
         }
 
         /*
@@ -85,7 +88,7 @@ class User {
         inline int sendData(uint16_t msgCode, const void* data, int datalen) const
         {
             return (sendMessage(&this->_from, msgCode, data, datalen,
-                    (this->_isEncrypted ? &this->aesKeyEncrypt : nullptr)));
+                    ((flags & ENCRYPTED) ? &this->aesKeyEncrypt : nullptr)));
         }
 
         inline int sendData(uint16_t msgCode) const
@@ -97,15 +100,15 @@ class User {
         {
             AES_set_encrypt_key(key, AES_KEY_LENGTH, &this->aesKeyEncrypt);
             AES_set_decrypt_key(key, AES_KEY_LENGTH, &this->aesKeyDecrypt);
-            this->_isEncrypted = true;
+            flags = flags | ENCRYPTED;
         }
         inline bool isEncryption() const
         {
-            return this->_isEncrypted;
+            return flags & ENCRYPTED;
         }
         inline void stopEncryption()
         {
-            this->_isEncrypted = false;
+            flags = flags & ~ENCRYPTED;
         }
         const AES_KEY* getDecryptKey() const
         {

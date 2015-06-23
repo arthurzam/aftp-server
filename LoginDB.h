@@ -17,7 +17,7 @@ private:
 
     void add(Login* next);
 public:
-    LoginDB() = default;
+    constexpr LoginDB() = default;
 
     /*
      * Load the list from the given file.

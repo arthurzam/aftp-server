@@ -28,7 +28,7 @@ class FileTransfer {
          */
         static constexpr unsigned FILE_BLOCK_SIZE = 0x200; //=512
 
-        FileTransfer() = default;
+        constexpr FileTransfer() = default;
 
         /*
          * set for Download situation.
