@@ -24,7 +24,7 @@ enum CLIENT_MSG{
     FILE_MOVE,
     FILE_COPY,
     FILE_REMOVE,
-    FILE_SIZE,
+    FILE_STAT,
     FILE_MD5,
     FILE_SYMLINK,
 

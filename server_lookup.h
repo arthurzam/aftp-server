@@ -36,7 +36,7 @@ static const struct table_msg_t table_msgs[] = {
     {2, moveFile, 8},
     {2, copyFile, 8},
     {1, removeFile, 3},
-    {1, getFileSize, 3},
+    {1, getFileStat, 3},
     {1, getMD5OfFile, 3},
     {2, symbolicLink, 8},
 

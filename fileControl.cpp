@@ -25,6 +25,31 @@
 
 extern char* base_server_folder;
 
+uint64_t getSizeOfFile(const char* path)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define bswap64(y) (((uint64_t)ntohl(y)) << 32 | ntohl(y>>32))
+#else
+#define bswap64(y) (y)
+#endif
+
+    uint64_t l = (uint64_t)-1;
+#ifdef WIN32
+    HANDLE MF = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    DWORD High;
+    if ( MF != INVALID_HANDLE_VALUE )
+    {
+        l = GetFileSize(MF, &High);
+    }
+#else
+    struct stat st;
+    if(stat(path, &st) >= 0)
+        l = st.st_size;
+#endif
+    return bswap64(l);
+#undef bswap64
+}
+
 bool isDirectory(const char* directory)
 {
     DIR *dir = opendir(directory);
@@ -60,26 +85,42 @@ bool getContentDirectory(fsData* data)
     if(!dir)
         return false;
     int fileNameLen;
-    bool flag;
+
+    struct __attribute__((packed)){
+        uint64_t size;
+        uint8_t flags;
+    } fileStat;
+    static constexpr unsigned MIN_REMAINING_LENGTH = sizeof(fileStat) + 3;
+    static constexpr unsigned FLAG_ISDIR = 0x1;
+
     while ((ent = readdir (dir)))
     {
         if(ent->d_name[0] == '.' && (ent->d_name[1] == 0 || (ent->d_name[1] == '.' && ent->d_name[2] == 0))) // the path is not "." or ".."
             continue;
-        fileNameLen = strlen(ent->d_name);
-        if(resP - result + fileNameLen >= SERVER_BUFFER_SIZE - 10)
+        if((fileNameLen = strlen(ent->d_name)) == 0)
+            continue;
+
+        if(resP - result + fileNameLen >= SERVER_BUFFER_SIZE - MIN_REMAINING_LENGTH)
         {
             data->user->sendData(SERVER_MSG::LS_DATA, result, resP - result);
             resP = result;
         }
+
         memcpy(dirP, ent->d_name, fileNameLen + 1);
-        flag = isDirectory(data->data.path);
-        if(flag)
-            *(resP++) = '[';
-        memcpy(resP, ent->d_name, fileNameLen);
-        resP += fileNameLen;
-        if(flag)
-            *(resP++) = ']';
-        *(resP++) = '|';
+        if(isDirectory(data->data.path))
+        {
+            fileStat.flags |= FLAG_ISDIR;
+            fileStat.size = 0;
+        }
+        else
+        {
+            fileStat.flags = 0;
+            fileStat.size = getSizeOfFile(data->data.path);
+        }
+        memcpy(resP, &fileStat, sizeof(fileStat));
+        resP += sizeof(fileStat);
+        memcpy(resP, ent->d_name, fileNameLen + 1);
+        resP += fileNameLen + 1;
     }
     closedir (dir);
     if(resP != result)
@@ -135,35 +176,26 @@ bool removeFile(fsData* data)
     return !(remove(data->data.path));
 }
 
-bool getFileSize(fsData* data)
+bool getFileStat(fsData* data)
 {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define bswap64(y) (((uint64_t)ntohl(y)) << 32 | ntohl(y>>32))
-#else
-#define bswap64(y) (y)
-#endif
-
-    uint64_t l = (uint64_t)-1;
-#ifdef WIN32
-    HANDLE MF = CreateFile(data->data.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
-    DWORD High;
-    if ( MF != INVALID_HANDLE_VALUE )
+    struct __attribute__((packed)){
+        uint64_t size;
+        uint8_t flags = 0;
+    } buffer;
+    static constexpr unsigned FLAG_ISDIR = 0x1;
+    if(!isFileExists(data->data.path))
+        return false;
+    if(isDirectory(data->data.path))
     {
-        l = GetFileSize(MF, &High);
+        buffer.flags |= FLAG_ISDIR;
+        buffer.size = 0;
     }
-#else
-    struct stat st;
-    if(stat(data->data.path, &st) >= 0)
-        l = st.st_size;
-#endif
-
-    if(l != (uint64_t)-1)
+    else
     {
-        l = bswap64(l);
-        data->user->sendData(SERVER_MSG::ACTION_COMPLETED, &l, sizeof(l));
+        buffer.size = getSizeOfFile(data->data.path);
     }
-    return (l != (uint64_t)-1);
-#undef bswap64
+    data->user->sendData(SERVER_MSG::ACTION_COMPLETED, &buffer, sizeof(buffer));
+    return (true);
 }
 
 bool getMD5OfFile(fsData* data)

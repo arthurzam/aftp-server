@@ -213,6 +213,11 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
             Buffer = (client_msg_plain_t*)&encrypted_msg;
         }
 
+        if(Buffer->msgCode > CLIENT_MSG_COUNT) // bad msgCode
+        {
+            user->sendData(SERVER_MSG::UNKNOWN_COMMAND);
+            continue;
+        }
         if(table_msgs[Buffer->msgCode].min_ret > retval) // too short data
         {
             user->sendData(SERVER_MSG::ERROR_OCCURED);
@@ -234,11 +239,6 @@ extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_con
         if(Buffer->msgCode != CLIENT_MSG::LOGIN && !user->isLoged()) // not logged in
         {
             user->sendData(SERVER_MSG::LOGIN_REQUIRED);
-            continue;
-        }
-        if(Buffer->msgCode > CLIENT_MSG_COUNT) // bad msgCode
-        {
-            user->sendData(SERVER_MSG::UNKNOWN_COMMAND);
             continue;
         }
         if(table_msgs[Buffer->msgCode].num != 0) // IO path function
