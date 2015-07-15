@@ -359,10 +359,10 @@ static int encryptAES(const AES_KEY* encryptKey, const void* src, size_t src_len
     return (dPtr - (uint8_t*)dst);
 }
 
+static std::mutex lockSend;
+
 extern "C" int sendMessage(const struct sockaddr_in* to, msgCode_t msgCode, const void* data, size_t datalen, const AES_KEY* encryptKey)
 {
-    static std::mutex lockSend;
-
     struct __attribute__((packed)){
         msgCode_t msgCode;
         char data[SERVER_BUFFER_SIZE - sizeof(msgCode)];
@@ -385,6 +385,16 @@ extern "C" int sendMessage(const struct sockaddr_in* to, msgCode_t msgCode, cons
 
     lockSend.lock();
     int retVal = sendto(sock, (char*)&buffer, datalen + sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
+    lockSend.unlock();
+    return (retVal);
+}
+
+extern "C" int sendMessageCode(const struct sockaddr_in* to, msgCode_t msgCode)
+{
+    msgCode = htons(msgCode);
+
+    lockSend.lock();
+    int retVal = sendto(sock, (char*)&msgCode, sizeof(msgCode), 0, (struct sockaddr *)to, sizeof(struct sockaddr_in));
     lockSend.unlock();
     return (retVal);
 }

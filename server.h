@@ -16,5 +16,6 @@ struct rsa_control_t {
 
 extern "C" void startServer(LoginDB* usersDB, UserList* listUsers, const rsa_control_t& rsaControl);
 extern "C" int sendMessage(const struct sockaddr_in* to, msgCode_t msgCode, const void* data, size_t datalen, const AES_KEY* encryptKey);
+extern "C" int sendMessageCode(const struct sockaddr_in* to, msgCode_t msgCode);
 
 #endif /* SERVER_H_ */

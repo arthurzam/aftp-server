@@ -85,15 +85,15 @@ class User {
 
         void print() const;
 
-        inline int sendData(uint16_t msgCode, const void* data, int datalen) const
+        inline int sendData(msgCode_t msgCode, const void* data, int datalen) const
         {
             return (sendMessage(&this->_from, msgCode, data, datalen,
                     ((flags & ENCRYPTED) ? &this->aesKeyEncrypt : nullptr)));
         }
 
-        inline int sendData(uint16_t msgCode) const
+        inline int sendData(msgCode_t msgCode) const
         {
-            return (this->sendData(msgCode, nullptr, 0));
+            return (sendMessageCode(&this->_from, msgCode));
         }
 
         inline void setAesKey(const uint8_t key[AES_KEY_LENGTH / 8])
