@@ -25,6 +25,16 @@
 
 extern char* base_server_folder;
 
+static constexpr int getMSGcode_Bool(bool flag)
+{
+    return (flag ? SERVER_MSG::ACTION_COMPLETED : SERVER_MSG::ERROR_OCCURED);
+}
+
+static constexpr int getMSGcode_syscall(int syscall)
+{
+    return (syscall ? SERVER_MSG::ERROR_OCCURED : SERVER_MSG::ACTION_COMPLETED);
+}
+
 uint64_t getSizeOfFile(const char* path)
 {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -68,7 +78,7 @@ bool getRealDirectory(char* realativDirectory, char* result)
     return (true);
 }
 
-bool getContentDirectory(fsData* data)
+int getContentDirectory(fsData* data)
 {
     // data->data.path is used for storing the continue of path -> and it changes
     char *dirP, *resP;
@@ -83,7 +93,7 @@ bool getContentDirectory(fsData* data)
     struct dirent *ent;
     dir = opendir (data->data.path);
     if(!dir)
-        return false;
+        return getMSGcode_Bool(false);
     int fileNameLen;
 
     struct __attribute__((packed)){
@@ -125,58 +135,62 @@ bool getContentDirectory(fsData* data)
     closedir (dir);
     if(resP != result)
         data->user->sendData(SERVER_MSG::LS_DATA, result, resP - result);
-    return true;
+    return getMSGcode_Bool(true);
 }
 
 #ifndef WIN32
-bool symbolicLink(fsData* data)
+int symbolicLink(fsData* data)
 {
     char srcT[FILENAME_MAX], srcR[FILENAME_MAX];
     strncpy(srcR, data->data.path2.src, FILENAME_MAX - 1);
     while(readlink(srcR, srcT, FILENAME_MAX - 1) > 0)
         strncpy(srcR, srcT, FILENAME_MAX - 1);
-    return !symlink(srcR, data->data.path2.dst);
+    return getMSGcode_syscall(symlink(srcR, data->data.path2.dst));
 }
 #endif
 
-bool createDirectory(fsData* data)
+int createDirectory(fsData* data)
 {
 #ifdef WIN32
-    return CreateDirectoryA(data->data.path, NULL);
+    return getMSGcode_Bool(CreateDirectoryA(data->data.path, NULL));
 #else
     struct stat st;
     memset(&st, 0, sizeof(struct stat));
-    return !(stat(data->data.path, &st) && mkdir(data->data.path, 0755));
+    return getMSGcode_syscall(stat(data->data.path, &st) && mkdir(data->data.path, 0755));
 #endif
 }
 
-bool moveFile(fsData* data)
+int moveFile(fsData* data)
 {
-    return !(rename(data->data.path2.src, data->data.path2.dst));
+    return getMSGcode_syscall(rename(data->data.path2.src, data->data.path2.dst));
 }
 
-bool copyFile(fsData* data)
+int copyFile(fsData* data)
 {
 #ifdef WIN32
-    return CopyFileA(data->data.path2.src, data->data.path2.dst, 0);
+    return getMSGcode_Bool(CopyFileA(data->data.path2.src, data->data.path2.dst, 0));
 #else
     int src = open(data->data.path2.src, O_RDONLY, 0);
     int dst = open(data->data.path2.dst, O_WRONLY | O_CREAT, 0644);
     struct stat stat_source;
     fstat(src, &stat_source);
-    bool res = (sendfile(dst, src, 0, stat_source.st_size) == stat_source.st_size);
+    int res = getMSGcode_Bool(sendfile(dst, src, 0, stat_source.st_size) == stat_source.st_size);
     close(dst);
     close(src);
     return res;
 #endif
 }
 
-bool removeFile(fsData* data)
+int removeFile(fsData* data)
 {
-    return !(remove(data->data.path));
+#ifdef WIN32
+    return getMSGcode_Bool(DeleteFileA(data->data.path));
+#else
+    return getMSGcode_syscall(unlink(data->data.path));
+#endif
 }
 
-bool getFileStat(fsData* data)
+int getFileStat(fsData* data)
 {
     struct __attribute__((packed)){
         uint64_t size;
@@ -184,7 +198,7 @@ bool getFileStat(fsData* data)
     } buffer;
     static constexpr unsigned FLAG_ISDIR = 0x1;
     if(!isFileExists(data->data.path))
-        return false;
+        return getMSGcode_Bool(false);
     if(isDirectory(data->data.path))
     {
         buffer.flags |= FLAG_ISDIR;
@@ -195,10 +209,10 @@ bool getFileStat(fsData* data)
         buffer.size = getSizeOfFile(data->data.path);
     }
     data->user->sendData(SERVER_MSG::ACTION_COMPLETED, &buffer, sizeof(buffer));
-    return (true);
+    return (-1);
 }
 
-bool getMD5OfFile(fsData* data)
+int getMD5OfFile(fsData* data)
 {
     static constexpr unsigned READ_BUFFER = 512;
 
@@ -210,7 +224,7 @@ bool getMD5OfFile(fsData* data)
 
     if(!(f = fopen(data->data.path, "rb")))
     {
-        return false;
+        return getMSGcode_Bool(false);
     }
 
     MD5_Init(&ctx);
@@ -220,7 +234,7 @@ bool getMD5OfFile(fsData* data)
 
     data->user->sendData(SERVER_MSG::ACTION_COMPLETED, result, MD5_DIGEST_LENGTH);
     fclose(f);
-    return true;
+    return -1;
 }
 
 #ifndef WIN32
@@ -230,20 +244,20 @@ static int _remove_file(const char *fpath, const struct stat*, int, struct FTW*)
 }
 #endif
 
-bool removeFolder(fsData* data)
+int removeFolder(fsData* data)
 {
 #ifdef WIN32
     char command[REL_PATH_MAX + BASE_FOLDER_MAX + 9] = "rd /q /s ";
     const int baseCommandLen = 9;
 
     strcpy(command + baseCommandLen, data->data.path);
-    return !(system(command));
+    return getMSGcode_syscall(system(command));
 #else
-    return !nftw(data->data.path, _remove_file, 64, FTW_DEPTH | FTW_PHYS);
+    return getMSGcode_syscall(nftw(data->data.path, _remove_file, 64, FTW_DEPTH | FTW_PHYS));
 #endif
 }
 
-bool copyFolder(fsData* data)
+int copyFolder(fsData* data)
 {
 #ifdef WIN32
     char command[2 * (REL_PATH_MAX + BASE_FOLDER_MAX) + 20] = "xcopy /E /H /Y /i ";
@@ -254,14 +268,14 @@ bool copyFolder(fsData* data)
     *(cP += strlen(cP)) = ' ';
     strcpy(cP + 1, data->data.path2.dst);
 
-    return !(system(command));
+    return getMSGcode_syscall(system(command));
 #else
     pid_t p;
     int status;
     switch((p = fork()))
     {
         case -1:
-            return false;
+            return getMSGcode_Bool(false);
         case 0:
             close(STDOUT_FILENO);
             close(STDERR_FILENO);
@@ -269,10 +283,10 @@ bool copyFolder(fsData* data)
             break;
         default:
             waitpid(p, &status, 0);
-            return !(WEXITSTATUS(status));
+            return getMSGcode_syscall(WEXITSTATUS(status));
             break;
     }
-    return false;
+    return getMSGcode_Bool(false);
 #endif
 }
 

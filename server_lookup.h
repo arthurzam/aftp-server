@@ -7,7 +7,7 @@
 
 struct table_msg_t {
     uint_fast8_t num;
-    bool(*function)(fsData*);
+    int(*function)(fsData*);
     uint_fast16_t min_ret;
 };
 

@@ -42,14 +42,9 @@ class FileTransfer {
         /*
          * returns true if the initialize succeeded, otherwise false.
          */
-        inline bool isLoaded() const
-        {
-            return (this->state);
-        }
-
         inline operator bool() const
         {
-            return isLoaded();
+            return (this->state);
         }
 
         /*

@@ -26,7 +26,7 @@ IOThreadPool::~IOThreadPool()
         this->threads[i].join();
 }
 
-bool IOThreadPool::addPathFunction(int type, char* buffer, const User* user, bool(*function)(fsData*))
+bool IOThreadPool::addPathFunction(int type, char* buffer, const User* user, int(*function)(fsData*))
 {
     const fsThreadData* end = this->data + IO_DATA_SIZE;
 
@@ -85,9 +85,9 @@ void IOThreadPool::slaveThread()
             t = DATA_STATE::WAITING;
             if(std::atomic_compare_exchange_strong(&currManaged->state, &t, DATA_STATE::CONTROLED))
             {
-                currManaged->data.user->sendData(currManaged->function(&currManaged->data)
-                                                ? SERVER_MSG::ACTION_COMPLETED
-                                                : SERVER_MSG::ERROR_OCCURED);
+                int res = currManaged->function(&currManaged->data);
+                if(res != -1)
+                    currManaged->data.user->sendData((msgCode_t)res);
                 currManaged->state = DATA_STATE::FREE;
                 --this->count;
                 found = true;

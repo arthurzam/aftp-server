@@ -21,19 +21,19 @@ extern "C" {
 #ifdef WIN32
 #define symbolicLink copyFile
 #else
-    bool symbolicLink(fsData* data);
+    int symbolicLink(fsData* data);
 #endif
 
-    bool getContentDirectory(fsData* data);
-    bool createDirectory(fsData* data);
+    int getContentDirectory(fsData* data);
+    int createDirectory(fsData* data);
 #define moveDirectory moveFile
-    bool removeFolder(fsData* data);
-    bool copyFolder(fsData* data);
+    int removeFolder(fsData* data);
+    int copyFolder(fsData* data);
 
-    bool moveFile(fsData* data);
-    bool copyFile(fsData* data);
-    bool removeFile(fsData* data);
-    bool getFileStat(fsData* data);
-    bool getMD5OfFile(fsData* data);
+    int moveFile(fsData* data);
+    int copyFile(fsData* data);
+    int removeFile(fsData* data);
+    int getFileStat(fsData* data);
+    int getMD5OfFile(fsData* data);
 }
 #endif

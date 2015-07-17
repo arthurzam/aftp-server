@@ -11,6 +11,7 @@ bool FileTransfer::reset(char* relativePath, const User* user) // Download
     char fPath[FILENAME_MAX];
 
     close();
+    this->file = nullptr;
 
     if(!(user->getRealFile(relativePath, fPath) && (this->file = fopen(fPath, "rb"))))
     {
@@ -29,6 +30,12 @@ bool FileTransfer::reset(char* relativePath, const User* user) // Download
     static_assert(((FILE_BLOCK_SIZE - 1) & FILE_BLOCK_SIZE) == 0, "FILE_BLOCK_SIZE is not 2^x");
     if((temp & (FILE_BLOCK_SIZE - 1)) != 0) // check that there is a partial block
         this->blocksCount++;
+    if(this->blocksCount == 0)
+    {
+        this->state = STATE_ERROR;
+        return false;
+    }
+
     fseek(this->file, 0, SEEK_SET);
     return true;
 }
@@ -38,8 +45,9 @@ bool FileTransfer::reset(char* relativePath, const User* user, uint32_t blocksCo
     char fPath[FILENAME_MAX];
 
     close();
+    this->file = nullptr;
 
-    if(!(user->getRealFile(relativePath, fPath) && (this->file = fopen(fPath, "w+b"))))
+    if(blocksCount == 0 || !(user->getRealFile(relativePath, fPath) && (this->file = fopen(fPath, "w+b"))))
     {
         this->state = STATE_ERROR;
         return false;
